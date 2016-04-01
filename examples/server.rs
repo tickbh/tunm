@@ -51,7 +51,6 @@ fn main() {
     }
 
     register_custom_func(lua);
-    println!("require '{:?}'", &*global_config.start_lua);
     let _ : Option<()> = LuaEngine::instance().get_lua().exec_string(format!("require '{:?}'", global_config.start_lua));
     EventMgr::instance().add_lua_excute();
     let _ = EventMgr::instance().get_event_loop().run();

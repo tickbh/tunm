@@ -7,7 +7,6 @@ USER_CLASS.name = "USER_CLASS";
 
 function USER_CLASS:create(value)
     assert(type(value) == "table", "user::create para not corret");
-    trace("USER_CLASS:create value is %o", value)
     self:replace_dbase(value);
     self:set("ob_type", OB_TYPE_USER);
     self:freeze_dbase()
@@ -28,6 +27,15 @@ end
 function USER_CLASS:accept_relay(agent)
     -- 将连接转换到 user 对象上
     agent:relay_comm(self)
+
+    self:enter_world()
+end
+
+-- 玩家进入世界
+function USER_CLASS:enter_world()
+    self:set_temp("entered_world", true)
+    trace("玩家(%o/%s)进入游戏世界。", self:query("name"), get_ob_rid(self));
+    trace("玩家等级: %d\r\n玩家金币: %d\r\n玩家钻石: %d", self:query("lv"), self:query("gold"), self:query("stone"))
 end
 
 -- 取得对象类

@@ -12,7 +12,6 @@ local _enter_game = false
 
 -- 进入游戏第一次更新玩家数据
 function me_updated(agent, data)
-
     -- 创建玩家
     local user = USER_CLASS.new(data);
     -- 关联玩家对象与连接对象

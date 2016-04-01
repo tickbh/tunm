@@ -4,7 +4,6 @@
 function update(name)
     name = string.gsub(name, ".lua", "") .. ".lua";
     local full_name = get_full_path(name);
-    print("Load : " .. full_name);
     require(full_name);
     -- 回收垃圾
     collectgarbage("collect");
@@ -33,6 +32,7 @@ local function main()
 
     update("client/command")
 
+    send_debug_on(0)
     start_command_input()
     print("------------------welcome to rust lua game client------------------")
 end

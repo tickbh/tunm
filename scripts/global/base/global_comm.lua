@@ -220,7 +220,6 @@ end
 function global_dispatch_command(port_no, message, buffer)
     local message_handler = _G[message];
 
-    trace("------------------- port_no is %o, cmd : %s -------------------\n", port_no, message);
     -- 判断是否已存在对应的 agent
     local agent = find_agent_by_port(port_no);
     -- trace("------- my agent = %o ---------", agent)
@@ -240,7 +239,7 @@ function global_dispatch_command(port_no, message, buffer)
 
     local mm_type = get_message_manage_type(message,  agent:get_server_type())
     if mm_type == MESSAGE_DISCARD then
-        trace("------------------- discard port_no is %o, cmd : %s -------------------\n", port_no, message);
+        trace("------------- discard port_no is %o, cmd : %s -------------\n", port_no, message);
         del_message(buffer)
         return 
     end
@@ -272,7 +271,7 @@ function global_dispatch_command(port_no, message, buffer)
     local args = buffer:msg_to_table()
     del_message(buffer)
     if type(debug_flag)== "table" and agent:is_user() and debug_flag[agent:get_rid()] then
-        trace("------------------- cmd : %s -------------------\n%o\n", message, args);
+        trace("------------- cmd : %s -------------\n%o\n", message, args);
     end
 
     if is_function(msg_filter[message]) then
@@ -307,7 +306,6 @@ end
 
 -- 取得DB的返回值
 function msg_db_result(cookie, ret, result_list)
-    -- trace("msg_db_result ret is %o, result_list is %o", ret, result_list)
     -- 通知 DB_D 收到结果
     if type(result_list) == "table" then
         DB_D.notify_operation_result(cookie, ret, unpack(result_list));

@@ -7,7 +7,6 @@ USER_CLASS.name = "USER_CLASS";
 
 function USER_CLASS:create(value)
     assert(type(value) == "table", "user::create para not corret");
-    trace("USER_CLASS:create value is %o", value)
     self:replace_dbase(value);
     self:set("ob_type", OB_TYPE_USER);
     self:freeze_dbase()

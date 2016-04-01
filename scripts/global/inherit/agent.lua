@@ -107,7 +107,6 @@ end
 
 -- 转接通讯端口到另一个对象上
 function AGENT_CLASS:relay_comm(to_comm)
-    --trace("___________AGENT_CLASS:relay_comm(to_comm)______%o",to_comm)
     -- 取消本对象的端口-对象的映射
     if self.port_no == -1 then
         return;
@@ -124,7 +123,6 @@ function AGENT_CLASS:relay_comm(to_comm)
 end
 
 function AGENT_CLASS:forward_message(msg)
-    trace("forward_message port_no = %o", self.port_no)
     local port_no = self.port_no;
     if port_no == -1 then
         return;
@@ -151,7 +149,6 @@ end
 
 -- 发送消息
 function AGENT_CLASS:send_message(msg, ...)
-    trace("self.port_no = %o", self.port_no)
     -- trace("###################1 msg : %s ###################\n%o\n", msg, { ... });
     local port_no = self.port_no;
     if port_no == -1 then

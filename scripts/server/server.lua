@@ -4,7 +4,6 @@
 function update(name)
     name = string.gsub(name, ".lua", "") .. ".lua";
     local full_name = get_full_path(name);
-    print("Load : " .. full_name);
     require(full_name);
     -- 回收垃圾
     collectgarbage("collect");
