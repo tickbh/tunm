@@ -159,7 +159,6 @@ local function is_level_up(user)
     local exp = user:query("exp");
     local lv = user:query("lv");
 
-    trace("is_level_up lv is %o, exp is %o", lv, exp_user_table[lv])
     if not exp_user_table[lv] then
         return
     end
@@ -169,7 +168,9 @@ end
 
 --玩家升级
 function try_level_up(user)
-
+    if not user:is_user() then
+        return false
+    end
     if is_level_up(user) then
 
         local org_lv = user:query("lv");
@@ -197,7 +198,9 @@ function try_level_up(user)
         user:set("exp", exp);
 
         user:notify_fields_updated({"lv", "exp"});
+        return true
     end
+    return false
 end
 
 -- 加载玩家经验等级表
@@ -228,8 +231,7 @@ function create()
     register_post_init(init);
     -- 注册玩家的心跳回调
     register_heartbeat("USER_CLASS", when_user_heartbeat);
-    register_as_audience("USER_D", {EVENT_NEW_DAY=event_new_day})
-
+    register_as_audience("USER_D", {EVENT_EXP_CHANGE=try_level_up})
 end
 
 create();

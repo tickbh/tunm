@@ -58,21 +58,11 @@ function add_attrib(ob, field, value)
     local attrib_max = attrib_max_list[ob:query("ob_type")] or {};
 
     --查看是否达到满级
-    if field == "exp" and not ob:is_equip() and not attrib_max["lv"] then
+    if field == "exp" and not attrib_max["lv"] then
         if attrib_max["lv"] <= ob:query("lv") then
             return false;
         end
     end
-
-    if field == "sp" and ob:is_user() and not ob:query_temp("sp_is_buy") then
-        local max_sp = CALC_SP_MAX(ob)
-        if cur_value > max_sp then
-            final_value = cur_value
-        elseif final_value > max_sp then
-            final_value = max_sp
-        end
-    end
-
 
     --超过上限,则取上限值
     if attrib_max[field] and final_value > attrib_max[field] then
@@ -81,6 +71,10 @@ function add_attrib(ob, field, value)
 
     ob:set(field, final_value);
     ob:notify_fields_updated(field);
+
+    if field == "exp" then
+        raise_issue(EVENT_EXP_CHANGE, ob)
+    end
     return true;
 end
 

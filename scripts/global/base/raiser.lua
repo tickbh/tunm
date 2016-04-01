@@ -17,8 +17,6 @@
 --event_routines 事件的索引
 local event_responder = {};
 local event_audience  = {};
-setmetatable(event_responder, { __mode = "kv" });
-setmetatable(event_audience, { __mode = "kv" });
 
 -- 定义公共接口，按照字母顺序排序
 function get_all_audiences()
@@ -110,3 +108,4 @@ end
 function remove_responder_from_raiser(listener, events)
     remove_by_type(event_responder, listener, events)
 end
+
