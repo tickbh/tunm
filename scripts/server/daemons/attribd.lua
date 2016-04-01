@@ -35,7 +35,6 @@ end
 
 --执行属性增加操作
 function add_attrib(ob, field, value)
-    trace("add_attrib ob is %o" , {ob, field, value})
     if not is_object(ob) or value == 0  then
         return false;
     end
@@ -67,7 +66,6 @@ function add_attrib(ob, field, value)
 
     if field == "sp" and ob:is_user() and not ob:query_temp("sp_is_buy") then
         local max_sp = CALC_SP_MAX(ob)
-        trace("max_sp = %o, cur_value = %o, final_value = %o\n", max_sp, cur_value, final_value)
         if cur_value > max_sp then
             final_value = cur_value
         elseif final_value > max_sp then
@@ -75,33 +73,14 @@ function add_attrib(ob, field, value)
         end
     end
 
-    -- if statistics_add_log_id[field] then
-    --     local owner_ob = get_owner(ob)
-    --     if owner_ob then
-    --         LOG_D.to_log(statistics_add_log_id[field], get_ob_rid(owner_ob), tostring(value), tostring(final_value), "", owner_ob:query_log_channel())
-    --     end
-    -- end
 
     --超过上限,则取上限值
     if attrib_max[field] and final_value > attrib_max[field] then
         final_value = attrib_max[field];
-
-        -- if field == "money" then
-        --     ob:notify_dialog_ok($$[86]);
-        -- elseif field ~= "vp" then
-        --     ob:notify_dialog_ok(string.format($$[6], field));
-        -- end
     end
 
     ob:set(field, final_value);
-    trace("attrib filed is %o, final_value is %o", field, final_value)
     ob:notify_fields_updated(field);
-
-    if field == "money" then
-        -- 发起获取金币的事件
-        raise_issue("ATTRIB_D", SF_CHANGE_MONEY, ob, value);
-    end
-
     return true;
 end
 

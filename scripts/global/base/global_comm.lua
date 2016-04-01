@@ -270,8 +270,10 @@ function global_dispatch_command(port_no, message, buffer)
 
     local args = buffer:msg_to_table()
     del_message(buffer)
-    if type(debug_flag)== "table" and agent:is_user() and debug_flag[agent:get_rid()] then
-        trace("------------- cmd : %s -------------\n%o\n", message, args);
+    local flag = get_debug_flag()
+    if (type(flag) == "number" and flag == 1) or
+           (type(flag) == "table" and self:is_user() and flag[self:get_rid()]) then
+        trace("------------- msg : %s -------------\n%o\n", message, args);
     end
 
     if is_function(msg_filter[message]) then

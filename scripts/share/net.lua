@@ -9,5 +9,13 @@ MSG_ENTER_GAME              = "msg_enter_game"
 MSG_LOGIN_NOTIFY_STATUS     = "msg_login_notify_status"
 NEW_CLIENT_INIT             = "new_client_init"
 LOSE_CLIENT                 = "lose_client"
+CMD_COMMON_OP               = "cmd_common_op"
+MSG_COMMON_OP               = "msg_common_op"
+MSG_OBJECT_UPDATED          = "msg_object_updated"
+MSG_PROPERTY_LOADED         = "msg_property_loaded"
+MSG_BONUS                   = "msg_bonus"
+
+
+
 
 MSG_DB_RESULT               = "msg_db_result"

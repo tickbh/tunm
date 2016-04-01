@@ -25,10 +25,8 @@ local function check_finish(data)
 end
 
 local function accout_user_callback(data, result_list)
-    trace("USER_REDISD::accout_user_callback() get data from redis %o\n", result_list)
     data["readnum"] = data["readnum"] - 1
     if not REDIS_D.check_string(result_list) then
-        trace("get accout_user_callback failed %o\n", result_list)
         data.failed = true
     else
         merge(data, decode_json(result_list))
@@ -50,8 +48,6 @@ function load_data_from_db(rid, callback, callback_arg)
 end
 
 function cache_data_to_db(rid, data)
-    -- trace("cache_data_to_db() rid is %o data is %o serialize data is %o \n", rid, data, serialize(data))
-    -- trace("cache_data_to_db() rid is %o data is %o unserialize data is %o \n", rid, data, unserialize(serialize(data)))
     local ser = encode_json(data)
     REDIS_D.run_command("SET", rid, ser)
     REDIS_D.run_command("EXPIRE", rid, CACHE_EXPIRE_TIME_REDIS)

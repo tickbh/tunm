@@ -45,12 +45,10 @@ function remove_port_agent(port_no)
             else
                 local logic_agent = find_agent_by_port(get_map_port(port_no))
                 if logic_agent then
-                    logic_agent:print_fd_info()
                     logic_agent:send_message(LOSE_CLIENT, port_no)
                 end
             end
         elseif SERVER_TYPE == "logic" then
-            trace("is logic!!!!!!!! server_type = %o", server_type)
             if server_type == SERVER_TYPE_GATE then
                 for _,ag in pairs(dup(agents)) do
                     if ag:get_server_type() == SERVER_TYPE_CLIENT then

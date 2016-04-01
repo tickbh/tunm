@@ -12,8 +12,6 @@ LOGIN_FLAG_TIMEOUT = 3600 * 24
 -- 定义内部接口，按照字母顺序排序
 
 local function check_account_callback(login_info, ret, result_list)
-    trace("_____check_account_callback(login_info, ret, result_list)____%o, \n%o, \n%o ", login_info, ret, result_list)
-
     if type(result_list) ~= "table" or #result_list == 0 then
         trace("create new ACCOUNT_D!!")
         -- 创建新角色
@@ -46,8 +44,6 @@ local function check_account_callback(login_info, ret, result_list)
             end
         end
     end
-
-    trace("ACCOUNT_D.login!!!!!!!!!!")
     
     -- -- 旧角色登录
     ACCOUNT_D.login(login_info["agent"], data["rid"], result_list[1]);
@@ -83,7 +79,6 @@ end
 
 -- 玩家登录
 function login(agent, login_info)
-    trace("LOGIN_D.login login_info %o", login_info)
     --account case insensitive
     login_info["account"] = string.lower(login_info["account"] or "")
     local account   = login_info["account"];

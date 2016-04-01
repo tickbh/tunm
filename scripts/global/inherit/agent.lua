@@ -166,7 +166,7 @@ function AGENT_CLASS:send_message(msg, ...)
         local flag = get_send_debug_flag();
         if (type(flag) == "number" and flag == 1) or
            (type(flag) == "table" and self:is_user() and flag[self:get_rid()]) then
-            trace("###################2 msg : %s ###################\n%o\n",
+            trace("################### cmd : %s ###################\n%o\n",
                   msg, { ... });
         end
     elseif self:is_user() then
@@ -318,8 +318,6 @@ end
 
 -- 给逻辑服发送消息，网关服调用
 function AGENT_CLASS:send_logic_message(msg, ...)
-    trace("################### AGENT_CLASS:send_logic_message() msg : %s ###################\n%o\n", msg, { ... });
-
     local logic_port = get_map_port(self.port_no)
     if logic_port == -1 then
         trace("no logic server for %o", self.port_no)

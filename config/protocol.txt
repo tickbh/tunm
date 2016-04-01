@@ -18,7 +18,6 @@
         "name"                         : { "index" :    12,    "pattern" : "str" },
         "account"                      : { "index" :    13,    "pattern" : "str" },
         "client_ip"                    : { "index" :    14,    "pattern" : "str" },
-
         "create_time"                  : { "index" :    15,    "pattern" : "u32" },
         "stone"                        : { "index" :    16,    "pattern" : "u32" },
         "gold"                         : { "index" :    17,    "pattern" : "u32" },
@@ -33,6 +32,10 @@
         "vip_exp"                      : { "index" :    26,    "pattern" : "u32" },
         "sp"                           : { "index" :    27,    "pattern" : "u32" },
         "account_rid"                  : { "index" :    28,    "pattern" : "str" },
+        "oper"                         : { "index" :    29,    "pattern" : "str" },
+        "field"                        : { "index" :    30,    "pattern" : "str" },
+        "class_id"                     : { "index" :    31,    "pattern" : "u32" },
+        "amount"                       : { "index" :    32,    "pattern" : "i32" },
 
         "i8"                           : { "index" :    50000, "pattern" : "i8" },
         "u8"                           : { "index" :    50001, "pattern" : "u8" },
@@ -94,10 +97,12 @@
         "msg_login_notify_status"      : { "msg_type" :    "client", "args" : [ "map" ] },
         "new_client_init"              : { "msg_type" :    "logic",  "args" : [ "u32", "map", "map" ] },
         "lose_client"                  : { "msg_type" :    "server", "args" : [ "u16" ] },
-
+        "cmd_common_op"                : { "msg_type" :    "logic",  "args" : [ "map" ] },
+        "msg_common_op"                : { "msg_type" :    "client", "args" : [ "map" ] },
+        "msg_object_updated"           : { "msg_type" :    "client", "args" : [ "str", "map" ] },
+        "msg_property_loaded"          : { "msg_type" :    "client", "args" : [ "str", "map[]" ] },
+        "msg_bonus"                    : { "msg_type" :    "client", "args" : [ "map", "u8" ] },
 
         "msg_db_result"                : { "msg_type" :    "server", "args" : [ "map[]" ] }
     }
 }
-
-

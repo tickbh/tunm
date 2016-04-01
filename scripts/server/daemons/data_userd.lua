@@ -38,7 +38,6 @@ function load_user_data_from_db(startPos)
 end
 
 function user_data_changed(info)
-    trace("user_data_changed is %o", info)
     local rid = remove_get(info, "rid")
     if not rid then
         return

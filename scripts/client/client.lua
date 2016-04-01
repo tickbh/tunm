@@ -33,6 +33,7 @@ local function main()
     update("client/command")
 
     send_debug_on(0)
+    debug_on(0)
     start_command_input()
     print("------------------welcome to rust lua game client------------------")
 end

@@ -38,7 +38,6 @@ function login(agent, account_rid, account_dbase)
     account:accept_relay(agent)
     account:send_message(MSG_LOGIN_NOTIFY_STATUS, {ret = 0})
     success_login(account, false)
-    account:print_fd_info()
 end
 
 function success_login(account, is_reconnect)

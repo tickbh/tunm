@@ -30,6 +30,8 @@ local function main()
     load_folder("server/cmds")
     load_folder("server/msgs")
 
+    send_debug_on(0)
+    debug_on(0)
     start_command_input()
     print("------------------welcome to rust lua game server------------------")
 end

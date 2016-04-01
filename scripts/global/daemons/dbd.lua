@@ -316,7 +316,6 @@ end
 -- 更新数据库操作
 function execute_db(table_name, sql_cmd, callback, callback_arg)
     local db_name = DATA_D.get_db_name(table_name);
-    trace("execute_db sql is %o ", sql_cmd);
     local cookie = 0
     if callback then
         cookie = new_cookie();
