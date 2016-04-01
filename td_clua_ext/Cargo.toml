@@ -1,0 +1,17 @@
+[package]
+name = "td_clua_ext"
+version = "0.1.0"
+authors = [ "tickbh <tickdream125@hotmail.com>" ]
+description = "extend for Lua 5.3"
+repository = "https://github.com/tickbh/tdengine"
+build = "build.rs"
+links = "luaext"
+license = "MIT/Apache-2.0"
+
+[build-dependencies]
+pkg-config = "0.3"
+gcc = "0.3"
+
+[dependencies]
+libc = "^0.2"
+td_rlua = "0.1.0"
