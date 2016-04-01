@@ -1,14 +1,9 @@
 extern crate mysql as my;
 #[macro_use(raw_to_ref)]
-extern crate td_rnet;
+extern crate tdengine;
+// extern crate td_proto_rust as td_rp;
 
-#[macro_use]
-extern crate log;
-extern crate env_logger;
-
-extern crate td_proto_rust as td_rp;
-
-use td_rnet::{DbTrait, DbMysql, NetMsg, NetConfig};
+// use tdengine::{DbTrait, DbMysql, NetMsg, NetConfig};
 
 use std::default::Default;
 
@@ -36,7 +31,7 @@ fn main() {
     // // let mut raw1 = unsafe { Box::from_raw(raw) };
     // let mut raw2 = unsafe { &mut *raw };
     // drop(raw2);
-    drop(first);
+    // drop(first);
     // let mut raw3 = raw_to_ref!(raw);
     // println!("raw2 = {:?}", raw2);
     // raw2.i = 222;
@@ -52,7 +47,7 @@ fn main() {
     // let instance = NetConfig::instance() ;
 
     // let pool = my::Pool::new("mysql://root:123456@localhost:3306").unwrap();
-    // let mut sql_db = td_rnet::DbMysql::new(pool);
+    // let mut sql_db = tdengine::DbMysql::new(pool);
     // sql_db.execute(r"CREATE TEMPORARY TABLE tmp.payment (
     //                      customer_id int not null,
     //                      amount int not null,

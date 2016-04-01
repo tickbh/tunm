@@ -1,2 +1,4 @@
 /target
 Cargo.lock
+/td_clua_ext/target
+/td_clua_ext/Cargo.lock

@@ -15,11 +15,11 @@ default = ["mysql"]
 libc = "^0.2"
 time = "0.1.33"
 rustc-serialize = "0.3.16"
-net2   = { version = "0.2.19", default-features = false }
+net2   = { version = "0.2.23", default-features = false }
 rust-crypto = "^0.2"
 tiny_http = { version = "0.5", default-features = false } 
 td_rlua = "0.1.0"
-td_revent = "0.1.0"
+td_revent = "0.1.1"
 td_proto_rust = "0.1.0"
 td_rredis = "0.1.0"
 td_rthreadpool = "0.1.0"
@@ -27,7 +27,7 @@ td_rthreadpool = "0.1.0"
 [dependencies.mysql]
 version = "2.2.1"
 default-features = false
-features = ["pipe"]
+features = [""]
 optional = true
 
 [dependencies.td_clua_ext]
