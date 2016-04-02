@@ -36,15 +36,11 @@ function cmd_select_user(account, rid)
 end
 
 function cmd_common_op(user, info)
-    if info.oper == "get" then
+    if info.oper == "add" then
         user:add_attrib(info.field, info.amount)
-    elseif info.oper == "use" then
+    elseif info.oper == "cost" then
         user:cost_attrib(info.field, info.amount)
-    elseif info.oper == "get_item" then
+    elseif info.oper == "add_item" then
         
     end
-        --     "oper"                         : { "index" :    29,    "pattern" : "str" },
-        -- "field"                        : { "index" :    30,    "pattern" : "str" },
-        -- "class_id"                     : { "index" :    31,    "pattern" : "u32" },
-        -- "amount"                       : { "index" :    32,    "pattern" : "i32" },
 end

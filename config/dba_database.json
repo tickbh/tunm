@@ -40,7 +40,18 @@
             ]
         },
         {
-            "name":"log",
+            "name":"item",
+            "fields" : [
+                {   "field" : "rid",                       "type" : "varchar(12)",     "nullable" : 1,         "default" : "",      "comment" : "物品RID"                                  },
+                {   "field" : "owner",                     "type" : "varchar(12)",     "nullable" : 1,         "default" : "",      "comment" : "拥有者RID"                               },
+                {   "field" : "pos",                       "type" : "varchar(18)",     "nullable" : 1,         "default" : "",      "comment" : "装备位置信息"                                  },
+                {   "field" : "class_id",                  "type" : "int(11)",         "nullable" : 1,         "default" : "",      "comment" : "装备ID"                                  },
+                {   "field" : "amount",                    "type" : "varchar(11)",     "nullable" : 1,         "default" : "",      "comment" : "装备数量"                                  },
+                {   "name"  : "owner",                     "type" : "normal",          "indexs" : "owner",     "key" : "index"                                  }
+            ]
+        },
+        {
+            "name" : "log",
             "fields" : [
                 {   "field" : "time",                     "type" : "int(12)",         "nullable" : 1,         "default" : "",      "comment" : "时间"                               },
                 {   "field" : "log_id",                   "type" : "int(5)",          "nullable" : 1,         "default" : "",      "comment" : "日志id"                                  },
