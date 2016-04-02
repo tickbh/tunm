@@ -226,9 +226,12 @@ function global_dispatch_command(port_no, message, buffer)
     if not agent or
        (not agent:is_authed() and message ~= "cmd_internal_auth") then
         -- 若找不到 agent，且该消息不为验证消息，则认为是非法连接，不处理
-        trace("非法连接(%d)\n", port_no);
+        trace("非法连接(%d)\n 消息为(%o)", port_no, message);
+        if not agent then
+            trace("端口绑定的对象不存在")
+        end
         if is_object(agent) then
-            trace("非法连接(%o)\n", agent:get_ob_id());
+            agent:print_fd_info()
             destruct_object(agent);
         else 
             close_fd(port_no);
