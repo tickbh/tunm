@@ -44,6 +44,7 @@ local function load_item_table()
         end
         item_table[class_id] = set_table_read_only(info)
     end
+    trace("item_table = %o", item_table)
 end
 
 local function load_equip_table()
@@ -221,7 +222,7 @@ local function init()
     load_equip_table();
     init_property_fields();
 end
-
+ 
 -- 模块的入口执行
 function create()
     register_post_init(init);

@@ -11,7 +11,7 @@ function USER_CLASS:create(value)
     self:set("ob_type", OB_TYPE_USER);
     self:freeze_dbase()
 
-    self:set_temp("container", clone_object(CONTAINER_CLASS, {owner = get_ob_rid(self)}))
+    self:set_temp("container", clone_object(CONTAINER_CLASS, {rid = get_ob_rid(self)}))
 end
 
 function USER_CLASS:destruct()

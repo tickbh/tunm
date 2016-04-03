@@ -7,3 +7,7 @@ end
 function GET_STONE_ID()
     return 102
 end
+
+function CALC_ITEM_MAX_AMOUNT(ob)
+    return 99
+end

@@ -17,6 +17,7 @@ local function main()
     load_folder("global/base");
     load_folder("global/inherit");
     load_folder("global/daemons", "importd:dbd:sqld:datad");
+    load_folder("global/clone");
 
     load_folder("etc")
 
@@ -34,6 +35,7 @@ local function main()
 
     send_debug_on(0)
     debug_on(0)
+    post_init()
     start_command_input()
     print("------------------welcome to rust lua game server------------------")
 end

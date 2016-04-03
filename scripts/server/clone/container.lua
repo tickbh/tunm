@@ -589,6 +589,8 @@ function CONTAINER_CLASS:init_property(property)
 end
 
 function CONTAINER_CLASS:recieve_property(info, check_enough)
+    trace("CONTAINER_CLASS:recieve_property---- info = %o", info)
+
     assert(info["class_id"] ~= nil, "class_id must no empty")
     local item_info = PROPERTY_D.get_item_or_equip_info(info["class_id"])
     if not item_info then
@@ -664,7 +666,8 @@ function CONTAINER_CLASS:load_property(property, dst_pos, not_auto_notify, not_a
         -- 若该位置为自动获取的，则尝试合并道具
         return (self:combine_to_pos(property, dst_pos));
     end
-
+    local owner_rid = self.owner
+    local owner_ob = self:get_owner()
     LOG_D.to_log(LOG_TYPE_CREATE_PROPERTY, self.owner, property:get_rid(), tostring(property:query("class_id")), tostring(property:query("amount")), self:get_owner():query_log_channel());
     -- 记录物件的位置
     property:set("pos", dst_pos);

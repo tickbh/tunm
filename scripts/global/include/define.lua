@@ -42,21 +42,16 @@ CACHE_EXPIRE_TIME_REDIS = 300
 
 OB_TYPE_USER        = 1;
 OB_TYPE_ITEM        = 2;
-OB_TYPE_HERO        = 3;
-OB_TYPE_EQUIP       = 4;
-OB_TYPE_ACCOUNT     = 5;
-OB_TYPE_TASK        = 6;
-OB_TYPE_NOTE        = 7;
-OB_TYPE_COLOSSEUM   = 8;
-OB_TYPE_BADGE       = 9;
+OB_TYPE_EQUIP       = 3;
+OB_TYPE_ACCOUNT     = 4;
 
 CHAT_CHANNEL_WORLD = 1
 CHAT_CHANNEL_UNION = 2
 CHAT_CHANNEL_PRIVATE = 3
 
 -- 定义包裹分组位置
-PAGE_EQUIP          = 1;             -- 装备
 PAGE_ITEM           = 2;             -- 道具仓库
+PAGE_EQUIP          = 3;             -- 装备
 
 -- 各分页的最大道具数量
 MAX_PAGE_SIZE  = {
