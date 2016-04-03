@@ -9,7 +9,7 @@ local port_map = {};
 --{GateType = {1=true,3=true}, LogicType={2=true, 3=true}, ClientType={4=true}}
 local type_fds = {};
 
-setmetatable(agents, { __mode = "v" });
+-- setmetatable(agents, { __mode = "v" });
 
 -- 定义公共接口，按照字母顺序排序
 

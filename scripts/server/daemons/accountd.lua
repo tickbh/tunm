@@ -191,17 +191,21 @@ local function read_user_callback(info, args)
         return
     end
 
-    local user = info.user
+    local user = remove_get(info, "user")
+    local item = remove_get(info, "item")
     for key, value in pairs(user or {}) do
         info[key] = value
     end
-    info.user = nil
 
     local user_ob = find_object_by_rid(rid)
     if user_ob then
         user_ob:close_agent()
     else
         user_ob = USER_D.create_user(info)
+    end
+
+    for _,v in pairs(item) do
+        user_ob:get_container():init_property(v)
     end
     
     account:set_login_user(user_ob)

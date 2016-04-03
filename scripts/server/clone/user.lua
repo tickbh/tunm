@@ -161,16 +161,18 @@ function USER_CLASS:save_sub_content(callback, arg)
             -- 取得该物件需要保存的 dbase
             local dbase, is_part = ob:save_to_mapping();
             if dbase then
+
                 -- 取得该物件的保存操作相关信息
                 local table_name, primary, oper = ob:get_save_oper();
                 local sql;
                 if oper == "insert" then
                     sql = SQL_D.insert_sql(table_name, dbase)
                 elseif oper == "update" then
-                    sql = SQL_D.update_sql(table_name, dbase, {owner = primary})
+                    sql = SQL_D.update_sql(table_name, dbase, {rid = primary})
                 else
                     assert(false, "unknow op")
                 end
+
                 DB_D.execute_db(table_name, sql, callback, callback_arg)
             end
         end

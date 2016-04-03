@@ -63,10 +63,10 @@ end
 
 -- 道具是否可叠加
 function ITEM_CLASS:can_combine(ob)
-    if not self:query("combine") or
-       not ob:query("combine") or
-       self:query("combine") <= 1 or
-       ob:query("combine") <= 1 then
+    if not self:query("over_lap") or
+       not ob:query("over_lap") or
+       self:query("over_lap") <= 1 or
+       ob:query("over_lap") <= 1 then
        return false;
    end
 

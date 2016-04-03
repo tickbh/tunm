@@ -660,6 +660,7 @@ function CONTAINER_CLASS:load_property(property, dst_pos, not_auto_notify, not_a
         self:unload_property(property, not_auto_notify);
     end
 
+    trace("self.carry is %o", self.carry)
     trace("is_pos_occuppied is %o", self:is_pos_occuppied(dst_pos))
     -- 判断目标位置是否已被占用
     if self:is_pos_occuppied(dst_pos) then
@@ -698,7 +699,6 @@ function CONTAINER_CLASS:unload_property(property, not_auto_notify)
 
     -- 删除该物件记录的 container
     property:delete_temp("container");
-    
     if pos then
         -- 背包物品析构，从 carry 中移除该物件
         self.carry[pos] = nil;
