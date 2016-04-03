@@ -10,7 +10,8 @@ function USER_CLASS:create(value)
     self:replace_dbase(value);
     self:set("ob_type", OB_TYPE_USER);
     self:freeze_dbase()
-    self.container = CONTAINER_CLASS.new({rid = value.rid})
+
+    self:set_temp("container", clone_object(CONTAINER_CLASS, {owner = get_ob_rid(self)}))
 end
 
 function USER_CLASS:destruct()
@@ -147,7 +148,13 @@ function USER_CLASS:set_change_to_db(callback, arg)
     local table_name, condition = self:get_save_path();
     local sql = SQL_D.update_sql(table_name, dbase, condition)
     DB_D.execute_db(table_name, sql, callback, arg)
-    self:freeze_dbase();
+    self:freeze_dbase()
+
+    self:save_sub_content(callback, arg)
+end
+
+function USER_CLASS:save_sub_content(callback, arg)
+    self:get_container():set_change_to_db(callback, arg)
 end
 
 -- 弹出提示文字
@@ -224,4 +231,8 @@ end
 
 function USER_CLASS:set_log_channel(channel)
     self:set_temp("LOG_CHANNEL", channel)
+end
+
+function USER_CLASS:get_container()
+    return self:query_temp("container")
 end

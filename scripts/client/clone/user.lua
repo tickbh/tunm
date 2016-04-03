@@ -10,6 +10,7 @@ function USER_CLASS:create(value)
     self:replace_dbase(value);
     self:set("ob_type", OB_TYPE_USER);
     self:freeze_dbase()
+
 end
 
 function USER_CLASS:destruct()

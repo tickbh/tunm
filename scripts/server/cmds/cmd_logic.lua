@@ -41,6 +41,6 @@ function cmd_common_op(user, info)
     elseif info.oper == "cost" then
         user:cost_attrib(info.field, info.amount)
     elseif info.oper == "add_item" then
-        
+        BONUS_D.do_user_bonus(user, {property = { {class_id = info.class_id, amount = info.amount} }}, BONUS_TYPE_SHOW, BONUS_TYPE_SHOW)
     end
 end

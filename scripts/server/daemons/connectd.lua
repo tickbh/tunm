@@ -2,7 +2,7 @@
 --connectd 服务
 module("CONNECT_D", package.seeall)
 
-local connect_fd = -1
+local connect_agent = -1
 local connect_timer = nil
 local heartbeat_timer = nil
 local timeout = 60
@@ -10,9 +10,9 @@ local gate_prefix = "{GATE:IP}"
 local redis_gate_prefix = "{GATE:IP}:*"
 
 function close_connecting_info()
-    if connect_fd ~= -1 then
-        close_fd(connect_fd)
-        connect_fd = -1
+    if is_object(connect_agent) then
+        destruct_object(connect_agent)
+        connect_agent = nil
         if is_valid_timer(connect_timer) then
             delete_timer(connect_timer)
         end
@@ -34,17 +34,14 @@ local function gate_heartbeat_network()
 end
 
 local function logic_connect_callback(agent, arg)
-    if connect_fd ~= -1 then
-        local obj = find_agent_by_port(connect_fd)
-        if obj then
-            obj:connection_lost()
-        end
-        connect_fd = -1
+    if is_object(connect_agent) then
+        destruct_object(connect_agent)
+        connect_agent = nil
     end
     agent:set_server_type(SERVER_TYPE_GATE)
-    connect_fd = agent:get_port_no()
+    connect_agent = agent
     
-    trace("logic_connect_callback success fd is %o", connect_fd)
+    trace("logic_connect_callback success fd is %o", connect_agent)
 end
 
 local function callback_gate_select(data, result_list)
@@ -60,7 +57,7 @@ end
 
 --找出负载最低的网关进行连接
 local function logic_check_connection()
-    if connect_fd ~= -1 and find_agent_by_port(connect_fd) then
+    if is_object(connect_agent) then
         return
     end
 

@@ -18,6 +18,8 @@ local function main()
     load_folder("global/inherit");
     load_folder("global/daemons", "importd:dbd:sqld:datad");
 
+    load_folder("etc")
+
     local load_table={
         "user",
     }
