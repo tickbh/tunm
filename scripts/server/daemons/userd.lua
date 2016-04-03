@@ -40,26 +40,6 @@ local function when_user_heartbeat(user)
     check_save(user)
 end
 
-local function read_user_callback(info)
-    local rid = info["rid"]
-    assert(rid ~= nil, "rid must not nil")
-    local user = find_object_by_rid(rid)
-    assert(user ~= nil, "user must not nil")
-    if info.failed then
-        user:connection_lost()
-    else
-        local account = info.account
-        for key,value in pairs(account) do
-            info[key] = value
-        end
-        info.account = nil
-        user:absorb_dbase(info)
-    end
-end
-
-function read_user_data(user_rid)
-    CACHE_D.get_user_data(user_rid, read_user_callback)
-end
 
 function login(agent, user_rid, user_dbase)
     assert(user_rid == user_dbase["rid"]);
@@ -79,7 +59,7 @@ end
 
 -- 冻结玩家记录的回调
 local function hiberate_callback(info, ret, result_list)
-    local save_callback = info.save_callback
+    -- local save_callback = info.save_callback
 
 end
 
@@ -92,7 +72,6 @@ function hiberate(user, save_callback)
     }
     
     user:set_change_to_db(hiberate_callback, arg)
-
 end
 
 --玩家数据是否全部保存完毕

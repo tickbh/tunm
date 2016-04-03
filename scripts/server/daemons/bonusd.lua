@@ -362,7 +362,7 @@ function do_bonus(bonus_info, bonus_type, show_type)
 
         -- 属性
         if sizeof(attrib) > 0 then
-            bonus["attrib"] = attrib;
+            bonus["attribs"] = attrib;
         end
 
         -- 没有奖励，则不需要发送

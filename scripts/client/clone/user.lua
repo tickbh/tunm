@@ -10,7 +10,7 @@ function USER_CLASS:create(value)
     self:replace_dbase(value);
     self:set("ob_type", OB_TYPE_USER);
     self:freeze_dbase()
-
+    self.carry = {}
 end
 
 function USER_CLASS:destruct()
@@ -46,4 +46,21 @@ end
 
 function USER_CLASS:is_user()
     return true;
+end
+
+function USER_CLASS:load_property(object)
+    self.carry[object:query("pos")] = object
+end
+
+function USER_CLASS:get_page_carry(page)
+    local arr = {};
+    local x, y;
+    local read_pos = READ_POS;
+    for pos, ob in pairs(self.carry) do
+        x, y = read_pos(pos);
+        if x == page then
+            arr[#arr + 1] = ob;
+        end
+    end
+    return arr;
 end

@@ -154,7 +154,28 @@ function USER_CLASS:set_change_to_db(callback, arg)
 end
 
 function USER_CLASS:save_sub_content(callback, arg)
-    self:get_container():set_change_to_db(callback, arg)
+    -- 取得玩家容器中的所有物件的保存信息
+    for pos, ob in pairs(self:get_container():get_carry()) do
+        assert(is_object(ob));
+        if is_object(ob) then
+            -- 取得该物件需要保存的 dbase
+            local dbase, is_part = ob:save_to_mapping();
+            if dbase then
+                -- 取得该物件的保存操作相关信息
+                local table_name, primary, oper = ob:get_save_oper();
+                local sql;
+                if oper == "insert" then
+                    sql = SQL_D.insert_sql(table_name, dbase)
+                elseif oper == "update" then
+                    sql = SQL_D.update_sql(table_name, dbase, {owner = primary})
+                else
+                    assert(false, "unknow op")
+                end
+                DB_D.execute_db(table_name, sql, callback, callback_arg)
+            end
+        end
+    end
+
 end
 
 -- 弹出提示文字

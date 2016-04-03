@@ -479,7 +479,7 @@ function CONTAINER_CLASS:check_free_amount_by_multi_class_id(item_list)
     return true;
 end
 
--- 增加指定数量的道具、装备、斗灵
+-- 增加指定数量的道具、装备
 function CONTAINER_CLASS:add_property(class_id, amount, bonus_type)
 
     if not amount then

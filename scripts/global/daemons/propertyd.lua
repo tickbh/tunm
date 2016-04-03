@@ -44,7 +44,6 @@ local function load_item_table()
         end
         item_table[class_id] = set_table_read_only(info)
     end
-    trace("item_table = %o", item_table)
 end
 
 local function load_equip_table()

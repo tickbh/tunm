@@ -2,7 +2,7 @@
 --connectd 服务
 module("CONNECT_D", package.seeall)
 
-local connect_agent = -1
+local connect_agent = nil
 local connect_timer = nil
 local heartbeat_timer = nil
 local timeout = 60

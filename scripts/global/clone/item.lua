@@ -104,3 +104,35 @@ end
 function ITEM_CLASS:is_item()
     return true;
 end
+
+-- 取得数据库的保存操作
+function ITEM_CLASS:get_save_oper()
+    local oper = self:query_temp("not_in_db") and "insert" or "update";
+    return "item", self:query("rid"), oper;
+end
+
+-- 取得保存数据库的信息
+function ITEM_CLASS:save_to_mapping()
+    --insert操作,返回全部数据
+    if self:quermy_temp("not_in_db") then
+        return (self:query());
+    end
+
+    -- 道具数据发生变化的字段
+    local change_list = self:get_change_list();
+    local data = {};
+
+    for key,_ in pairs(change_list) do
+        if PROPERTY_D.is_in_item_fields(key) then
+            data[key] = self:query(key);
+        else
+            return (self:query());
+        end 
+    end
+
+    if sizeof(data) == 0 then
+        return;
+    end
+
+    return data, 1;
+end

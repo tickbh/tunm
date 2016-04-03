@@ -36,6 +36,9 @@
         "field"                        : { "index" :    30,    "pattern" : "str" },
         "class_id"                     : { "index" :    31,    "pattern" : "u32" },
         "amount"                       : { "index" :    32,    "pattern" : "i32" },
+        "properties"                   : { "index" :    33,    "pattern" : "map[]" },
+        "attribs"                      : { "index" :    34,    "pattern" : "map[]" },
+
 
         "i8"                           : { "index" :    50000, "pattern" : "i8" },
         "u8"                           : { "index" :    50001, "pattern" : "u8" },

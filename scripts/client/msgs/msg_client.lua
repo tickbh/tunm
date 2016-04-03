@@ -30,7 +30,18 @@ function msg_object_updated(user, rid, info)
 end
 
 function msg_property_loaded(user, rid, info_list)
+    for _,v in pairs(info_list) do
+        local obj = PROPERTY_D.clone_object_from(v.class_id, v)
+        user:load_property(obj)
+    end
 end
 
 function msg_bonus(user, info, bonus_type)
+    if bonus_type == BONUS_TYPE_SHOW then
+        for _,v in pairs(info.properties or {}) do
+            local obj = find_basic_object_by_class_id(v.class_id)
+            assert(obj, "物品不存在")
+            trace("获得物品:%o，数量:%o", obj:query("name"), v.amount)
+        end
+    end
 end

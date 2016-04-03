@@ -214,6 +214,7 @@ function request_select_user(account, rid)
     end
 
     local user_ob = find_object_by_rid(rid)
+    trace("user_ob = %o", user_ob)
     --断线重连
     if user_ob then
         account:set_login_user(user_ob)
