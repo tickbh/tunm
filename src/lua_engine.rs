@@ -52,6 +52,7 @@ impl LuaEngine {
     pub fn new(mut lua : Lua) -> LuaEngine {
         lua.openlibs();
         lua.add_lualoader(load_func);
+        lua.enable_hotfix();
         LuaEngine {
             exec_list : vec![],
             lua       : lua,

@@ -105,6 +105,11 @@ fn get_floder_files(path : String) -> Vec<String> {
     files
 }
 
+fn get_file_str(path : String) -> String {
+    let full_path = unwrap_or!(FileUtils::instance().full_path_for_name(&*path), String::new());
+    unwrap_or!(FileUtils::get_file_str(&*full_path), String::new())
+}
+
 fn get_msg_type(name : String) -> String {
     let proto = NetConfig::instance().get_proto_msg_type(&name);
     proto.map(|s| s.clone()).unwrap_or("".to_string())
@@ -136,6 +141,7 @@ pub fn register_util_func(lua : &mut Lua) {
     lua.set("write_log", td_rlua::function1(write_log));
     lua.register("get_next_rid", get_next_rid);
     lua.set("get_full_path", td_rlua::function1(get_full_path));
+    lua.set("get_file_str", td_rlua::function1(get_file_str));
     lua.set("get_floder_files", td_rlua::function1(get_floder_files));
     lua.set("get_msg_type", td_rlua::function1(get_msg_type));
     lua.set("time_ms", td_rlua::function0(time_ms));

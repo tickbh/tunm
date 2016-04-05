@@ -1,7 +1,7 @@
 
 extern crate td_rlua;
-use td_rlua::lua_State;
 
+#[allow(improper_ctypes)]
 extern "C" {
-    pub fn luaopen_cjson(L : *mut lua_State);
+    pub fn luaopen_cjson(L : *mut td_rlua::lua_State);
 }
