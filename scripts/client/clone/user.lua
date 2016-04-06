@@ -52,6 +52,17 @@ function USER_CLASS:load_property(object)
     self.carry[object:query("pos")] = object
 end
 
+function USER_CLASS:unload_property(object)
+    if not is_object(object) then
+        return
+    end
+    local pos = object:query("pos")
+    if pos then
+        self.carry[pos] = nil
+    end
+    destruct_object(object)
+end
+
 function USER_CLASS:get_page_carry(page)
     local arr = {};
     local x, y;

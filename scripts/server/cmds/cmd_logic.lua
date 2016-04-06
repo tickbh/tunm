@@ -44,3 +44,20 @@ function cmd_common_op(user, info)
         BONUS_D.do_user_bonus(user, {property = { {class_id = info.class_id, amount = info.amount} }}, BONUS_TYPE_SHOW, BONUS_TYPE_SHOW)
     end
 end
+
+function cmd_sale_object(user, info)
+    local rid, amount = info.rid, info.amount
+    local object = find_object_by_rid(rid)
+    if not object or get_ob_rid(user) ~= object:query("owner") then
+        return user:send_message(MSG_SALE_OBJECT, {ret = -1, err_msg = "物品rid有误"})
+    end
+
+    if object:query("sell_price") == 0 then
+        return user:send_message(MSG_SALE_OBJECT, {ret = -1, err_msg = "该物品不可出售"})
+    end
+
+    local sale_amount = math.min(info.amount, object:query("amount"))
+    user:add_attrib("gold", sale_amount * object:query("sell_price"))
+    object:cost_amount(sale_amount)
+    return user:send_message(MSG_SALE_OBJECT, {ret = 0})
+end

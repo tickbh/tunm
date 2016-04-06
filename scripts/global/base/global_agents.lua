@@ -32,12 +32,10 @@ end
 
 -- 移除 port_no　与 agent 的映射关系
 function remove_port_agent(port_no)
-    trace("remove_port_agent %o", port_no)
     local agent = agents[port_no]
     if agent then
         local server_type = agent:get_server_type()
         if SERVER_TYPE == "gate" then
-            trace("is gate!!!!!!!! server_type = %o", server_type)
             if server_type == SERVER_TYPE_LOGIC then
                 for port,_ in pairs(dup(port_map[port_no]) or {}) do
                     agents[port]:connection_lost()

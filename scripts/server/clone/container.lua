@@ -62,8 +62,6 @@ function CONTAINER_CLASS:combine_to_pos(property, dst_pos)
 end
 
 function CONTAINER_CLASS:drop(property)
-    
-    trace("CONTAINER_CLASS:drop %o", property)
     --判断道具对象是否存在
     if not property or not is_object(property) then
        trace("drop的道具对象不存在\n");
@@ -84,7 +82,7 @@ function CONTAINER_CLASS:drop(property)
     check_rid_vaild(get_ob_rid(property))
 
     -- 取得道具所在的数据库表
-    local table_name = property:get_save_path();
+    local table_name = property:get_save_oper();
     local sql = SQL_D.delete_sql(table_name, {rid = property:query("rid")})
     DB_D.execute_db(table_name, sql)
 
@@ -589,7 +587,6 @@ function CONTAINER_CLASS:init_property(property)
 end
 
 function CONTAINER_CLASS:recieve_property(info, check_enough)
-    trace("CONTAINER_CLASS:recieve_property---- info = %o", info)
 
     assert(info["class_id"] ~= nil, "class_id must no empty")
     local item_info = PROPERTY_D.get_item_or_equip_info(info["class_id"])
@@ -597,7 +594,6 @@ function CONTAINER_CLASS:recieve_property(info, check_enough)
         return false;
     end
 
-    trace("info is %o item_info is %o", info, item_info)
     local page = CONTAINER_D.get_page_by_data(item_info);
     local size = self:get_container_size(page);
     if not size then
@@ -636,32 +632,26 @@ function CONTAINER_CLASS:recieve_property(info, check_enough)
         end
     end
 
-    trace("------gain_list is %o left_amount is %o", gain_list, left_amount)
     if check_enough and left_amount > 0 then 
         return false, "背包空间不足"
     end
     local result_list = {}
     for _,v in ipairs(gain_list) do
         local property = PROPERTY_D.clone_object_from(info["class_id"], merge(dup(info), {amount = v.amount}), false)
-        trace("------property is %o", property:query())
         self:load_property(property, v.pos)
         local property = self.carry[v.pos]
         table.insert(result_list, {rid = get_ob_rid(property), class_id = info["class_id"], amount = v.amount, pos = v.pos, ob_type = property:query("ob_type")})
     end
-    trace("result_list is %o", result_list)
     return true, result_list
 end
 
 -- 加载道具
 function CONTAINER_CLASS:load_property(property, dst_pos, not_auto_notify, not_auto_arrange)
-    trace("load_property is %o is_item is %o", property, property:is_item())
     if property:query_temp("container") == self.owner then
         -- 道具已在容器中，需要先从容器中移除
         self:unload_property(property, not_auto_notify);
     end
 
-    trace("self.carry is %o", self.carry)
-    trace("is_pos_occuppied is %o", self:is_pos_occuppied(dst_pos))
     -- 判断目标位置是否已被占用
     if self:is_pos_occuppied(dst_pos) then
         -- 若该位置为自动获取的，则尝试合并道具
@@ -679,9 +669,6 @@ function CONTAINER_CLASS:load_property(property, dst_pos, not_auto_notify, not_a
 
     -- 记录物件的位置索引
     self.carry[dst_pos] = property;
-
-    trace("___ load_property() __ self.carry is %o \n ", self.carry)
-
     -- 通知物件加载
     self:get_owner():notify_property_loaded(property:get_rid())
 

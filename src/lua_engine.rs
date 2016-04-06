@@ -189,7 +189,6 @@ impl LuaEngine {
         if let Some(index) = ori.find('\'') {
             if index == 0 {
                 let t : String = ori.drain(1..).collect();
-                println!("str {:?}", format!("trace(\"%o\", {})", t));
                 return format!("trace(\"%o\", {})", t);
             }
         }

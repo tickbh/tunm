@@ -42,9 +42,9 @@ end
 -- 道具扣除数量,返回实际扣除个数
 function EQUIP_CLASS:cost_amount()
     -- 析构道具
-    local owner = self:get_container();
+    local owner = get_owner(self);
     if owner then
-        owner:drop(self);
+        owner:get_container():drop(self);
         return true;
     end
 end
@@ -62,12 +62,12 @@ end
 
 -- 通知字段变更
 function EQUIP_CLASS:notify_fields_updated(field_names)
-    local env = self:get_container();
-    if not env then
+    local owner = get_owner(self);
+    if not owner then
         return;
     end
 
-    env:notify_property_updated(self:get_rid(), field_names);
+    owner:notify_property_updated(get_ob_rid(self), field_names);
 end
 
 -- 取得保存数据库的信息

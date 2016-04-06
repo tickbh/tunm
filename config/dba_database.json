@@ -46,7 +46,7 @@
                 {   "field" : "owner",                     "type" : "varchar(12)",     "nullable" : 1,         "default" : "",      "comment" : "拥有者RID"                               },
                 {   "field" : "pos",                       "type" : "varchar(18)",     "nullable" : 1,         "default" : "",      "comment" : "装备位置信息"                                  },
                 {   "field" : "class_id",                  "type" : "int(11)",         "nullable" : 1,         "default" : "",      "comment" : "装备ID"                                  },
-                {   "field" : "amount",                    "type" : "varchar(11)",     "nullable" : 1,         "default" : "",      "comment" : "装备数量"                                  },
+                {   "field" : "amount",                    "type" : "int(11)",         "nullable" : 1,         "default" : "",      "comment" : "装备数量"                                  },
                 {   "name"  : "owner",                     "type" : "normal",          "indexs" : "owner",     "key" : "index"                                  }
             ]
         },

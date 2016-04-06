@@ -14,7 +14,9 @@ MSG_COMMON_OP               = "msg_common_op"
 MSG_OBJECT_UPDATED          = "msg_object_updated"
 MSG_PROPERTY_LOADED         = "msg_property_loaded"
 MSG_BONUS                   = "msg_bonus"
-
+CMD_SALE_OBJECT             = "cmd_sale_object"
+MSG_SALE_OBJECT             = "msg_sale_object"
+MSG_PROPERTY_DELETE         = "msg_property_delete"
 
 
 

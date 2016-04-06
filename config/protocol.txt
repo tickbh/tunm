@@ -41,10 +41,9 @@
         "pos"                          : { "index" :    35,    "pattern" : "str" },
         "ob_type"                      : { "index" :    36,    "pattern" : "i8" },
         "owner"                        : { "index" :    37,    "pattern" : "str" },
-        "amount"                       : { "index" :    38,    "pattern" : "i32" },
-        "item_list"                    : { "index" :    39,    "pattern" : "map[]" },
-        "equip_list"                   : { "index" :    40,    "pattern" : "map[]" },
-        "user"                         : { "index" :    41,    "pattern" : "map" },
+        "item_list"                    : { "index" :    38,    "pattern" : "map[]" },
+        "equip_list"                   : { "index" :    39,    "pattern" : "map[]" },
+        "user"                         : { "index" :    40,    "pattern" : "map" },
 
         "i8"                           : { "index" :    50000, "pattern" : "i8" },
         "u8"                           : { "index" :    50001, "pattern" : "u8" },
@@ -111,6 +110,9 @@
         "msg_object_updated"           : { "msg_type" :    "client", "args" : [ "str", "map" ] },
         "msg_property_loaded"          : { "msg_type" :    "client", "args" : [ "str", "map[]" ] },
         "msg_bonus"                    : { "msg_type" :    "client", "args" : [ "map", "u8" ] },
+        "cmd_sale_object"              : { "msg_type" :    "logic",  "args" : [ "map" ] },
+        "msg_sale_object"              : { "msg_type" :    "client", "args" : [ "map" ] },
+        "msg_property_delete"          : { "msg_type" :    "client", "args" : [ "str[]" ] },
 
         "msg_db_result"                : { "msg_type" :    "server", "args" : [ "map[]" ] }
     }

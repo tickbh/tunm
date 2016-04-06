@@ -13,8 +13,7 @@ impl CommandMgr {
                 if line.is_empty() {
                     continue;
                 }
-                line.trim_matches('\n');
-                line.trim_matches('\r');
+                let line = line.trim_matches(|c| c == '\r' || c == '\n').to_string();
                 if line == "quit" {
                     break;
                 }

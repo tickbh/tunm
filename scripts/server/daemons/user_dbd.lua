@@ -42,7 +42,6 @@ local function accout_user_callback(data, ret, result_list)
 end
 
 local function item_callback(data, ret, result_list)
-    trace("item_callback result_list is %o", result_list)
     data["readnum"] = data["readnum"] - 1
     if type(result_list) ~= "table" or ret ~= 0 then
         data.failed = true
@@ -53,7 +52,6 @@ local function item_callback(data, ret, result_list)
 end
 
 local function equip_callback(data, ret, result_list)
-    trace("item_callback result_list is %o", result_list)
     data["readnum"] = data["readnum"] - 1
     if type(result_list) ~= "table" or ret ~= 0 then
         data.failed = true

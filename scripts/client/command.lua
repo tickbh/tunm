@@ -97,3 +97,13 @@ function show_equips()
         trace("位置:%s, 物品rid:%s, 物品名称:%s, 物品数量:%d, 等级:%d", equip:query("pos"), equip:query("rid"), equip:query("name"), equip:query("amount"), equip:query("lv"))
     end
 end
+
+function sale_object(rid, amount)
+    amount = amount or 1
+    local user = ME_D.get_user()
+    if not is_object(user) then
+        trace("请先登陆游戏")
+        return
+    end
+    user:send_message(CMD_SALE_OBJECT, {rid = rid, amount = amount})
+end

@@ -51,7 +51,6 @@ impl ServiceMgr {
                 size
             },
             Err(_) => {
-                println!("is error!!!!!!!!");
                 EventMgr::instance().add_kick_event(fd as i32);
                 mem::forget(tcp);
                 return 0;

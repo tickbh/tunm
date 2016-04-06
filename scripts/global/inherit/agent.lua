@@ -61,7 +61,6 @@ end
 
 -- 析造函数
 function AGENT_CLASS:destruct()
-    trace("AGENT_CLASS:destruct %o", self.port_no)
     self:close_agent()
     if is_valid_timer(self.timer_id) then
         delete_timer(self.timer_id);

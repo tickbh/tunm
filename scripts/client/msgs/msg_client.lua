@@ -45,3 +45,22 @@ function msg_bonus(user, info, bonus_type)
         end
     end
 end
+
+function msg_sale_object(user, info)
+    if info.ret ~= 0 then
+        trace("出售物品失败:%o", info.err_msg)
+    else
+        trace("出售物品成功")
+    end
+end
+
+function msg_property_delete(user, rids)
+    for _,rid in ipairs(rids) do
+        local object = find_object_by_rid(rid)
+        if object then
+            trace("物品:%o，名称:%o消耗完毕", object:query("rid"), object:query("name"))
+            user:unload_property(object)
+        end
+    end
+end
+

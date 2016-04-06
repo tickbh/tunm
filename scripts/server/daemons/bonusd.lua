@@ -136,7 +136,6 @@ end
 
 --执行奖励道具操作
 local function property_bonus(propertys, bonus_type)
-    trace("property_bonus is %o", propertys)
     local list ={};
     for _, info in pairs(propertys) do
         -- 取出额外参数
@@ -150,7 +149,6 @@ local function property_bonus(propertys, bonus_type)
             list[ob_rid] =  list[ob_rid] or {};
 
             local success, gain_list = ob:get_container():recieve_property(info)
-            trace("------------ recieve info %o, success is %o, gain_list is %o", info, success, gain_list)
             if success then
                 for _,v in pairs(gain_list) do
                     table.insert(list[ob_rid], v)
@@ -327,7 +325,6 @@ end
                     }   --]=]
 
 function do_bonus(bonus_info, bonus_type, show_type)
-    trace("bonus_info is %o", bonus_info)
     if not is_mapping(bonus_info) then
         return
     end
@@ -354,7 +351,6 @@ function do_bonus(bonus_info, bonus_type, show_type)
         --caculate_bonus_property_times(propertys)
         property_list = property_bonus(propertys, bonus_type);
     end
-    trace("bonus_info[ property_list is %o \n", property_list)
 
     --向客户端发送奖励信息
     for rid, attrib in pairs(attrib_list) do

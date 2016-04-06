@@ -11,7 +11,6 @@ use {EventMgr, ServiceMgr, NetMsg, NetConfig, NetUtils, ThreadUtils, HttpMgr, So
 static LUA_POOL_NAME : &'static str = "lua";
 
 fn close_fd(fd : i32) {
-    println!("close_fd {:?}", fd);
     EventMgr::instance().add_kick_event(fd);
 }
 

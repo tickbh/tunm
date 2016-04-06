@@ -371,7 +371,6 @@ impl TelnetUtils {
                 size
             },
             Err(_) => {
-                println!("is error!!!!!!!!");
                 telnet.remove_client(fd as i32);
                 return 0;
             }

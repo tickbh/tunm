@@ -75,7 +75,6 @@ impl LogUtils {
 
     pub fn role_file(&mut self) -> Option<File> {
         let filename = self.get_log_filename(time::now());
-        println!("filename = {:?}", filename);
         let file = unwrap_or!(File::create(filename).ok(), return None);
         let now = time::precise_time_s() as u64;
         let start = now / KEEP_ROLE_SECOND;

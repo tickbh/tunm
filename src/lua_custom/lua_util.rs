@@ -9,18 +9,10 @@ use {FileUtils, NetConfig, TelnetUtils, CommandMgr, LogUtils};
 static ENCODE_MAP : &'static [u8; 32] = b"0123456789ACDEFGHJKLMNPQRSTUWXYZ";
 
 
-fn lua_print(mut val : String) {
+fn lua_print(val : String) {
     LogUtils::instance().append(&*val);
-    if val.len() > 1000 {
-        let val : String = val.drain(..1000).collect();
-        // let val = String::from_utf8_lossy(&val);
-        println!("{}", val);
-        TelnetUtils::instance().new_message(val);
-    } else {
-        println!("{}", val);
-        TelnetUtils::instance().new_message(val);
-    }
-
+    println!("{}", val);
+    TelnetUtils::instance().new_message(val);
 }
 
 fn write_log(_val : String) {
@@ -47,8 +39,6 @@ fn get_rid(server_id : u16, flag : Option<u8>) -> [u8; 12] {
         if ti > last_rid_time {
             last_rid_time = ti;
         }
-        println!("last_rid_time is {}", time::precise_time_s());
-        println!("last_rid_time is {}", last_rid_time);
         let ti = last_rid_time - 1292342400; // 2010/12/15 0:0:0
         /* 60bits RID
          * 00000-00000-00000-00000-00000-00000 00000-00000-00 000-00000-00000-00000
@@ -123,7 +113,7 @@ fn time_ms() -> u32 {
 fn block_read() -> String {
     let mut line = String::new();
     let _ = unwrap_or!(::std::io::stdin().read_line(&mut line).ok(), 0);
-    line
+    line.trim_matches(|c| c == '\r' || c == '\n').to_string()
 }
 
 fn calc_str_md5(input : String) -> String {

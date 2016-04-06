@@ -45,6 +45,7 @@ end
 
 -- 道具增加数量
 function ITEM_CLASS:add_amount(count)
+    trace("ITEM_CLASS:add_amount amount is %o", count)
     if count <= 0 then
         return;
     end
@@ -59,6 +60,11 @@ function ITEM_CLASS:add_amount(count)
 
     -- 更新 amount 字段
     self:set("amount", amount);
+    self:notify_fields_updated({"amount"})
+
+    local memo = string.format("add:%d|remain:%d", count, self:query("amount"));
+    LOG_D.to_log(LOG_TYPE_ADD_AMOUNT, self:query("owner"), self:get_rid(),
+                 tostring(self:query("class_id")), memo, find_object_by_rid(self:query("owner")):query_log_channel());
 end
 
 -- 道具是否可叠加
@@ -86,19 +92,33 @@ end
 
 -- 道具扣除数量,返回实际扣除个数
 function ITEM_CLASS:cost_amount(count)
+    local owner = get_owner(self)
     local amount = self:query("amount");
     local update_amount = amount - count;
 
     if update_amount <= 0 then
-        -- 析构道具
-        destruct_object(self);
-        return;
+        owner:get_container():drop(self);
+        return 0;
     end
 
     -- 更新 amount 字段
     self:set("amount", update_amount);
+    self:notify_fields_updated({"amount"})
 
+    local memo = string.format("cost:%d|remain:%d", count, self:query("amount"));
+    LOG_D.to_log(LOG_TYPE_COST_AMOUNT, self:query("owner"), self:get_rid(),
+                 tostring(self:query("class_id")), memo, owner:query_log_channel() );
     return count;
+end
+
+-- 通知字段变更
+function ITEM_CLASS:notify_fields_updated(field_names)
+    local owner = get_owner(self);
+    if not owner then
+        return;
+    end
+
+    owner:notify_property_updated(get_ob_rid(self), field_names);
 end
 
 function ITEM_CLASS:is_item()

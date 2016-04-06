@@ -31,6 +31,8 @@ function USER_CLASS:destruct()
         destruct_object(account_ob)
     end
 
+    destruct_object(self:get_container())
+
     self:delete_logout_timer()
 end
 
@@ -141,7 +143,7 @@ function USER_CLASS:save_to_mapping()
 end
 
 -- 取得数据库的保存路径
-function USER_CLASS:get_save_path()
+function USER_CLASS:get_save_oper()
     return "user", { rid = get_ob_rid(self) };
 end
 
@@ -151,7 +153,7 @@ function USER_CLASS:set_change_to_db(callback, arg)
         if callback then callback(arg, 0, {}) end
         return
     end
-    local table_name, condition = self:get_save_path();
+    local table_name, condition = self:get_save_oper();
     local sql = SQL_D.update_sql(table_name, dbase, condition)
     DB_D.execute_db(table_name, sql, callback, arg)
     self:freeze_dbase()
