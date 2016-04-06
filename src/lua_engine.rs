@@ -2,6 +2,7 @@ use {NetMsg, NetConfig, FileUtils};
 use td_rlua::{self, Lua};
 use libc;
 use td_rp;
+use std::sync::Arc;
 use td_rthreadpool::ReentrantMutex;
 use td_rredis::{RedisResult, Value};
 use super::{LuaWrapperTableValue, RedisWrapperResult};
@@ -28,7 +29,7 @@ enum LuaElem {
 pub struct LuaEngine {
     exec_list : Vec<LuaElem>,
     lua       : Lua,
-    mutex     : ReentrantMutex<i32>,
+    mutex     : Arc<ReentrantMutex<i32>>,
 }
 
 extern "C" fn load_func(lua: *mut td_rlua::lua_State) -> libc::c_int {
@@ -56,7 +57,7 @@ impl LuaEngine {
         LuaEngine {
             exec_list : vec![],
             lua       : lua,
-            mutex     : ReentrantMutex::new(0),
+            mutex     : Arc::new(ReentrantMutex::new(0)),
         }
     }
 

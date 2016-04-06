@@ -8,6 +8,7 @@ use SocketEvent;
 use LuaEngine;
 use NetMsg;
 
+use std::sync::Arc;
 use td_rthreadpool::ReentrantMutex;
 use td_rp::{self, Buffer, decode_number};
 use td_revent::{FromFd, EventLoop, EventFlags, EventEntry};
@@ -16,7 +17,7 @@ static mut el : *mut EventMgr = 0 as *mut _;
 static mut read_data : [u8; 65536] = [0; 65536];
 pub struct EventMgr {
     connect_ids  : HashMap<i32, SocketEvent>,
-    mutex        : ReentrantMutex<i32>,
+    mutex        : Arc<ReentrantMutex<i32>>,
     event_loop   : EventLoop,
     lua_exec_id  : u32,
 }
@@ -25,7 +26,7 @@ impl EventMgr {
     pub fn new() -> EventMgr {
         EventMgr {
             connect_ids : HashMap::new(),
-            mutex       : ReentrantMutex::new(0),
+            mutex       : Arc::new(ReentrantMutex::new(0)),
             event_loop  : EventLoop::new().ok().unwrap(),
             lua_exec_id : 0,
         }
@@ -45,14 +46,16 @@ impl EventMgr {
     }
 
     pub fn new_socket_event(&mut self, ev : SocketEvent) -> bool {
-        let _guard = self.mutex.lock().unwrap();
+        let mutex = self.mutex.clone();
+        let _guard = mutex.lock().unwrap();
         LuaEngine::instance().apply_new_connect(ev.get_cookie(), ev.get_socket_fd(), ev.get_client_ip(), ev.get_server_port());
         self.connect_ids.insert(ev.get_socket_fd(), ev);
         true
     }
 
     pub fn kick_socket(&mut self, sock : i32) {
-        let _guard = self.mutex.lock().unwrap();
+        let mutex = self.mutex.clone();
+        let _guard = mutex.lock().unwrap();
         let sock_ev = self.connect_ids.remove(&sock);
         if sock_ev.is_some() {
             drop(TcpStream::from_fd(sock_ev.unwrap().get_socket_fd()));
@@ -61,19 +64,17 @@ impl EventMgr {
     }
 
     pub fn send_netmsg(&mut self, fd : i32, net_msg : &mut NetMsg) -> bool {
-        let size = {
-            let _guard = self.mutex.lock().unwrap();
-            if !self.connect_ids.contains_key(&fd) {
-                println!("send_netmsg ==== {:?}", fd);
-                return false;
-            }
-            let mut tcp = TcpStream::from_fd(fd);
-            //TODO
-            let size = tcp.write(net_msg.get_buffer().get_data());
+        let mutex = self.mutex.clone();
+        let _guard = mutex.lock().unwrap();
+        if !self.connect_ids.contains_key(&fd) {
+            println!("send_netmsg ==== {:?}", fd);
+            return false;
+        }
+        let mut tcp = TcpStream::from_fd(fd);
+        //TODO
+        let size = tcp.write(net_msg.get_buffer().get_data());
 
-            mem::forget(tcp);
-            size
-        };
+        mem::forget(tcp);
 
         if size.is_err() || size.unwrap() != net_msg.len() {
             self.add_kick_event(fd);
@@ -88,6 +89,9 @@ impl EventMgr {
     }
 
     pub fn data_recieved(&mut self, fd : i32, data : &[u8]) {
+        let mutex = self.mutex.clone();
+        let _guard = mutex.lock().unwrap();
+        
         let socket_event = EventMgr::instance().get_socket_event(fd as i32);
         if socket_event.is_none() {
             return;
@@ -98,6 +102,9 @@ impl EventMgr {
     }
 
     pub fn try_dispatch_message(&mut self, fd : i32) {
+        let mutex = self.mutex.clone();
+        let _guard = mutex.lock().unwrap();
+        
         let socket_event = EventMgr::instance().get_socket_event(fd as i32);
         if socket_event.is_none() {
             return;

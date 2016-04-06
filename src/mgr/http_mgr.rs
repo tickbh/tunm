@@ -26,7 +26,7 @@ impl ServerRequest {
 
 pub struct HttpMgr {
     requests : HashMap<u32, ServerRequest>,
-    lock     : Arc<ReentrantMutex<u32>>,
+    mutex     : Arc<ReentrantMutex<u32>>,
 }
 
 static HTTP_POOL_NAME : &'static str = "http";
@@ -45,12 +45,12 @@ impl HttpMgr {
         ThreadUtils::instance().create_pool(HTTP_POOL_NAME.to_string(), 10);
         HttpMgr {
             requests : HashMap::new(),
-            lock     : Arc::new(ReentrantMutex::new(0)),
+            mutex     : Arc::new(ReentrantMutex::new(0)),
         }
     }
 
     pub fn new_request_receive(&mut self, mut request : Request) {
-        let mut data = self.lock.lock().unwrap();
+        let mut data = self.mutex.lock().unwrap();
         if *data > u32::max_value() - 1000 {
             *data = 0;
         }
@@ -64,7 +64,7 @@ impl HttpMgr {
     } 
 
     pub fn http_server_respone(&mut self, cookie : u32, content : String) {
-        let _data = self.lock.lock().unwrap();
+        let _data = self.mutex.lock().unwrap();
         let request = unwrap_or!(self.requests.remove(&cookie), return);
         let pool = ThreadUtils::instance().get_pool(&HTTP_POOL_NAME.to_string());
         pool.execute(move || {
