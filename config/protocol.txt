@@ -42,6 +42,9 @@
         "ob_type"                      : { "index" :    36,    "pattern" : "i8" },
         "owner"                        : { "index" :    37,    "pattern" : "str" },
         "amount"                       : { "index" :    38,    "pattern" : "i32" },
+        "item_list"                    : { "index" :    39,    "pattern" : "map[]" },
+        "equip_list"                   : { "index" :    40,    "pattern" : "map[]" },
+        "user"                         : { "index" :    41,    "pattern" : "map" },
 
         "i8"                           : { "index" :    50000, "pattern" : "i8" },
         "u8"                           : { "index" :    50001, "pattern" : "u8" },

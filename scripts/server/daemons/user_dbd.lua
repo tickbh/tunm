@@ -52,6 +52,17 @@ local function item_callback(data, ret, result_list)
     check_finish(data)
 end
 
+local function equip_callback(data, ret, result_list)
+    trace("item_callback result_list is %o", result_list)
+    data["readnum"] = data["readnum"] - 1
+    if type(result_list) ~= "table" or ret ~= 0 then
+        data.failed = true
+    else
+        data["equip"] = result_list
+    end
+    check_finish(data)
+end
+
 function load_data_from_db(rid, callback, callback_arg)
     assert(callback ~= nil and type(callback) == "function", "callback must not empty")
 
@@ -65,6 +76,11 @@ function load_data_from_db(rid, callback, callback_arg)
             name = "item",    
             condition = {_WHERE={owner=rid} },
             callback = item_callback
+        },
+        {
+            name = "equip",    
+            condition = {_WHERE={owner=rid} },
+            callback = equip_callback
         }
     } 
 

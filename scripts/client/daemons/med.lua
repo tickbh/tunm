@@ -12,10 +12,22 @@ local _enter_game = false
 
 -- 进入游戏第一次更新玩家数据
 function me_updated(agent, data)
+    local item_list = remove_get(data, "item_list") or {}
+    local equip_list = remove_get(data, "equip_list") or {}
     -- 创建玩家
-    local user = USER_CLASS.new(data);
+    local user = USER_CLASS.new(data.user);
     -- 关联玩家对象与连接对象
     user:accept_relay(agent);
+    for _,v in ipairs(item_list) do
+        local obj = PROPERTY_D.clone_object_from(v.class_id, v)
+        user:load_property(obj)
+    end
+
+    for _,v in ipairs(equip_list) do
+        local obj = PROPERTY_D.clone_object_from(v.class_id, v)
+        user:load_property(obj)
+    end
+
     me_rid = get_ob_rid(user)
     me_agent = agent;
 end

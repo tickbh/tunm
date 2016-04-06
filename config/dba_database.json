@@ -51,6 +51,21 @@
             ]
         },
         {
+            "name":"equip",
+            "fields" : [
+                {   "field" : "rid",                       "type" : "varchar(12)",     "nullable" : 0,         "default" : "",      "comment" : "物品的RID", "key" : "PRI"                                             },
+                {   "field" : "owner",                     "type" : "varchar(12)",     "nullable" : 1,         "default" : "",      "comment" : "物品拥有者RID"                                  },
+                {   "field" : "class_id",                  "type" : "int(32)",         "nullable" : 1,         "default" : "",      "comment" : "物品ID"                                  },
+                {   "field" : "pos",                       "type" : "varchar(12)",     "nullable" : 1,         "default" : "",      "comment" : "物品位置以22-33形式"                                  },
+                {   "field" : "lv",                        "type" : "int(32)",         "nullable" : 1,         "default" : "0",      "comment" : "强化等级，起始0"                                  },
+                {   "field" : "exp",                       "type" : "int(32)",         "nullable" : 1,         "default" : "0",      "comment" : "物品当前经验"                     },               
+                {   "name"  : "rid",                       "type" : "normal",          "indexs" : "rid",       "key" : "index"                                  },
+                {   "name"  : "owner",                     "type" : "normal",          "indexs" : "owner",     "key" : "index"                                  },                
+                {   "name"  : "pos",                       "type" : "normal",          "indexs" : "pos",     "key" : "index"                                  },
+                {   "name"  : "owner_pos",                 "type" : "normal",          "indexs" : "owner,pos", "key" : "index", "uni" : true                    }
+            ]
+        },
+        {
             "name" : "log",
             "fields" : [
                 {   "field" : "time",                     "type" : "int(12)",         "nullable" : 1,         "default" : "",      "comment" : "时间"                               },

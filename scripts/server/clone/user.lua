@@ -91,8 +91,14 @@ function USER_CLASS:enter_world()
     raise_issue(EVENT_USER_LOGIN, self)
     trace("玩家(%o  %s/%s)进入游戏世界。\n", self:query("name"), get_ob_rid(self), self:query("account_rid"));
    
-    self:send_message(MSG_ENTER_GAME, self:query())
-
+    local data = {
+        user = self:query(), 
+        item_list = self:get_dump_item(),
+        equip_list = self:get_dump_equip(),
+    }
+   
+    self:send_message(MSG_ENTER_GAME, data)
+    
     self:set_temp("login_act_time", os.time())
 
     local value = {rid=get_ob_rid(self), online=1}
@@ -258,4 +264,29 @@ end
 
 function USER_CLASS:get_container()
     return self:query_temp("container")
+end
+
+function USER_CLASS:get_dump_item()    
+    local result = {}
+    for _, data in pairs(self:get_item_info()) do
+        table.insert(result, data:query())
+    end
+    return result
+end
+
+function USER_CLASS:get_item_info()
+    return self:get_container():get_page_carry(PAGE_ITEM)
+end
+
+
+function USER_CLASS:get_dump_equip()
+    local result = {}
+    for _, data in pairs(self:get_equip_info()) do
+        table.insert(result, data:query())
+    end
+    return result
+end
+
+function USER_CLASS:get_equip_info()
+    return self:get_container():get_page_carry(PAGE_EQUIP)
 end

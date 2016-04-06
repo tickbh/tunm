@@ -132,9 +132,6 @@ function clone_object_from(class_id, property_info, from_db)
     elseif ob_type == OB_TYPE_EQUIP then
         property_ob = clone_object(EQUIP_CLASS, property_info);
         ori_property_info["amount"] = nil;
-        if not property_ob:query("refine") then
-            property_ob:set("refine", 0)
-        end
         if not property_ob:query("lv") then
             property_ob:set("lv", 0)
         end
