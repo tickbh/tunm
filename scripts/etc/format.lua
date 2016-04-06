@@ -9,5 +9,11 @@ function GET_STONE_ID()
 end
 
 function CALC_ITEM_MAX_AMOUNT(ob)
-    return 99
+    if is_object(ob) then
+        return ob:query("over_lap") or 1
+    elseif is_table(ob) then
+        return ob["over_lap"] or 1
+    else
+        return 1
+    end
 end
