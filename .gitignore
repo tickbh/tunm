@@ -2,3 +2,6 @@
 Cargo.lock
 /td_clua_ext/target
 /td_clua_ext/Cargo.lock
+/log
+/*.tags
+/*.tags_sorted_by_file

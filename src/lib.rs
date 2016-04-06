@@ -33,7 +33,7 @@ pub use global_config::GlobalConfig;
 pub use db::{DbTrait, DbMysql, DbPool, PoolTrait, RedisPool};
 pub use net_msg::NetMsg;
 pub use values::{ErrorKind, NetResult, make_extension_error};
-pub use utils::{FileUtils, ThreadUtils, NetUtils, TelnetUtils};
+pub use utils::{FileUtils, ThreadUtils, NetUtils, TelnetUtils, LogUtils};
 pub use socket_event::SocketEvent;
 pub use event_mgr::EventMgr;
 pub use rp_wrapper::{LuaWrapperValue, LuaWrapperVecValue, LuaWrapperTableValue};

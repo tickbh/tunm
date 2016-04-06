@@ -4,12 +4,13 @@ use crypto;
 use crypto::md5::Md5;
 use libc;
 use td_rlua::{self, Lua, lua_State, LuaPush, LuaRead};
-use {FileUtils, NetConfig, TelnetUtils, CommandMgr};
+use {FileUtils, NetConfig, TelnetUtils, CommandMgr, LogUtils};
 
 static ENCODE_MAP : &'static [u8; 32] = b"0123456789ACDEFGHJKLMNPQRSTUWXYZ";
 
 
 fn lua_print(mut val : String) {
+    LogUtils::instance().append(&*val);
     if val.len() > 1000 {
         let val : String = val.drain(..1000).collect();
         // let val = String::from_utf8_lossy(&val);

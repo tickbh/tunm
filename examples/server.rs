@@ -5,7 +5,7 @@ extern crate tdengine;
 extern crate td_proto_rust as td_rp;
 extern crate td_rthreadpool;
 
-use tdengine::{NetConfig, GlobalConfig, LuaEngine, register_custom_func, EventMgr, FileUtils, DbPool, RedisPool, TelnetUtils};
+use tdengine::{NetConfig, GlobalConfig, LuaEngine, register_custom_func, EventMgr, FileUtils, DbPool, RedisPool, TelnetUtils, LogUtils};
 
 use std::env;
 
@@ -43,6 +43,8 @@ fn main() {
             lua.set(&**key, value);    
         }
     }
+
+    LogUtils::instance().set_log_path("log/".to_string());
 
     FileUtils::instance().add_search_path("scripts/");
 
