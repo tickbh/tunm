@@ -83,7 +83,7 @@ function EQUIP_CLASS:save_to_mapping()
     local data = {};
 
     for key,_ in pairs(change_list) do
-        if PROPERTY_D.is_in_equip_fields(key) then
+        if DATA_D.is_field_exist("equip", key) then
             data[key] = self:query(key);
         else
             return (self:query());

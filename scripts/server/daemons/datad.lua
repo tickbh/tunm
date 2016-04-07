@@ -22,6 +22,11 @@ function get_table_fields( table_name )
     return tinfo["field_map"];
 end
 
+function is_field_exist(table_name, field)
+    local fields = get_table_fields(table_name)
+    return fields[field] ~= nil
+end
+
 local function create_db(db_name,tinfo)
     -- 创建表和相应的索引
     for _, sql_cmd in ipairs(tinfo["sql_cmds"]) do

@@ -77,23 +77,6 @@ local function load_equip_table()
     end
 end
 
-local function init_property_fields()
-    local item_fields = DATA_D.get_table_fields("item");
-    local equip_fields = DATA_D.get_table_fields("equip");
-    local hero_fields = DATA_D.get_table_fields("hero");
-
-    for _, info in pairs(item_fields) do
-        item_fields_list[info.field] = true;
-    end
-
-    for _, info in pairs(equip_fields) do
-        equip_fields_list[info.field] = true;
-    end
-
-    for _, info in pairs(hero_fields) do
-        hero_fields_list[info.field] = true;
-    end
-end
 
 -- 定义公共接口，按照字母顺序排序
 
@@ -192,21 +175,6 @@ function get_item_or_equip_info(class_id)
     end
 end
 
---该字段是否在物品表中有单独列出
-function is_in_item_fields(key)
-    return item_fields_list[key];
-end
-
---该字段是否在装备表中有单独列出
-function is_in_equip_fields(key)
-    return equip_fields_list[key];
-end
-
---该字段是否在英雄表中有单独列出
-function is_in_hero_fields(key)
-    return hero_fields_list[key];
-end
-
 -- 注册其他模块需要收集的道具信息
 function register_property_callback(f)
     property_callback[#property_callback + 1] = f;
@@ -216,7 +184,6 @@ local function init()
     -- 加载道具表
     load_item_table();
     load_equip_table();
-    init_property_fields();
 end
  
 -- 模块的入口执行

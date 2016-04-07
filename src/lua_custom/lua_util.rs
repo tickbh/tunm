@@ -1,7 +1,6 @@
 use std::path::Path;
 use time;
 use crypto;
-use crypto::md5::Md5;
 use libc;
 use td_rlua::{self, Lua, lua_State, LuaPush, LuaRead};
 use {FileUtils, NetConfig, TelnetUtils, CommandMgr, LogUtils};
