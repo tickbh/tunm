@@ -1,13 +1,14 @@
 use std::collections::{ HashMap};
 
 use super::DbTrait;
-use {NetResult, NetMsg, NetConfig};
+use {NetResult, NetMsg, NetConfig, ErrorKind};
 
 use td_rp::{self, Value, encode_proto};
 
 use time::Timespec;
 use mysql;
-use mysql::{Conn};
+use mysql::{Conn, Result as MyResult, QueryResult};
+
 
 static DB_RESULT_PROTO : &'static str = "msg_db_result";
 static LAST_INSERT_ID : &'static str = "sys_last_insert_id";
@@ -16,22 +17,50 @@ pub struct DbMysql {
     pub conn   : Conn,
     pub last_insert_id : u64,
     pub affected_rows  : u64,
-    pub error  : Option<mysql::Error>
+    pub error  : Option<mysql::Error>,
+    pub is_connect : bool,
 }
 
 impl DbMysql {
     pub fn new(conn : Conn) -> DbMysql {
         DbMysql {
-            conn : conn,
+            conn :conn,
             last_insert_id : 0,
             affected_rows : 0,
             error : None,
+            is_connect : true,
         }
+    }
+
+    pub fn is_io_error<'a>(value : &MyResult<QueryResult<'a>>) -> bool {
+        match value {
+            &Err(ref val) => {
+                match val {
+                    &mysql::Error::IoError(_) => {
+                        return true
+                    },
+                    _ => (),
+                }
+            }
+            _ => (),
+        }
+        false
+    }
+
+    pub fn check_connect(&mut self) -> NetResult<()> {
+        if !self.conn.ping() {
+            self.is_connect = false;
+            unwrap_or!(self.conn.reset().ok(), fail!((ErrorKind::IoError, "reconnect db error")));
+            self.is_connect = true;
+        }
+        Ok(())
     }
 }
 
+
 impl DbTrait for DbMysql {
     fn select(&mut self, sql_cmd : &str, msg : &mut NetMsg) -> NetResult<i32> {
+        try!(self.check_connect());
         let value = self.conn.prep_exec(sql_cmd, ());
         let config = NetConfig::instance();
         let mut success : i32 = 0;
@@ -134,6 +163,7 @@ impl DbTrait for DbMysql {
     }
 
     fn execute(&mut self, sql_cmd : &str) -> NetResult<i32> {
+        try!(self.check_connect());
         let value = self.conn.prep_exec(sql_cmd, ());
         let mut success : i32 = 0;
         match value {
@@ -155,6 +185,7 @@ impl DbTrait for DbMysql {
 
 
     fn insert(&mut self, sql_cmd : &str, msg : &mut NetMsg) -> NetResult<i32> {
+        try!(self.check_connect());
         let value = self.conn.prep_exec(sql_cmd, ());
         let config = NetConfig::instance();
         let mut success : i32 = 0;

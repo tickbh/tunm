@@ -13,7 +13,7 @@ LOGIN_FLAG_TIMEOUT = 3600 * 24
 
 local function check_account_callback(login_info, ret, result_list)
     if type(result_list) ~= "table" or #result_list == 0 then
-        trace("create new ACCOUNT_D!!")
+        trace("create new ACCOUNT_D!! ret = %o, result_list is = %o", ret, result_list)
         -- 创建新角色
         ACCOUNT_D.create_new_account(login_info);
         return;
