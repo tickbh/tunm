@@ -38,3 +38,7 @@ allows developers to concentrate on the game logic development, quickly create a
 (TDEngine is designed to be multi-process distributed dynamic load balancing scheme, 
 in theory only need to expand hardware can increase load-limit, the single machine load-limit 
 depends on complexity of logic of the game itself.)he game itself.)
+
+## How To Use (Sorry, Only in Chinese now)
+
+Read Wiki https://github.com/tickbh/tdengine/wiki

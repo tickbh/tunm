@@ -67,6 +67,10 @@ impl PoolTrait for DbMysql {
     }
 
     fn release_db_trait(pool : &mut DbPool, db_name : &String, db : DbMysql) {
+        //db is lose connection, not need add to pool
+        if !db.is_connect {
+            return;
+        }
         let _guard = pool.mutex.lock().unwrap();
         let mut list = match pool.db_mysql.contains_key(db_name) {
             true        => { pool.db_mysql.get_mut(db_name).unwrap() },
