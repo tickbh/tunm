@@ -7,6 +7,10 @@ function c()
     connect("aa", "bb")
 end
 
+function c1()
+    connect("aa1", "bb1")
+end
+
 local function add_attrib(field, amount)
     local user = ME_D.get_user()
     if not is_object(user) then
@@ -106,4 +110,13 @@ function sale_object(rid, amount)
         return
     end
     user:send_message(CMD_SALE_OBJECT, {rid = rid, amount = amount})
+end
+
+function send_chat(content)
+    local user = ME_D.get_user()
+    if not is_object(user) then
+        trace("请先登陆游戏")
+        return
+    end
+    user:send_message(CMD_CHAT, CHAT_CHANNEL_WORLD, {send_content = content})
 end

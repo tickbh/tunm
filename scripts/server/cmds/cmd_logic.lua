@@ -61,3 +61,11 @@ function cmd_sale_object(user, info)
     object:cost_amount(sale_amount)
     return user:send_message(MSG_SALE_OBJECT, {ret = 0})
 end
+
+function cmd_chat( user, channel, info )
+    local data = {chat_channel = channel, send_rid = user:query("rid"), recv_rid = info.recv_rid, send_name = user:query("name"), chat_info = {send_content = info.send_content, send_time = os.time()}}
+    if channel == CHAT_CHANNEL_WORLD then
+        REDIS_D.run_command("PUBLISH", REDIS_CHAT_CHANNEL_WORLD, encode_json(data))
+    end
+
+end

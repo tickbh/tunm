@@ -17,6 +17,8 @@ MSG_BONUS                   = "msg_bonus"
 CMD_SALE_OBJECT             = "cmd_sale_object"
 MSG_SALE_OBJECT             = "msg_sale_object"
 MSG_PROPERTY_DELETE         = "msg_property_delete"
+CMD_CHAT                    = "cmd_chat"
+MSG_CHAT                    = "msg_chat"
 
 
 

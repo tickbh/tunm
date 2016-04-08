@@ -44,6 +44,13 @@
         "item_list"                    : { "index" :    38,    "pattern" : "map[]" },
         "equip_list"                   : { "index" :    39,    "pattern" : "map[]" },
         "user"                         : { "index" :    40,    "pattern" : "map" },
+        "send_time"                    : { "index" :    41,    "pattern" : "u32" },
+        "send_content"                 : { "index" :    42,    "pattern" : "str" },
+        "send_name"                    : { "index" :    43,    "pattern" : "str" },
+        "recv_rid"                     : { "index" :    44,    "pattern" : "str" },
+        "send_rid"                     : { "index" :    45,    "pattern" : "str" },
+        "chat_channel"                 : { "index" :    46,    "pattern" : "str" },
+        "chat_info"                    : { "index" :    47,    "pattern" : "map" },
 
         "i8"                           : { "index" :    50000, "pattern" : "i8" },
         "u8"                           : { "index" :    50001, "pattern" : "u8" },
@@ -113,6 +120,8 @@
         "cmd_sale_object"              : { "msg_type" :    "logic",  "args" : [ "map" ] },
         "msg_sale_object"              : { "msg_type" :    "client", "args" : [ "map" ] },
         "msg_property_delete"          : { "msg_type" :    "client", "args" : [ "str[]" ] },
+        "cmd_chat"                     : { "msg_type" :    "logic",  "args" : [ "i8", "map" ] },
+        "msg_chat"                     : { "msg_type" :    "client", "args" : [ "i8", "map" ] },
 
         "msg_db_result"                : { "msg_type" :    "server", "args" : [ "map[]" ] }
     }

@@ -2,12 +2,15 @@
 --redis消息队列处理
 module("REDIS_QUEUED", package.seeall)
 
-local first_msg = "pmessage"
 function deal_with_reply(reply)
     if not is_table(reply) then
         return
     end
-    trace("__ REDIS_QUEUED:deal_with_reply() __ is %o \n", reply)
+    
+    if reply.channel == REDIS_CHAT_CHANNEL_WORLD then
+        CHAT_D.deal_with_new_chat(decode_json(reply.payload))
+    end
+    -- trace("__ REDIS_QUEUED:deal_with_reply() __ is %o \n", reply)
 end
 
 function deal_with_respone_list(respone_list)
@@ -24,7 +27,7 @@ local function time_update()
 end
 
 function create()
-    set_timer(10000, time_update, nil, true)
+    set_timer(100, time_update, nil, true)
 end
 
 create()
