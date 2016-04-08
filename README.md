@@ -9,7 +9,7 @@ a game server for rust + lua
 ## How to run
 
 ```
-git clone https://github.com/cloudwu/tdengine.git
+git clone https://github.com/tickbh/tdengine.git
 cd tdengine
 cargo build
 ```
