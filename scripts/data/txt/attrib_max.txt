@@ -1,0 +1,9 @@
+#属性上限表		
+#属性名	上限值	类型
+string	int	string
+name	max	ob_type
+exp	1000000	OB_TYPE_USER
+gold	100000000	OB_TYPE_USER
+stone	100000000	OB_TYPE_USER
+lv	50	OB_TYPE_USER
+vip	15	OB_TYPE_USER

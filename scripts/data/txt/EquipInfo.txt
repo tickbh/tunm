@@ -1,0 +1,5 @@
+#物品表配置信息								
+#装备id	装备图标	装备名字	物品类型(2物品，3装备)	物品介绍	装备品质（1白、2绿、3蓝、4紫、5橙、6橙1 、7橙2、 8橙3）	装备部位（1、武器；2、衣服；3、手套；4、鞋子；5、项链；6、戒指）	出售价格（金币）	最大叠加数
+int	string	string	int	string	int	int	float	int
+class_id	icon	name	ob_type	describe	quality	equip_position	sell_price	over_lap
+10001	wuqi1-icon	这是一把剑	3	这是一把普通的剑	1	1	100	1

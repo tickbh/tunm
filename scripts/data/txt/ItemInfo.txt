@@ -1,0 +1,8 @@
+#物品表配置信息			 								
+#物品id	物品图标	物品名字	物品类型名称	物品介绍	物品类型(2物品，3装备)	是否能合并	限制等级（0表示不限制等级）	物品品质（1白、2绿、3蓝、4紫、5橙、6橙1、 7橙2、 8橙3）	出售价格（金币）	最大叠加数	是否可使用（1、可使用；0、不可使用）
+int	string	string	string	string	int	int	int	int	float	int	int
+class_id	icon	name	class_name	describe	ob_type	combine	level	quality	sell_price	over_lap	if_use
+1	test	测试物品	这是一个测试物品	不可使用	2	1	0	1	10	999	0
+101	jinbi1	1金币	金币	可获得1金币	2	1	0	5	0	999	0
+102	zuanshi1	1钻石	钻石	使用获得1钻石	2	1	0	5	0	999	0
+103	tili1	1体力	体力丹	使用获得1点体力	2	1	0	3	0	999	1

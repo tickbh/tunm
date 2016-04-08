@@ -1,0 +1,87 @@
+{
+    "mser" : [
+        {
+            "name":"account",
+            "fields" : [
+                {   "field" : "account",                   "type" : "varchar(128)",     "nullable" : 0,         "default" : "",    "comment" : "账号名称",     "key" : "PRI",  "extra" : ""       },
+                {   "field" : "device_id",                 "type" : "varchar(128)",     "nullable" : 0,         "default" : "",         "comment" : "设备ID"                                  },
+                {   "field" : "rid",                       "type" : "varchar(12)",     "nullable" : 0,         "default" : "",         "comment" : "账号RID",         "key" : "UNI"        },
+                {   "field" : "name",                      "type" : "varchar(128)",     "nullable" : 1,         "default" : "",         "comment" : "账号名字"                                  },
+                {   "field" : "device_md5",                "type" : "varchar(128)",     "nullable" : 1,         "default" : "",         "comment" : "设备md5"                                  },
+                {   "field" : "create_time",               "type" : "int(32)",         "nullable" : 1,         "default" : "",         "comment" : "创建时间"                                  },
+                {   "field" : "password",                  "type" : "varchar(32)",     "nullable" : 1,         "default" : "",         "comment" : "账号密码"                                  },
+                {   "field" : "is_freezed",                "type" : "int(1)",          "nullable" : 1,         "default" : "",         "comment" : "是否冻结账号"                                    },
+                {   "field" : "server_id",                 "type" : "int(32)",         "nullable" : 1,         "default" : "0",         "comment" : "服务器ID标识"                                   },               
+                {   "name"  : "account_rid",               "type" : "normal",          "indexs" : "account,rid",   "key" : "index", "uni" : true                                   },
+                {   "name"  : "name",                      "type" : "normal",          "indexs" : "name",          "key" : "index"                                   }
+            ]
+        },
+        {
+            "name":"user",
+            "fields" : [
+                {   "field" : "name",                      "type" : "varchar(128)",     "nullable" : 0,         "default" : "",         "comment" : "用户名称",     "key" : "PRI",  "extra" : ""       },
+                {   "field" : "rid",                       "type" : "varchar(12)",     "nullable" : 0,         "default" : "",         "comment" : "角色RID",         "key" : "UNI"        },
+                {   "field" : "account_rid",               "type" : "varchar(12)",     "nullable" : 0,         "default" : "",         "comment" : "账号RID"                                  },
+                {   "field" : "lv",                        "type" : "int(16)",         "nullable" : 1,         "default" : "1",         "comment" : "Lv"                      },
+                {   "field" : "exp",                       "type" : "int(32)",         "nullable" : 1,         "default" : "0",         "comment" : "exp"                     },
+                {   "field" : "create_time",               "type" : "int(32)",         "nullable" : 1,         "default" : "" ,         "comment" : "创建时间"                                 },
+                {   "field" : "stone",                     "type" : "int(32)",         "nullable" : 1,         "default" : "0",         "comment" : "钻石"                                  },
+                {   "field" : "gold",                      "type" : "int(32)",         "nullable" : 1,         "default" : "0",         "comment" : "金币"                                  },
+                {   "field" : "last_logout_time",          "type" : "int(32)",         "nullable" : 1,         "default" : "",         "comment" : "最后登出时间"                                   },
+                {   "field" : "last_login_time",           "type" : "int(32)",         "nullable" : 1,         "default" : "",         "comment" : "最后登陆时间"                                  },
+                {   "field" : "all_login_time",            "type" : "int(32)",         "nullable" : 1,         "default" : "0",         "comment" : "累计登陆时间"                                  },
+                {   "field" : "ban_flag",                  "type" : "int(8)",          "nullable" : 1,         "default" : "0",         "comment" : "封禁标识，1为封禁状态, 2为禁言"                                  },
+                {   "field" : "ban_end_time",              "type" : "int(32)",         "nullable" : 1,         "default" : "0",         "comment" : "封禁结束时间"                                  },
+                {   "field" : "vip",                       "type" : "int(32)",         "nullable" : 1,         "default" : "",         "comment" : "vip"                                  },
+                {   "field" : "vip_exp",                   "type" : "int(32)",         "nullable" : 1,         "default" : "",         "comment" : "vip_exp"                                  },
+                {   "field" : "sp",                        "type" : "int(32)",         "nullable" : 1,         "default" : "",          "comment" : "体力"                                  },
+                {   "name"  : "account_rid",               "type" : "normal",          "indexs" : "account_rid",    "key" : "index"                                   },
+                {   "name"  : "name",                      "type" : "normal",          "indexs" : "name",          "key" : "index"                                   }
+            ]
+        },
+        {
+            "name":"item",
+            "fields" : [
+                {   "field" : "rid",                       "type" : "varchar(12)",     "nullable" : 1,         "default" : "",      "comment" : "物品RID",     "key" : "PRI"                                  },
+                {   "field" : "owner",                     "type" : "varchar(12)",     "nullable" : 1,         "default" : "",      "comment" : "拥有者RID"                               },
+                {   "field" : "pos",                       "type" : "varchar(18)",     "nullable" : 1,         "default" : "",      "comment" : "装备位置信息"                                  },
+                {   "field" : "class_id",                  "type" : "int(11)",         "nullable" : 1,         "default" : "",      "comment" : "装备ID"                                  },
+                {   "field" : "amount",                    "type" : "int(11)",         "nullable" : 1,         "default" : "",      "comment" : "装备数量"                                  },
+                {   "name"  : "owner",                     "type" : "normal",          "indexs" : "owner",     "key" : "index"                                  }
+            ]
+        },
+        {
+            "name":"equip",
+            "fields" : [
+                {   "field" : "rid",                       "type" : "varchar(12)",     "nullable" : 0,         "default" : "",      "comment" : "物品的RID", "key" : "PRI"                                             },
+                {   "field" : "owner",                     "type" : "varchar(12)",     "nullable" : 1,         "default" : "",      "comment" : "物品拥有者RID"                                  },
+                {   "field" : "class_id",                  "type" : "int(32)",         "nullable" : 1,         "default" : "",      "comment" : "物品ID"                                  },
+                {   "field" : "pos",                       "type" : "varchar(12)",     "nullable" : 1,         "default" : "",      "comment" : "物品位置以22-33形式"                                  },
+                {   "field" : "lv",                        "type" : "int(32)",         "nullable" : 1,         "default" : "0",      "comment" : "强化等级，起始0"                                  },
+                {   "field" : "exp",                       "type" : "int(32)",         "nullable" : 1,         "default" : "0",      "comment" : "物品当前经验"                     },               
+                {   "name"  : "rid",                       "type" : "normal",          "indexs" : "rid",       "key" : "index"                                  },
+                {   "name"  : "owner",                     "type" : "normal",          "indexs" : "owner",     "key" : "index"                                  },                
+                {   "name"  : "pos",                       "type" : "normal",          "indexs" : "pos",     "key" : "index"                                  },
+                {   "name"  : "owner_pos",                 "type" : "normal",          "indexs" : "owner,pos", "key" : "index", "uni" : true                    }
+            ]
+        },
+        {
+            "name" : "log",
+            "fields" : [
+                {   "field" : "time",                     "type" : "int(12)",         "nullable" : 1,         "default" : "",      "comment" : "时间"                               },
+                {   "field" : "log_id",                   "type" : "int(5)",          "nullable" : 1,         "default" : "",      "comment" : "日志id"                                  },
+                {   "field" : "log_channel",              "type" : "int(5)",          "nullable" : 1,         "default" : "",      "comment" : "日志产生的渠道或系统"                                  },
+                {   "field" : "p1",                       "type" : "varchar(32)",     "nullable" : 1,         "default" : "",      "comment" : "参数1"                                  },
+                {   "field" : "p2",                       "type" : "varchar(32)",     "nullable" : 1,         "default" : "",      "comment" : "参数2"                                  },
+                {   "field" : "p3",                       "type" : "varchar(32)",     "nullable" : 1,         "default" : "",      "comment" : "参数3"                                  },
+                {   "field" : "memo",                     "type" : "text",            "nullable" : 1,         "default" : "",      "comment" : "额外描述"                                  },
+                {   "name"  : "time_index",               "type" : "normal",          "indexs" : "time",      "key" : "index"                                  },
+                {   "name"  : "id_index",                 "type" : "normal",          "indexs" : "log_id",        "key" : "index"                                  },
+                {   "name"  : "p1_index",                 "type" : "normal",          "indexs" : "p1",        "key" : "index"                                  },
+                {   "name"  : "p2_index",                 "type" : "normal",          "indexs" : "p2",        "key" : "index"                                  },
+                {   "name"  : "p3_index",                 "type" : "normal",          "indexs" : "p3",        "key" : "index"                                  }
+            ]
+        }
+    ]
+}
+ 
