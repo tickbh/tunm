@@ -1132,3 +1132,7 @@ assert(check_sql_param_vailed("1+1") == false)
 assert(check_sql_param_vailed("1*1") == false)
 assert(check_sql_param_vailed("1%1") == false)
 
+
+function memory_use()
+    return collectgarbage("count")
+end

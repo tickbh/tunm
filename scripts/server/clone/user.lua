@@ -56,9 +56,9 @@ function USER_CLASS:accept_relay(agent, is_reconnect)
     -- 将连接转换到 user 对象上
     agent:relay_comm(self)
     
-    if is_reconnect then
-        self:send_message(MSG_RECONNECT_INFO, {ret = 0})
-    end
+    -- if is_reconnect then
+    --     self:send_message(MSG_RECONNECT_INFO, {ret = 0})
+    -- end
     self:enter_world();
     self:delete_logout_timer()
 end

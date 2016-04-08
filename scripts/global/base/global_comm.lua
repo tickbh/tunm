@@ -10,6 +10,7 @@ local send_debug_flag = 1;
 local new_connection_callback = {};
 local socket_cookie_map = {};
 local msg_filter = {};
+local max_online_num = 1000
 
 -- 发起 socket 连接的回调
 local function socket_connect_callback(cookie, fd, client_ip)
@@ -119,6 +120,11 @@ function cmd_new_connection(cookie, fd, client_ip, server_port)
             set_port_map(server_fd, fd)
         else
             trace("no logic server to accept so close the port")
+            agent:connection_lost()
+        end
+
+        --超过最高在线
+        if get_real_agent_count() > max_online_num then
             agent:connection_lost()
         end
     end
@@ -362,4 +368,12 @@ function http_client_msg_respone(cookie, success, body)
     cookie = tonumber(cookie)
     success = success == "true" or success == "1"
     trace("http_client_msg_respone args is %o", {cookie, success, body})
+end
+
+function set_max_online_num(num)
+    max_online_num = num
+end
+
+function get_max_online_num()
+    return max_online_num
 end

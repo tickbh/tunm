@@ -110,7 +110,8 @@ function AGENT_CLASS:relay_comm(to_comm)
     if self.port_no == -1 then
         return;
     end
-    self:close_port()
+    
+    to_comm:close_agent()
     -- 绑定到另一个连接 ob 上
     to_comm:set_authed(true)
     to_comm:set_all_port_no(self.fport_no, self.port_no)

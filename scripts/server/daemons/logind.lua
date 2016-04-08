@@ -28,12 +28,13 @@ local function check_account_callback(login_info, ret, result_list)
     end
 
     local rid = data["rid"]
+    local device_id = login_info["device_id"]
     -- 若传入 rid，则判断本服务器上是否存在该玩家对象
     if sizeof(rid) > 0 then
         local account_ob = find_object_by_rid(rid);
         if is_object(account_ob) then
             if account_ob:query("device_id") ~= device_id then
-                trace("玩家(%o)登录传入的设备ID(%s)与内存中的玩家设备ID(%s)不符。\n",
+                trace("玩家(%o)登录传入的设备ID(%o)与内存中的玩家设备ID(%o)不符。\n",
                        account_ob, device_id, account_ob:query("device_id"));
                 account_ob:connection_lost(true)
             else

@@ -18,6 +18,16 @@ function get_all_agents()
     return agents;
 end
 
+function get_real_agent_count()
+    local sum = 0
+    for port,_ in ipairs(agents) do
+        if port < 0xFFFF then
+            sum = sum + 1
+        end
+    end
+    return sum
+end
+
 function get_port_map()
     return port_map
 end
@@ -35,29 +45,25 @@ function remove_port_agent(port_no)
     local agent = agents[port_no]
     if agent then
         local server_type = agent:get_server_type()
-        if SERVER_TYPE == "gate" then
-            if server_type == SERVER_TYPE_LOGIC then
-                for port,_ in pairs(dup(port_map[port_no]) or {}) do
-                    agents[port]:connection_lost()
-                end
-            else
-                local logic_agent = find_agent_by_port(get_map_port(port_no))
-                if logic_agent then
-                    logic_agent:send_message(LOSE_CLIENT, port_no)
+        if server_type == SERVER_TYPE_GATE then
+            for _,ag in pairs(dup(agents)) do
+                if ag:get_server_type() == SERVER_TYPE_CLIENT then
+                    ag:connection_lost()
                 end
             end
-        elseif SERVER_TYPE == "logic" then
-            if server_type == SERVER_TYPE_GATE then
-                for _,ag in pairs(dup(agents)) do
-                    if ag:get_server_type() == SERVER_TYPE_CLIENT then
-                        ag:connection_lost()
-                    end
-                end
-            else
-                local gate_agent = find_agent_by_port(get_gate_fd())
-                if gate_agent then
-                    gate_agent:send_message(LOSE_CLIENT, port_no)
-                end
+        elseif server_type == SERVER_TYPE_LOGIC then
+            for port,_ in pairs(dup(port_map[port_no]) or {}) do
+                agents[port]:connection_lost()
+            end
+        else
+            local logic_agent = find_agent_by_port(get_map_port(port_no))
+            if logic_agent then
+                logic_agent:send_message(LOSE_CLIENT, port_no)
+            end
+            
+            local gate_agent = find_agent_by_port(get_gate_fd())
+            if gate_agent then
+                gate_agent:send_message(LOSE_CLIENT, port_no)
             end
         end
         remove_port_map(port_no)
