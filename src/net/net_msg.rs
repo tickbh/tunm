@@ -4,13 +4,13 @@ use td_rp::{Buffer, Value, encode_number, decode_number, decode_str_raw};
 use std::io::{Read, Write, Result};
 use {NetResult, make_extension_error};
 
-static HEAD_FILL_UP : [u8;12] = [0;12];
+static HEAD_FILL_UP: [u8; 12] = [0; 12];
 
 pub struct NetMsg {
-    buffer : Buffer,
-    seq_fd : u16,
-    length : u32,
-    pack_name : String,
+    buffer: Buffer,
+    seq_fd: u16,
+    length: u32,
+    pack_name: String,
 }
 
 impl NetMsg {
@@ -18,10 +18,10 @@ impl NetMsg {
         let mut buffer = Buffer::new();
         let _ = buffer.write(&HEAD_FILL_UP);
         NetMsg {
-            seq_fd : 0u16,
-            length : buffer.len() as u32,
-            buffer : buffer,
-            pack_name : String::new(),
+            seq_fd: 0u16,
+            length: buffer.len() as u32,
+            buffer: buffer,
+            pack_name: String::new(),
         }
     }
 
@@ -29,29 +29,29 @@ impl NetMsg {
         HEAD_FILL_UP.len()
     }
 
-    pub fn new_by_data(data : &[u8]) -> NetResult<NetMsg> {
+    pub fn new_by_data(data: &[u8]) -> NetResult<NetMsg> {
         if data.len() < HEAD_FILL_UP.len() {
             return Err(make_extension_error("data len too small", None));
         }
         let mut buffer = Buffer::new();
         let _ = buffer.write(&data);
-        let length : u32 = try!(decode_number(&mut buffer, td_rp::TYPE_U32)).into();
-        let seq_fd : u16 = try!(decode_number(&mut buffer, td_rp::TYPE_U16)).into();
+        let length: u32 = try!(decode_number(&mut buffer, td_rp::TYPE_U32)).into();
+        let seq_fd: u16 = try!(decode_number(&mut buffer, td_rp::TYPE_U16)).into();
         if data.len() != length as usize {
             return Err(make_extension_error("data length not match", None));
         }
         buffer.set_rpos(HEAD_FILL_UP.len());
-        let pack_name : String = try!(decode_str_raw(&mut buffer, td_rp::TYPE_STR)).into();
+        let pack_name: String = try!(decode_str_raw(&mut buffer, td_rp::TYPE_STR)).into();
         buffer.set_rpos(HEAD_FILL_UP.len());
         Ok(NetMsg {
-            seq_fd : seq_fd,
-            length : length,
-            buffer : buffer,
-            pack_name : pack_name,
+            seq_fd: seq_fd,
+            length: length,
+            buffer: buffer,
+            pack_name: pack_name,
         })
     }
 
-    pub fn end_msg(&mut self, seq_fd : u16) {
+    pub fn end_msg(&mut self, seq_fd: u16) {
         self.seq_fd = seq_fd;
         self.length = self.buffer.len() as u32;
         let wpos = self.buffer.get_wpos();
@@ -93,7 +93,7 @@ impl NetMsg {
         self.buffer.len()
     }
 
-    pub fn set_rpos(&mut self, rpos : usize) {
+    pub fn set_rpos(&mut self, rpos: usize) {
         self.buffer.set_rpos(rpos);
     }
 
@@ -101,7 +101,7 @@ impl NetMsg {
         self.buffer.get_rpos()
     }
 
-    pub fn set_wpos(&mut self, wpos : usize) {
+    pub fn set_wpos(&mut self, wpos: usize) {
         self.buffer.set_wpos(wpos)
     }
 
@@ -109,7 +109,7 @@ impl NetMsg {
         self.buffer.get_wpos()
     }
 
-    pub fn set_seq_fd(&mut self, seq_fd : u16) {
+    pub fn set_seq_fd(&mut self, seq_fd: u16) {
         self.seq_fd = seq_fd;
         let wpos = self.buffer.get_wpos();
         self.buffer.set_wpos(4);
@@ -124,7 +124,6 @@ impl NetMsg {
     pub fn get_pack_name(&self) -> &String {
         &self.pack_name
     }
-
 }
 
 
@@ -148,4 +147,3 @@ impl Drop for NetMsg {
         // println!("drop net_msg!!!!!!!!!!!!!!!!!");
     }
 }
-

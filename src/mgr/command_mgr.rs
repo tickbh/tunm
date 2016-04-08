@@ -1,7 +1,7 @@
 use {ThreadUtils, LuaEngine};
 pub struct CommandMgr;
 
-static COMMAND_POOL_NAME : &'static str = "command";
+static COMMAND_POOL_NAME: &'static str = "command";
 
 impl CommandMgr {
     pub fn start_command_input() {

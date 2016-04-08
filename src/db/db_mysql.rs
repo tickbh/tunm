@@ -1,4 +1,4 @@
-use std::collections::{ HashMap};
+use std::collections::HashMap;
 
 use super::DbTrait;
 use {NetResult, NetMsg, NetConfig, ErrorKind};
@@ -10,35 +10,33 @@ use mysql;
 use mysql::{Conn, Result as MyResult, QueryResult};
 
 
-static DB_RESULT_PROTO : &'static str = "msg_db_result";
-static LAST_INSERT_ID : &'static str = "sys_last_insert_id";
+static DB_RESULT_PROTO: &'static str = "msg_db_result";
+static LAST_INSERT_ID: &'static str = "sys_last_insert_id";
 
 pub struct DbMysql {
-    pub conn   : Conn,
-    pub last_insert_id : u64,
-    pub affected_rows  : u64,
-    pub error  : Option<mysql::Error>,
-    pub is_connect : bool,
+    pub conn: Conn,
+    pub last_insert_id: u64,
+    pub affected_rows: u64,
+    pub error: Option<mysql::Error>,
+    pub is_connect: bool,
 }
 
 impl DbMysql {
-    pub fn new(conn : Conn) -> DbMysql {
+    pub fn new(conn: Conn) -> DbMysql {
         DbMysql {
-            conn :conn,
-            last_insert_id : 0,
-            affected_rows : 0,
-            error : None,
-            is_connect : true,
+            conn: conn,
+            last_insert_id: 0,
+            affected_rows: 0,
+            error: None,
+            is_connect: true,
         }
     }
 
-    pub fn is_io_error<'a>(value : &MyResult<QueryResult<'a>>) -> bool {
+    pub fn is_io_error<'a>(value: &MyResult<QueryResult<'a>>) -> bool {
         match value {
             &Err(ref val) => {
                 match val {
-                    &mysql::Error::IoError(_) => {
-                        return true
-                    },
+                    &mysql::Error::IoError(_) => return true,
                     _ => (),
                 }
             }
@@ -50,7 +48,8 @@ impl DbMysql {
     pub fn check_connect(&mut self) -> NetResult<()> {
         if !self.conn.ping() {
             self.is_connect = false;
-            unwrap_or!(self.conn.reset().ok(), fail!((ErrorKind::IoError, "reconnect db error")));
+            unwrap_or!(self.conn.reset().ok(),
+                       fail!((ErrorKind::IoError, "reconnect db error")));
             self.is_connect = true;
         }
         Ok(())
@@ -59,11 +58,11 @@ impl DbMysql {
 
 
 impl DbTrait for DbMysql {
-    fn select(&mut self, sql_cmd : &str, msg : &mut NetMsg) -> NetResult<i32> {
+    fn select(&mut self, sql_cmd: &str, msg: &mut NetMsg) -> NetResult<i32> {
         try!(self.check_connect());
         let value = self.conn.prep_exec(sql_cmd, ());
         let config = NetConfig::instance();
-        let mut success : i32 = 0;
+        let mut success: i32 = 0;
         match value {
             Ok(val) => {
                 self.last_insert_id = val.last_insert_id();
@@ -77,7 +76,7 @@ impl DbTrait for DbMysql {
                 for (_, row) in val.enumerate() {
                     let mut hash = HashMap::<String, Value>::new();
                     let mut row = row.unwrap();
-                    
+
                     for (name, idx) in &columns {
                         let field = unwrap_or!(config.get_field_by_name(name), continue);
                         let fix_value = match row.take(*idx) {
@@ -86,7 +85,11 @@ impl DbTrait for DbMysql {
                                     mysql::Value::NULL => continue,
                                     mysql::Value::Bytes(sub_val) => {
                                         match &*field.pattern {
-                                            td_rp::STR_TYPE_STR => Value::from(unwrap_or!(String::from_utf8(sub_val).ok(), continue)),
+                                            td_rp::STR_TYPE_STR => {
+                                                Value::from(unwrap_or!(String::from_utf8(sub_val)
+                                                                           .ok(),
+                                                                       continue))
+                                            }
                                             td_rp::STR_TYPE_RAW => Value::from(sub_val),
                                             _ => continue,
                                         }
@@ -130,15 +133,16 @@ impl DbTrait for DbMysql {
                                     mysql::Value::Date(_, _, _, _, _, _, _) => {
                                         match &*field.pattern {
                                             td_rp::STR_TYPE_U32 => {
-                                                let timespec = mysql::from_value::<Timespec>(row_val);
+                                                let timespec =
+                                                    mysql::from_value::<Timespec>(row_val);
                                                 Value::from(timespec.sec as u32)
                                             }
                                             _ => continue,
                                         }
                                     }
                                     _ => continue,
-                                }    
-                            },
+                                }
+                            }
                             None => continue,
                         };
 
@@ -147,9 +151,12 @@ impl DbTrait for DbMysql {
                     array.push(Value::from(hash));
                 }
                 msg.set_write_data();
-                try!(encode_proto(msg.get_buffer(), config, &DB_RESULT_PROTO.to_string(), vec![Value::AMap(array)]));
+                try!(encode_proto(msg.get_buffer(),
+                                  config,
+                                  &DB_RESULT_PROTO.to_string(),
+                                  vec![Value::AMap(array)]));
                 self.error = None;
-            },
+            }
             Err(val) => {
                 match val {
                     mysql::Error::MySqlError(ref val) => success = val.code as i32,
@@ -162,16 +169,16 @@ impl DbTrait for DbMysql {
         Ok(success)
     }
 
-    fn execute(&mut self, sql_cmd : &str) -> NetResult<i32> {
+    fn execute(&mut self, sql_cmd: &str) -> NetResult<i32> {
         try!(self.check_connect());
         let value = self.conn.prep_exec(sql_cmd, ());
-        let mut success : i32 = 0;
+        let mut success: i32 = 0;
         match value {
             Ok(val) => {
                 self.last_insert_id = val.last_insert_id();
                 self.affected_rows = val.affected_rows();
                 self.error = None;
-            },
+            }
             Err(val) => {
                 match val {
                     mysql::Error::MySqlError(ref val) => success = val.code as i32,
@@ -184,22 +191,26 @@ impl DbTrait for DbMysql {
     }
 
 
-    fn insert(&mut self, sql_cmd : &str, msg : &mut NetMsg) -> NetResult<i32> {
+    fn insert(&mut self, sql_cmd: &str, msg: &mut NetMsg) -> NetResult<i32> {
         try!(self.check_connect());
         let value = self.conn.prep_exec(sql_cmd, ());
         let config = NetConfig::instance();
-        let mut success : i32 = 0;
+        let mut success: i32 = 0;
         match value {
             Ok(val) => {
                 self.last_insert_id = val.last_insert_id();
                 self.affected_rows = val.affected_rows();
                 let mut array = vec![];
                 let mut hash = HashMap::<String, Value>::new();
-                hash.insert(LAST_INSERT_ID.to_string(), Value::from(self.last_insert_id as u32));
+                hash.insert(LAST_INSERT_ID.to_string(),
+                            Value::from(self.last_insert_id as u32));
                 array.push(Value::from(hash));
-                try!(encode_proto(msg.get_buffer(), config, &DB_RESULT_PROTO.to_string(), vec![Value::AMap(array)]));
+                try!(encode_proto(msg.get_buffer(),
+                                  config,
+                                  &DB_RESULT_PROTO.to_string(),
+                                  vec![Value::AMap(array)]));
                 self.error = None;
-            },
+            }
             Err(val) => {
                 match val {
                     mysql::Error::MySqlError(ref val) => success = val.code as i32,
@@ -242,20 +253,24 @@ impl DbTrait for DbMysql {
 
     fn get_error_code(&mut self) -> i32 {
         match self.error {
-            Some(ref err) => match *err {
-                mysql::Error::MySqlError(ref val) => val.code as i32,
-                _ => -1,
-            },
+            Some(ref err) => {
+                match *err {
+                    mysql::Error::MySqlError(ref val) => val.code as i32,
+                    _ => -1,
+                }
+            }
             None => 0,
         }
     }
 
     fn get_error_str(&mut self) -> Option<String> {
         match self.error {
-            Some(ref err) => match *err {
-                mysql::Error::MySqlError(ref val) => Some(val.message.clone()),
-                _ => Some(format!("{}", err)),
-            },
+            Some(ref err) => {
+                match *err {
+                    mysql::Error::MySqlError(ref val) => Some(val.message.clone()),
+                    _ => Some(format!("{}", err)),
+                }
+            }
             None => None,
         }
     }

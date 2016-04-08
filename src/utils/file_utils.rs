@@ -1,14 +1,14 @@
 use std::io;
 use std::io::prelude::*;
-use std::path::{Path};
+use std::path::Path;
 use std::env;
 use std::fs::{self, File};
 
-static mut ins : *mut FileUtils = 0 as *mut _;
+static mut ins: *mut FileUtils = 0 as *mut _;
 
 
 pub struct FileUtils {
-    search_paths : Vec<String>,
+    search_paths: Vec<String>,
 }
 
 impl FileUtils {
@@ -16,7 +16,12 @@ impl FileUtils {
         unsafe {
             if ins == 0 as *mut _ {
                 let val = FileUtils {
-                    search_paths : vec![::std::env::current_dir().unwrap().to_str().unwrap().to_string() + "/"],
+                    search_paths: vec![::std::env::current_dir()
+                                           .unwrap()
+                                           .to_str()
+                                           .unwrap()
+                                           .to_string() +
+                                       "/"],
                 };
                 ins = Box::into_raw(Box::new(val));
             }
@@ -24,7 +29,7 @@ impl FileUtils {
         }
     }
 
-    pub fn get_file_data(file_name : &str) -> io::Result<Vec<u8>> {
+    pub fn get_file_data(file_name: &str) -> io::Result<Vec<u8>> {
         let mut f = try!(File::open(file_name));
         let mut buffer = Vec::new();
         // read the whole file
@@ -32,21 +37,21 @@ impl FileUtils {
         Ok(buffer)
     }
 
-    pub fn get_file_str(file_name : &str) -> Option<String> {
+    pub fn get_file_str(file_name: &str) -> Option<String> {
         let data = unwrap_or!(FileUtils::get_file_data(file_name).ok(), return None);
         let data = unwrap_or!(String::from_utf8(data).ok(), return None);
         return Some(data);
     }
 
-    pub fn is_absolute_path(path : &str) -> bool {
+    pub fn is_absolute_path(path: &str) -> bool {
         Path::new(path).is_absolute()
     }
 
-    pub fn is_file_exists(file_name : &str) -> bool {
+    pub fn is_file_exists(file_name: &str) -> bool {
         Path::new(file_name).exists()
     }
 
-    pub fn set_work_path(path : &str) -> bool {
+    pub fn set_work_path(path: &str) -> bool {
         let root = Path::new(path);
         env::set_current_dir(&root).is_ok()
     }
@@ -56,7 +61,7 @@ impl FileUtils {
         p.to_str().unwrap().to_string()
     }
 
-    pub fn full_path_for_name(&self, name : &str) -> Option<String> {
+    pub fn full_path_for_name(&self, name: &str) -> Option<String> {
         if Path::new(name).exists() {
             return Some(name.to_string());
         }
@@ -69,12 +74,12 @@ impl FileUtils {
         None
     }
 
-    pub fn add_search_path(&mut self, path : &str) {
+    pub fn add_search_path(&mut self, path: &str) {
         let path = path.trim_matches('\"');
         self.search_paths.push(path.to_string());
     }
 
-    pub fn list_files(dir : &Path, files : &mut Vec<String>, deep : bool) -> io::Result<()> {
+    pub fn list_files(dir: &Path, files: &mut Vec<String>, deep: bool) -> io::Result<()> {
         if try!(fs::metadata(dir)).is_dir() {
             for entry in try!(fs::read_dir(dir)) {
                 let entry = try!(entry);
@@ -89,5 +94,4 @@ impl FileUtils {
         }
         Ok(())
     }
-
 }

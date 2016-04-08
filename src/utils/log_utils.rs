@@ -5,34 +5,33 @@ use std::sync::Arc;
 
 use time;
 
-use td_rthreadpool::{ReentrantMutex};
+use td_rthreadpool::ReentrantMutex;
 
 use FileUtils;
 
-const KEEP_ROLE_SECOND : u64 = 60 * 60 * 24;
+const KEEP_ROLE_SECOND: u64 = 60 * 60 * 24;
 
 pub struct LogUtils {
-    file            : Option<File>,
-    mutex           : Arc<ReentrantMutex<i32>>,
-    log_path        : String,
-    basename        : String,
-    roll_size       : usize,
-    flush_interval  : u64,
-    check_every_n   : u64,
-    force_flush_interval   : u64,
+    file: Option<File>,
+    mutex: Arc<ReentrantMutex<i32>>,
+    log_path: String,
+    basename: String,
+    roll_size: usize,
+    flush_interval: u64,
+    check_every_n: u64,
+    force_flush_interval: u64,
 
-    cur_file_size   : usize,
-    cur_count       : u64,
-    last_append     : u64,
-    last_flush      : u64,
-    start_of_period : u64,
+    cur_file_size: usize,
+    cur_count: u64,
+    last_append: u64,
+    last_flush: u64,
+    start_of_period: u64,
 
-    cache_time      : u64,
-    date_cache      : String,
-
+    cache_time: u64,
+    date_cache: String,
 }
 
-static mut ins : *mut LogUtils = 0 as *mut _;
+static mut ins: *mut LogUtils = 0 as *mut _;
 impl LogUtils {
     pub fn instance() -> &'static mut LogUtils {
         unsafe {
@@ -45,26 +44,26 @@ impl LogUtils {
 
     pub fn new() -> LogUtils {
         LogUtils {
-            file     : None,
-            mutex    : Arc::new(ReentrantMutex::new(0)),
-            log_path : String::new(),
-            basename        : "TDEngine".to_string(),
-            roll_size       : 1024 * 1024 * 50,
-            flush_interval  : 3,
-            check_every_n   : 1024,
-            force_flush_interval   : 180,
-            cur_file_size   : 0,
-            cur_count       : 0,
-            last_append     : 0,
-            last_flush      : 0,
-            start_of_period : 0,
+            file: None,
+            mutex: Arc::new(ReentrantMutex::new(0)),
+            log_path: String::new(),
+            basename: "TDEngine".to_string(),
+            roll_size: 1024 * 1024 * 50,
+            flush_interval: 3,
+            check_every_n: 1024,
+            force_flush_interval: 180,
+            cur_file_size: 0,
+            cur_count: 0,
+            last_append: 0,
+            last_flush: 0,
+            start_of_period: 0,
 
-            cache_time      : 0,
-            date_cache      : String::new(),
+            cache_time: 0,
+            date_cache: String::new(),
         }
     }
 
-    pub fn set_log_path(&mut self, path : String) {
+    pub fn set_log_path(&mut self, path: String) {
         self.log_path = path;
         let _ = fs::create_dir_all(Path::new(&*self.log_path));
 
@@ -85,12 +84,12 @@ impl LogUtils {
         Some(file)
     }
 
-    pub fn get_can_use_filename(&mut self, filename : String) -> String {
+    pub fn get_can_use_filename(&mut self, filename: String) -> String {
         if !FileUtils::is_file_exists(&*filename) {
             return filename;
         }
 
-        for i in 1 .. {
+        for i in 1.. {
             let name = format!("{}.{}", filename, i);
             if !FileUtils::is_file_exists(&*name) {
                 return name;
@@ -99,19 +98,19 @@ impl LogUtils {
         unreachable!("find no use file");
     }
 
-    pub fn get_log_filename(&mut self, now : time::Tm) -> String {
+    pub fn get_log_filename(&mut self, now: time::Tm) -> String {
         let name = now.strftime(".%Y-%m-%d-%H_%M_%S").unwrap().to_string();
         let filename = self.log_path.clone() + &*self.basename + &*name + ".log";
         self.get_can_use_filename(filename)
     }
 
-    pub fn append(&mut self, log : &str) {
+    pub fn append(&mut self, log: &str) {
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
         self.append_unlock(log);
     }
 
-    pub fn write_bytes(&mut self, bytes : &[u8]) {
+    pub fn write_bytes(&mut self, bytes: &[u8]) {
         if self.file.is_none() {
             return;
         }
@@ -127,7 +126,7 @@ impl LogUtils {
         self.cur_file_size += self.date_cache.as_bytes().len();
     }
 
-    pub fn append_unlock(&mut self, log : &str) {
+    pub fn append_unlock(&mut self, log: &str) {
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
         if self.file.is_none() {
@@ -137,7 +136,13 @@ impl LogUtils {
         if now != self.cache_time {
             self.cache_time = now;
             let tm = time::now();
-            self.date_cache = format!("{:4}-{:2}-{:2}_{:2}:{:2}:{:2}", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+            self.date_cache = format!("{:4}-{:2}-{:2}_{:2}:{:2}:{:2}",
+                                      tm.tm_year + 1900,
+                                      tm.tm_mon + 1,
+                                      tm.tm_mday,
+                                      tm.tm_hour,
+                                      tm.tm_min,
+                                      tm.tm_sec);
         }
         // self.write_bytes(self.date_cache.as_bytes());
         self.write_bytes(log.as_bytes());
@@ -166,6 +171,4 @@ impl LogUtils {
             }
         }
     }
-
-
 }

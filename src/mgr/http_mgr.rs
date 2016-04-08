@@ -1,36 +1,36 @@
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::thread;
 use std::net::TcpStream;
 
 use std::io::prelude::*;
 use time;
-use std::sync::{Arc};
+use std::sync::Arc;
 use td_rthreadpool::ReentrantMutex;
 use tiny_http::{Server, Response, Request};
 use {ThreadUtils, LuaEngine};
 
 #[allow(dead_code)]
 struct ServerRequest {
-    request : Request,
-    time    : u32,
+    request: Request,
+    time: u32,
 }
 
 impl ServerRequest {
-    pub fn new(request : Request) -> ServerRequest {
+    pub fn new(request: Request) -> ServerRequest {
         ServerRequest {
-            request : request,
-            time    : (time::precise_time_ns() / 1_000_000) as u32,
+            request: request,
+            time: (time::precise_time_ns() / 1_000_000) as u32,
         }
     }
 }
 
 pub struct HttpMgr {
-    requests : HashMap<u32, ServerRequest>,
-    mutex     : Arc<ReentrantMutex<u32>>,
+    requests: HashMap<u32, ServerRequest>,
+    mutex: Arc<ReentrantMutex<u32>>,
 }
 
-static HTTP_POOL_NAME : &'static str = "http";
-static mut el : *mut HttpMgr = 0 as *mut _;
+static HTTP_POOL_NAME: &'static str = "http";
+static mut el: *mut HttpMgr = 0 as *mut _;
 impl HttpMgr {
     pub fn instance() -> &'static mut HttpMgr {
         unsafe {
@@ -44,12 +44,12 @@ impl HttpMgr {
     pub fn new() -> HttpMgr {
         ThreadUtils::instance().create_pool(HTTP_POOL_NAME.to_string(), 10);
         HttpMgr {
-            requests : HashMap::new(),
-            mutex     : Arc::new(ReentrantMutex::new(0)),
+            requests: HashMap::new(),
+            mutex: Arc::new(ReentrantMutex::new(0)),
         }
     }
 
-    pub fn new_request_receive(&mut self, mut request : Request) {
+    pub fn new_request_receive(&mut self, mut request: Request) {
         let mut data = self.mutex.lock().unwrap();
         if *data > u32::max_value() - 1000 {
             *data = 0;
@@ -58,12 +58,16 @@ impl HttpMgr {
 
         let mut body = String::new();
         let _ = request.as_reader().read_to_string(&mut body);
-        LuaEngine::instance().apply_args_func("http_server_msg_recv".to_string(), vec![data.to_string(), request.url().to_string(), body, format!("{}", request.remote_addr())]);
+        LuaEngine::instance().apply_args_func("http_server_msg_recv".to_string(),
+                                              vec![data.to_string(),
+                                                   request.url().to_string(),
+                                                   body,
+                                                   format!("{}", request.remote_addr())]);
         self.requests.insert(*data, ServerRequest::new(request));
-        
-    } 
 
-    pub fn http_server_respone(&mut self, cookie : u32, content : String) {
+    }
+
+    pub fn http_server_respone(&mut self, cookie: u32, content: String) {
         let _data = self.mutex.lock().unwrap();
         let request = unwrap_or!(self.requests.remove(&cookie), return);
         let pool = ThreadUtils::instance().get_pool(&HTTP_POOL_NAME.to_string());
@@ -72,12 +76,15 @@ impl HttpMgr {
         });
     }
 
-    pub fn http_get_request(&mut self, cookie : u32, addr : String, url : String) {
+    pub fn http_get_request(&mut self, cookie: u32, addr: String, url: String) {
         let pool = ThreadUtils::instance().get_pool(&HTTP_POOL_NAME.to_string());
         pool.execute(move || {
             let failed_cookie = cookie;
             let failed_fn = move || {
-                LuaEngine::instance().apply_args_func("http_client_msg_respone".to_string(), vec![failed_cookie.to_string(), "false".to_string()]);
+                LuaEngine::instance().apply_args_func(
+                    "http_client_msg_respone".to_string(),
+                    vec![failed_cookie.to_string(), "false".to_string()]
+                    );
             };
 
             let mut stream = unwrap_or!(TcpStream::connect(&*addr).ok(), {failed_fn(); return} );
@@ -87,7 +94,7 @@ impl HttpMgr {
             let content = format!("Host: {}\r\nContent-Length: {}\r\n\r\n{}", host, url.len(), url);
             unwrap_or!(stream.write(content.as_bytes()).ok(), return failed_fn());
             unwrap_or!(stream.flush().ok(), return failed_fn());
-            
+
             let mut result : Vec<u8> = vec![];
             let mut bytes = [0u8; 1024];
             let mut content_length = 0;
@@ -123,7 +130,9 @@ impl HttpMgr {
             if content_length == 0 {
                 return failed_fn();
             }
-            LuaEngine::instance().apply_args_func("http_client_msg_respone".to_string(), vec![cookie.to_string(), "true".to_string(), String::from_utf8_lossy(&result).to_string()]);
+            LuaEngine::instance().apply_args_func(
+                "http_client_msg_respone".to_string(),
+                vec![cookie.to_string(), "true".to_string(), String::from_utf8_lossy(&result).to_string()]);
         });
     }
 
@@ -133,10 +142,9 @@ impl HttpMgr {
 
             for request in server.incoming_requests() {
                 println!("received request! method: {:?}, url: {:?}, headers: {:?}",
-                    request.method(),
-                    request.url(),
-                    request.headers()
-                );
+                         request.method(),
+                         request.url(),
+                         request.headers());
 
                 HttpMgr::instance().new_request_receive(request);
             }

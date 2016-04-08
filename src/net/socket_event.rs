@@ -2,23 +2,23 @@ use td_rp::Buffer;
 
 #[derive(Debug)]
 pub struct SocketEvent {
-    socket_fd  : i32,
-    cookie     : u32,
-    client_ip  : String,
+    socket_fd: i32,
+    cookie: u32,
+    client_ip: String,
     server_port: u16,
-    buffer     : Buffer,
-    online     : bool,
+    buffer: Buffer,
+    online: bool,
 }
 
 impl SocketEvent {
-    pub fn new(socket_fd : i32, client_ip  : String, server_port: u16) -> SocketEvent {
+    pub fn new(socket_fd: i32, client_ip: String, server_port: u16) -> SocketEvent {
         SocketEvent {
-            socket_fd : socket_fd,
-            cookie    : 0,
-            client_ip : client_ip,
-            server_port : server_port,
-            buffer    : Buffer::new(),
-            online    : true,
+            socket_fd: socket_fd,
+            cookie: 0,
+            client_ip: client_ip,
+            server_port: server_port,
+            buffer: Buffer::new(),
+            online: true,
         }
     }
 
@@ -38,7 +38,7 @@ impl SocketEvent {
         self.cookie
     }
 
-    pub fn set_cookie(&mut self, cookie : u32) {
+    pub fn set_cookie(&mut self, cookie: u32) {
         self.cookie = cookie;
     }
 
@@ -46,7 +46,7 @@ impl SocketEvent {
         &mut self.buffer
     }
 
-    pub fn set_online(&mut self, online : bool) {
+    pub fn set_online(&mut self, online: bool) {
         self.online = online;
     }
 

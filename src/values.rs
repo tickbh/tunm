@@ -14,7 +14,7 @@ pub enum ErrorKind {
     TypeNotMatchError,
     /// the buffer can't parse the right data
     ParseError,
-    /// miss the major data 
+    /// miss the major data
     MissingError,
     /// string format must be utf-8
     StringFormatError,
@@ -54,18 +54,14 @@ pub type NetResult<T> = Result<T, NetError>;
 impl PartialEq for NetError {
     fn eq(&self, other: &NetError) -> bool {
         match (&self.repr, &other.repr) {
-            (&ErrorRepr::WithDescription(kind_a, _),
-             &ErrorRepr::WithDescription(kind_b, _)) => {
+            (&ErrorRepr::WithDescription(kind_a, _), &ErrorRepr::WithDescription(kind_b, _)) => {
                 kind_a == kind_b
             }
             (&ErrorRepr::WithDescriptionAndDetail(kind_a, _, _),
-             &ErrorRepr::WithDescriptionAndDetail(kind_b, _, _)) => {
-                kind_a == kind_b
-            },
-            (&ErrorRepr::ExtensionError(ref a, _),
-             &ErrorRepr::ExtensionError(ref b, _)) => {
+             &ErrorRepr::WithDescriptionAndDetail(kind_b, _, _)) => kind_a == kind_b,
+            (&ErrorRepr::ExtensionError(ref a, _), &ErrorRepr::ExtensionError(ref b, _)) => {
                 *a == *b
-            },
+            }
             _ => false,
         }
     }
@@ -84,14 +80,12 @@ impl From<RpError> for NetError {
 }
 
 impl From<(ErrorKind, &'static str)> for NetError {
-
     fn from((kind, desc): (ErrorKind, &'static str)) -> NetError {
         NetError { repr: ErrorRepr::WithDescription(kind, desc) }
     }
 }
 
 impl From<(ErrorKind, &'static str, String)> for NetError {
-
     fn from((kind, desc, detail): (ErrorKind, &'static str, String)) -> NetError {
         NetError { repr: ErrorRepr::WithDescriptionAndDetail(kind, desc, detail) }
     }
@@ -100,7 +94,6 @@ impl From<(ErrorKind, &'static str, String)> for NetError {
 
 
 impl error::Error for NetError {
-
     fn description(&self) -> &str {
         match self.repr {
             ErrorRepr::WithDescription(_, desc) => desc,
@@ -122,9 +115,7 @@ impl error::Error for NetError {
 impl fmt::Display for NetError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self.repr {
-            ErrorRepr::WithDescription(_, desc) => {
-                desc.fmt(f)
-            }
+            ErrorRepr::WithDescription(_, desc) => desc.fmt(f),
             ErrorRepr::WithDescriptionAndDetail(_, desc, ref detail) => {
                 try!(desc.fmt(f));
                 try!(f.write_str(": "));
@@ -134,13 +125,9 @@ impl fmt::Display for NetError {
                 try!(code.fmt(f));
                 try!(f.write_str(": "));
                 detail.fmt(f)
-            },
-            ErrorRepr::IoError(ref err) => {
-                err.fmt(f)
             }
-            ErrorRepr::RpError(ref err) => {
-                err.fmt(f)
-            }
+            ErrorRepr::IoError(ref err) => err.fmt(f),
+            ErrorRepr::RpError(ref err) => err.fmt(f),
         }
     }
 }
@@ -154,7 +141,6 @@ impl fmt::Debug for NetError {
 #[allow(dead_code)]
 /// Indicates a general failure in the library.
 impl NetError {
-
     /// Returns the kind of the error.
     pub fn kind(&self) -> ErrorKind {
         match self.repr {
@@ -186,7 +172,7 @@ impl NetError {
     pub fn is_io_error(&self) -> bool {
         match self.kind() {
             ErrorKind::IoError => true,
-            _ => false
+            _ => false,
         }
     }
 
@@ -210,10 +196,12 @@ impl NetError {
 
 pub fn make_extension_error(code: &str, detail: Option<&str>) -> NetError {
     NetError {
-        repr: ErrorRepr::ExtensionError(code.to_string(), match detail {
-            Some(x) => x.to_string(),
-            None => "Unknown extension error encountered".to_string()
-        })
+        repr: ErrorRepr::ExtensionError(code.to_string(),
+                                        match detail {
+                                            Some(x) => x.to_string(),
+                                            None => {
+                                                "Unknown extension error encountered".to_string()
+                                            }
+                                        }),
     }
 }
-

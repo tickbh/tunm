@@ -14,13 +14,13 @@ pub use self::lua_timer::register_timer_func;
 pub use self::lua_util::register_util_func;
 
 
-pub fn register_custom_func(lua : &mut Lua) {
+pub fn register_custom_func(lua: &mut Lua) {
     register_db_func(lua);
     register_network_func(lua);
     register_userdata_func(lua);
     register_timer_func(lua);
     register_util_func(lua);
     unsafe {
-        td_clua_ext::luaopen_cjson(lua.state());    
+        td_clua_ext::luaopen_cjson(lua.state());
     }
 }

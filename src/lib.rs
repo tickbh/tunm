@@ -30,7 +30,8 @@ pub use db::{DbTrait, DbMysql, DbPool, PoolTrait, RedisPool};
 pub use values::{ErrorKind, NetResult, make_extension_error};
 pub use utils::{FileUtils, ThreadUtils, NetUtils, TelnetUtils, LogUtils};
 pub use rp_wrapper::{LuaWrapperValue, LuaWrapperVecValue, LuaWrapperTableValue};
-pub use redis_wrapper::{RedisWrapperResult, RedisWrapperCmd, RedisWrapperMsg, RedisWrapperStringVec};
+pub use redis_wrapper::{RedisWrapperResult, RedisWrapperCmd, RedisWrapperMsg,
+                        RedisWrapperStringVec};
 pub use lua_engine::LuaEngine;
 pub use mgr::{ServiceMgr, HttpMgr, CommandMgr, EventMgr};
 pub use lua_custom::register_custom_func;
