@@ -42,3 +42,7 @@ depends on complexity of logic of the game itself.)he game itself.)
 ## How To Use (Sorry, Only in Chinese now)
 
 Read Wiki https://github.com/tickbh/tdengine/wiki
+
+## 中文
+
+QQ交流群：432216192
