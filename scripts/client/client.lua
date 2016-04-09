@@ -30,7 +30,13 @@ local function main()
     
     load_folder("client/global")
     load_folder("client/clone");
-    load_folder("client/daemons", ""); --,"propertyd" 强制加载优先顺序
+    update("client/daemons/logind")
+    update("client/daemons/med")
+    -- update("client/daemons/stress_testd")
+    -- load_folder("client/daemons", ""); --,"propertyd" 强制加载优先顺序
+
+    -- STRESS_TEST_D.start(5, "CHAT_TESTD")
+    
     load_folder("client/msgs")
 
     update("client/command")

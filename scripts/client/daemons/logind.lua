@@ -32,13 +32,18 @@ local function connect_callback(agent, arg)
     login_info["timestamp"] = os.time()
     login_info["version"] = 1
 
+    -- 保存数据到agent
+    for key, value in pairs(arg) do
+        agent.data[key] = value;
+    end
+
     -- 发送登录消息
     agent:send_message(CMD_LOGIN, login_info)
 end
 
 -- 登录建立连接的接口
-function login(account, password)
-    if ME_D.get_agent() then
+function login(account, password, extra_data)
+    if not START_STREE_TEST and ME_D.get_agent() then
         return
     end
 
@@ -47,6 +52,7 @@ function login(account, password)
     local ret = socket_connect(ip, port, 10000, connect_callback, {
                     account  = account,
                     password = password,
+                    extra_data = extra_data,
                     --custom yourself device id func
                     device_id = tostring(math.random(100000, 999999)),
                     server_id = 1,

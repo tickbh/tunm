@@ -1,3 +1,4 @@
+HEARTBEAT_INTERVAL = 10000
 
 local seq_id = 0;
 

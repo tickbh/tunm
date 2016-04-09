@@ -3,7 +3,7 @@
 -- 登录相关模块
 
 -- 声明模块名
-module("ME_D", package.seeall);
+module("ME_D", package.seeall)
 
 local me_rid
 local me_agent
@@ -15,9 +15,12 @@ function me_updated(agent, data)
     local item_list = remove_get(data, "item_list") or {}
     local equip_list = remove_get(data, "equip_list") or {}
     -- 创建玩家
-    local user = PLAYER_CLASS.new(data.user);
+    local user = PLAYER_CLASS.new(data.user)
+    for k, v in pairs(agent.data) do
+        user:set_temp(k, v)
+    end
     -- 关联玩家对象与连接对象
-    user:accept_relay(agent);
+    user:accept_relay(agent)
     for _,v in ipairs(item_list) do
         local obj = PROPERTY_D.clone_object_from(v.class_id, v)
         user:load_property(obj)
@@ -28,8 +31,12 @@ function me_updated(agent, data)
         user:load_property(obj)
     end
 
+    -- 设置玩家心跳
+    user:set_heartbeat_interval(HEARTBEAT_INTERVAL)
+    raise_issue(EVENT_LOGIN_OK, user)
+
     me_rid = get_ob_rid(user)
-    me_agent = user;
+    me_agent = user
 end
 
 function get_rid()

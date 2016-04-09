@@ -1136,3 +1136,9 @@ assert(check_sql_param_vailed("1%1") == false)
 function memory_use()
     return collectgarbage("count")
 end
+
+-- 取得类的所有克隆对象
+function child_objects(c)
+    clean_array(c.ob_list);
+    return c.ob_list;
+end
