@@ -15,7 +15,7 @@ function me_updated(agent, data)
     local item_list = remove_get(data, "item_list") or {}
     local equip_list = remove_get(data, "equip_list") or {}
     -- 创建玩家
-    local user = USER_CLASS.new(data.user);
+    local user = PLAYER_CLASS.new(data.user);
     -- 关联玩家对象与连接对象
     user:accept_relay(agent);
     for _,v in ipairs(item_list) do
@@ -29,7 +29,7 @@ function me_updated(agent, data)
     end
 
     me_rid = get_ob_rid(user)
-    me_agent = agent;
+    me_agent = user;
 end
 
 function get_rid()
