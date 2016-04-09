@@ -38,6 +38,7 @@ impl NetMsg {
         let length: u32 = try!(decode_number(&mut buffer, td_rp::TYPE_U32)).into();
         let seq_fd: u16 = try!(decode_number(&mut buffer, td_rp::TYPE_U16)).into();
         if data.len() != length as usize {
+            println!("data.len() = {:?}, length = {:?}", data.len(), length);
             return Err(make_extension_error("data length not match", None));
         }
         buffer.set_rpos(HEAD_FILL_UP.len());

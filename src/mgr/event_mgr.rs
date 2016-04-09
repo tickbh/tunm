@@ -67,6 +67,11 @@ impl EventMgr {
     }
 
     pub fn send_netmsg(&mut self, fd: i32, net_msg: &mut NetMsg) -> bool {
+        let _ = net_msg.read_head();
+        if net_msg.get_pack_len() != net_msg.len() as u32 {
+            println!("error!!!!!!!! net_msg.get_pack_len() = {:?}, net_msg.len() = {:?}", net_msg.get_pack_len(), net_msg.len());
+            return false;
+        }
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
         if !self.connect_ids.contains_key(&fd) {
