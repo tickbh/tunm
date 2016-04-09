@@ -295,21 +295,11 @@ function global_dispatch_command(port_no, message, buffer)
         return;
     end
 
-    if APP_TYPE ~= "CLIENT" then
-        -- 判断连接合法性，不合法则断开连接
-        -- if not INTERNAL_COMM_D.is_message_valid(agent, message) then
-        --     trace("INTERNAL_COMM_D.is_message_valid(agent, message)");
-        --     agent:connection_lost();
-        --     return ;
-        -- end
-
-        message_handler(agent, unpack(args or {}));
-    else
-        -- 为客户端，直接执行消息处理函数
-        message_handler(agent, unpack(args or {}));
-        -- 调用关注的回调
-        post_msg_hooks(agent, message, args);
-        if agent:is_user() then
+    -- 为客户端，直接执行消息处理函数
+    message_handler(agent, unpack(args or {}));
+    if agent:is_user() then
+        update_operation_time(agent)
+        if PACKAGE_STATD then
             PACKAGE_STATD.on_user_recv_package(agent)
         end
     end
