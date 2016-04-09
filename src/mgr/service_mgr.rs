@@ -46,13 +46,15 @@ impl ServiceMgr {
         let size = match tcp.read(&mut buffer) {
             Ok(size) => {
                 if size == 0 {
+                    println!("read fd = {:?} size = 0", fd);
                     EventMgr::instance().add_kick_event(fd as i32);
                     mem::forget(tcp);
                     return 0;
                 }
                 size
             }
-            Err(_) => {
+            Err(err) => {
+                println!("read fd = {:?} err = {:?}", fd, err);
                 EventMgr::instance().add_kick_event(fd as i32);
                 mem::forget(tcp);
                 return 0;

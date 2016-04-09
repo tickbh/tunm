@@ -96,7 +96,7 @@ end
 
 -- 收到新连接
 function cmd_new_connection(cookie, fd, client_ip, server_port)
-    trace("收到新连接(%d)。new connect info\n", fd);
+    trace("收到新连接(%d)。端口(%d), new connect info\n", fd, server_port);
     local f = new_connection_callback[cookie];
     if type(f) == "function" then
         -- 若该连接有回调，则调用之
@@ -255,6 +255,7 @@ function global_dispatch_command(port_no, message, buffer)
 
     if agent:get_server_type() == SERVER_TYPE_CLIENT and CHECK_PACK and not agent:check_next_client(buffer:get_seq_fd()) then
         trace("package check failed %o kick the socket", agent:get_ob_id())
+        trace("agent:get_server_type() = %o ", agent:get_server_type())
         agent:connection_lost()
         del_message(buffer)
         return

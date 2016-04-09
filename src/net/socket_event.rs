@@ -7,6 +7,7 @@ pub struct SocketEvent {
     client_ip: String,
     server_port: u16,
     buffer: Buffer,
+    out_cache: Buffer,
     online: bool,
 }
 
@@ -18,6 +19,7 @@ impl SocketEvent {
             client_ip: client_ip,
             server_port: server_port,
             buffer: Buffer::new(),
+            out_cache: Buffer::new(),
             online: true,
         }
     }
@@ -44,6 +46,10 @@ impl SocketEvent {
 
     pub fn get_buffer(&mut self) -> &mut Buffer {
         &mut self.buffer
+    }
+
+    pub fn get_out_cache(&mut self) -> &mut Buffer {
+        &mut self.out_cache
     }
 
     pub fn set_online(&mut self, online: bool) {
