@@ -157,7 +157,7 @@ function AGENT_CLASS:send_message(msg, ...)
 
     local net_msg = pack_message(msg, ...)
     if SERVER_TYPE == "client" and get_network_seq_id then
-        net_msg:set_seq_fd(get_network_seq_id())
+        net_msg:set_seq_fd(get_network_seq_id(port_no))
     end
     local ret = self:send_net_msg(net_msg)
 

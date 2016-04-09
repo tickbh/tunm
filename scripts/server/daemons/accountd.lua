@@ -175,7 +175,6 @@ function request_create_user(account, info)
         last_logout_time= 0,
     }
 
-    trace("user_dbase %o \n", user_dbase)
     local sql = SQL_D.insert_sql("user", user_dbase)
     user_dbase["account_ob"] = account
     DB_D.execute_db("account", sql, create_new_user_callback, user_dbase)

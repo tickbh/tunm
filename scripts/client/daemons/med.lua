@@ -63,7 +63,9 @@ function close_agent()
 end
 
 function set_agent(agent)
-    close_agent()
+    if not START_STREE_TEST then
+        close_agent()
+    end
     me_agent = agent
 end
 

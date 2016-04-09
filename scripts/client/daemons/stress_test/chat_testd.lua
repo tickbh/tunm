@@ -10,7 +10,7 @@ function operation(player)
     if not is_object(player) then
         return
     end
-    local content = tostring(math.random(10000, 99999))
+    local content = player:query("name") .. "__" .. tostring(math.random(10000, 99999))
     player:send_message(CMD_CHAT, CHAT_CHANNEL_WORLD, {send_content = content});
 end
 

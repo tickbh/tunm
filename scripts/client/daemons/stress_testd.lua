@@ -13,7 +13,7 @@
 module("STRESS_TEST_D", package.seeall)
 
 -- console是否繁忙标识
-local is_system_busy          = true
+local is_system_busy          = false
 
 -- 模块加载时间(起始时间供账号命名用)
 local start_time              = 0
@@ -27,7 +27,7 @@ TIME_LOGIN = 150
 
 -- 调试函数，看本模块的局部变量值
 function watch()
-    print(Y.."账号前缀:%o\n"..W, start_time)
+    print("账号前缀:%o\n", start_time)
 end
 
 -- 获取当前进程所占内存
@@ -56,13 +56,13 @@ function check_system()
         -- 系统繁忙
         is_system_busy = true
 
-        print(R.."Console is Busy!! rest for a while.."..W)
+        print("Console is Busy!! rest for a while..")
 
     else
         -- 系统空闲
         is_system_busy = false
 
-        trace(G.."Console is Working..."..W)
+        trace("Console is Working...")
     end
 end
 
@@ -76,7 +76,6 @@ end
 
 -- 玩家心跳函数(负责玩家所有测试子模块的操作)
 function heartbeat_handler(player)
-
     -- 如果console进程繁忙，则跳过
     if is_system_busy then
         return 
@@ -89,6 +88,7 @@ function heartbeat_handler(player)
 
     -- 每个玩家的子模块的时间间隔
     local interval = player:query("interval")
+
     if not interval then
         return 
     end
@@ -119,7 +119,7 @@ function heartbeat_handler(player)
                     -- 调用子模块的统一接口
                     child_module.operation(player)
                 else
-                    print(R.."找不到压力测试子模块(%o) 或者 该子模块未定义'operation'接口!\n"..W, test_module)
+                    print("找不到压力测试子模块(%o) 或者 该子模块未定义'operation'接口!\n", test_module)
                     test_modules[test_module] = nil
                 end
 
@@ -127,7 +127,7 @@ function heartbeat_handler(player)
                 accumulate[test_module] = 0
             end
         else
-            print(R.."要求测试的压力子模块(%o)并未定义!\n"..W, test_module)
+            print("要求测试的压力子模块(%o)并未定义!\n", test_module)
             test_modules[test_module] = nil
         end
     end
@@ -267,9 +267,9 @@ local function get_random_interval(test_modules)
 end
 
 -- 登陆成功 事件处理
-function func_login_ok(raiser, player)
+function func_login_ok(player)
 
-    print(G.."%o登陆成功！\n"..W, player)
+    trace("%o登陆成功！\n", player)
 
     local extra_data   = player:query_temp("extra_data") or {}
     local test_modules = extra_data.test_modules
@@ -299,7 +299,7 @@ end
 
 local function init()
     -- 定时检测系统是否繁忙
-    set_timer(10000, check_system, {}, true)
+    set_timer(100000, check_system, {}, true)
 
     -- watch()
 end
@@ -317,7 +317,7 @@ function create()
     register_post_init(init)
 
     -- 注册登陆成功事件 处理函数
-    register_as_audience("STRESS_TEST_D", {SF_LOGIN_OK = func_login_ok})
+    register_as_audience("STRESS_TEST_D", {EVENT_LOGIN_OK = func_login_ok})
 
     -- 记录模块加载时间(现在只取时间戳后几位)
     start_time = string.sub(tostring(os.time()), 8)
