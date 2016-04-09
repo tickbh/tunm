@@ -11,7 +11,7 @@ use NetMsg;
 use std::sync::Arc;
 use td_rthreadpool::ReentrantMutex;
 use td_rp::{self, Buffer, decode_number};
-use td_revent::{FromFd, EventLoop, EventFlags, EventEntry};
+use td_revent::*;
 
 static mut el: *mut EventMgr = 0 as *mut _;
 static mut read_data: [u8; 65536] = [0; 65536];
@@ -66,70 +66,135 @@ impl EventMgr {
         self.event_loop.del_event(sock as u32, EventFlags::all());
     }
 
+    fn write_callback(ev: &mut EventLoop, fd: u32, _: EventFlags, _: *mut ()) -> i32 {
+        let fd = fd as i32;
+        let mut success = false;
+        let mut tcp = TcpStream::from_fd(fd);
+        let write_ret;
+        loop {
+            let socket_event = unwrap_or!(EventMgr::instance().get_socket_event(fd), return 0);
+            write_ret = tcp.write(socket_event.get_out_cache().get_data());
+            if write_ret.is_err() {
+                break;
+            }
+            let size = write_ret.as_ref().map(|ref e| *e.clone()).unwrap();
+            if size != socket_event.get_out_cache().len() {
+                println!("drain len size = {}, get_out_cache size is = {}", size, socket_event.get_out_cache().len());
+                if size > 0 {
+                    socket_event.get_out_cache().drain(size);    
+                }
+                break;
+            }
+            socket_event.get_out_cache().clear();
+            success = true;
+            break;
+        }
+
+        mem::forget(tcp);
+
+        if write_ret.is_err() {
+            EventMgr::instance().add_kick_event(fd);
+            return 0;
+        } else if !success {
+            ev.add_event(EventEntry::new(fd as u32,
+                                         FLAG_WRITE,
+                                         Some(Self::write_callback),
+                                         None));
+        }
+
+        0
+    }
+
     pub fn send_netmsg(&mut self, fd: i32, net_msg: &mut NetMsg) -> bool {
         let _ = net_msg.read_head();
         if net_msg.get_pack_len() != net_msg.len() as u32 {
             println!("error!!!!!!!! net_msg.get_pack_len() = {:?}, net_msg.len() = {:?}", net_msg.get_pack_len(), net_msg.len());
             return false;
         }
+        println!("fd = {:?}", fd);
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
         if !self.connect_ids.contains_key(&fd) {
             println!("send_netmsg ==== {:?}", fd);
             return false;
         }
-        let mut tcp = TcpStream::from_fd(fd);
-        let mut write_ret;
-        let mut success = false;
-        loop {
-            let socket_event = self.connect_ids.get_mut(&fd).unwrap();
-            if socket_event.get_out_cache().len() > 0 {
-                write_ret = tcp.write(socket_event.get_out_cache().get_data());
-                if write_ret.is_err() {
-                    break;
-                }
-                let size = write_ret.as_ref().map(|ref e| *e.clone()).unwrap();
-                if size != socket_event.get_out_cache().len() {
-                    println!("drain len size = {}, get_out_cache size is = {}", size, socket_event.get_out_cache().len());
-                    if size > 0 {
-                        socket_event.get_out_cache().drain(size);    
-                    }
-                    let _ = socket_event.get_out_cache().write(net_msg.get_buffer().get_data());
-                    break;
-                }
-            }
-            socket_event.get_out_cache().clear();
 
-            write_ret = tcp.write(net_msg.get_buffer().get_data());
-            if write_ret.is_err() {
-                break;
-            }
+        let socket_event = self.connect_ids.get_mut(&fd).unwrap();
+        let _ = socket_event.get_out_cache().write(net_msg.get_buffer().get_data());
 
-            let size = write_ret.as_ref().map(|ref e| *e.clone()).unwrap();
-            if size != net_msg.get_buffer().len() {
-                println!("drain len size = {}, get_out_cache size is = {}", size, net_msg.get_buffer().len());
-                if size > 0 {
-                    net_msg.get_buffer().drain(size);    
-                }
-                let _ = socket_event.get_out_cache().write(net_msg.get_buffer().get_data());
-                break;
-            }
-
-            success = true;
-            break;
-        }
-
-
-        mem::forget(tcp);
-
-        if write_ret.is_err() {
-            self.add_kick_event(fd);
-            return success;
-        }
-
-        //TODO if success = false, we may need add write event
-        success
+        self.event_loop.add_event(EventEntry::new(fd as u32,
+                                             FLAG_WRITE,
+                                             Some(Self::write_callback),
+                                             None));
+        //判断缓冲区大小
+        true
     }
+
+    // pub fn send_netmsg(&mut self, fd: i32, net_msg: &mut NetMsg) -> bool {
+    //     let _ = net_msg.read_head();
+    //     if net_msg.get_pack_len() != net_msg.len() as u32 {
+    //         println!("error!!!!!!!! net_msg.get_pack_len() = {:?}, net_msg.len() = {:?}", net_msg.get_pack_len(), net_msg.len());
+    //         return false;
+    //     }
+    //     println!("fd = {:?}", fd);
+    //     let mutex = self.mutex.clone();
+    //     let _guard = mutex.lock().unwrap();
+    //     if !self.connect_ids.contains_key(&fd) {
+    //         println!("send_netmsg ==== {:?}", fd);
+    //         return false;
+    //     }
+    //     let mut tcp = TcpStream::from_fd(fd);
+    //     let mut write_ret;
+    //     let mut success = false;
+    //     loop {
+    //         let socket_event = self.connect_ids.get_mut(&fd).unwrap();
+    //         if socket_event.get_out_cache().len() > 0 {
+    //             write_ret = tcp.write(socket_event.get_out_cache().get_data());
+    //             if write_ret.is_err() {
+    //                 break;
+    //             }
+    //             let size = write_ret.as_ref().map(|ref e| *e.clone()).unwrap();
+    //             if size != socket_event.get_out_cache().len() {
+    //                 println!("drain len size = {}, get_out_cache size is = {}", size, socket_event.get_out_cache().len());
+    //                 if size > 0 {
+    //                     socket_event.get_out_cache().drain(size);    
+    //                 }
+    //                 let _ = socket_event.get_out_cache().write(net_msg.get_buffer().get_data());
+    //                 break;
+    //             }
+    //         }
+    //         socket_event.get_out_cache().clear();
+    //         println!("data size {:?}", net_msg.get_buffer().len());
+    //         write_ret = tcp.write(net_msg.get_buffer().get_data());
+    //         if write_ret.is_err() {
+    //             break;
+    //         }
+
+    //         let size = write_ret.as_ref().map(|ref e| *e.clone()).unwrap();
+    //         if size != net_msg.get_buffer().len() {
+    //             println!("drain len size = {}, get_out_cache size is = {}", size, net_msg.get_buffer().len());
+    //             if size > 0 {
+    //                 net_msg.get_buffer().drain(size);    
+    //             }
+    //             let _ = socket_event.get_out_cache().write(net_msg.get_buffer().get_data());
+    //             break;
+    //         }
+
+    //         success = true;
+    //         break;
+    //     }
+
+
+    //     mem::forget(tcp);
+
+    //     if write_ret.is_err() {
+    //         self.add_kick_event(fd);
+    //         return success;
+    //     }
+
+    //     //TODO if success = false, we may need add write event
+    //     success
+    // }
 
     pub fn get_socket_event(&mut self, fd: i32) -> Option<&mut SocketEvent> {
     let _guard = self.mutex.lock().unwrap();
@@ -161,13 +226,13 @@ impl EventMgr {
         let buffer_len = socket_event.get_buffer().len();
         let buffer = socket_event.get_buffer();
         loop {
-            let message: Option<&[u8]> = EventMgr::get_next_message(buffer);
+            let message: Option<Vec<u8>> = EventMgr::get_next_message(buffer);
             if message.is_none() {
                 break;
             }
-            let msg = NetMsg::new_by_data(message.unwrap());
+            let msg = NetMsg::new_by_data(&message.unwrap()[..]);
             if msg.is_err() {
-                println!("message error kick fd {:?} msg = {:?}, len = {} buffer = {}", fd, msg.err(), message.unwrap().len(), buffer_len);
+                println!("message error kick fd {:?} msg = {:?}, buffer = {}", fd, msg.err(), buffer_len);
                 self.add_kick_event(fd);
                 break;
             }
@@ -176,22 +241,20 @@ impl EventMgr {
         }
     }
 
-    fn get_next_message(buffer: &mut Buffer) -> Option<&[u8]> {
+    fn get_next_message(buffer: &mut Buffer) -> Option<Vec<u8>> {
         if buffer.len() < NetMsg::min_len() as usize {
             return None;
         }
         let rpos = buffer.get_rpos();
         let mut length: u32 = unwrap_or!(decode_number(buffer, td_rp::TYPE_U32).ok(), return None)
                               .into();
+                              println!("length = {:?}", length);
         buffer.set_rpos(rpos);
         length = unsafe { ::std::cmp::min(length, read_data.len() as u32) };
         if buffer.len() - rpos < length as usize {
             return None;
         }
-        unsafe {
-            buffer.read(&mut read_data[..length as usize]).unwrap();
-            Some(&read_data[..length as usize])
-        }
+        Some(buffer.drain_collect(length as usize))
     }
 
     pub fn exist_socket_event(&self, fd: i32) -> bool {
