@@ -79,7 +79,6 @@ impl EventMgr {
             }
             let size = write_ret.as_ref().map(|ref e| *e.clone()).unwrap();
             if size != socket_event.get_out_cache().len() {
-                println!("drain len size = {}, get_out_cache size is = {}", size, socket_event.get_out_cache().len());
                 if size > 0 {
                     socket_event.get_out_cache().drain(size);    
                 }
@@ -111,11 +110,10 @@ impl EventMgr {
             println!("error!!!!!!!! net_msg.get_pack_len() = {:?}, net_msg.len() = {:?}", net_msg.get_pack_len(), net_msg.len());
             return false;
         }
-        println!("fd = {:?}", fd);
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
         if !self.connect_ids.contains_key(&fd) {
-            println!("send_netmsg ==== {:?}", fd);
+            println!("send_netmsg but connect_ids no exist ==== {:?}", fd);
             return false;
         }
 
@@ -248,7 +246,6 @@ impl EventMgr {
         let rpos = buffer.get_rpos();
         let mut length: u32 = unwrap_or!(decode_number(buffer, td_rp::TYPE_U32).ok(), return None)
                               .into();
-                              println!("length = {:?}", length);
         buffer.set_rpos(rpos);
         length = unsafe { ::std::cmp::min(length, read_data.len() as u32) };
         if buffer.len() - rpos < length as usize {

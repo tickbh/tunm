@@ -32,9 +32,9 @@ impl ServiceMgr {
                                flag: EventFlags,
                                data: *mut ())
                                -> i32 {
-        if flag.intersects(FLAG_READ) {
+        if flag.contains(FLAG_READ) {
             Self::read_callback(ev, fd, flag, data);
-        } else if flag.intersects(FLAG_WRITE) {
+        } else if flag.contains(FLAG_WRITE) {
             Self::write_callback(ev, fd, flag, data);
         }
         0
