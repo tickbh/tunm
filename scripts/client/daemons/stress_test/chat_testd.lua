@@ -16,7 +16,7 @@ end
 
 --毫秒
 function random_interval()
-    return math.random(1000, 5000)
+    return math.random(10000, 300000)
 end
 
 -- 模块的入口函数

@@ -22,7 +22,7 @@ local start_time              = 0
 local login_number            = 0
 
 MAX_MEMCORY = 1024
-TIME_LOGIN = 150
+TIME_LOGIN = 500
 
 
 -- 调试函数，看本模块的局部变量值

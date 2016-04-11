@@ -4,7 +4,9 @@ extern crate tdengine;
 
 extern crate td_proto_rust as td_rp;
 extern crate td_rthreadpool;
+extern crate td_revent;
 
+use td_revent::{EventLoop, EventEntry, EventFlags};
 use tdengine::{NetConfig, GlobalConfig, LuaEngine, register_custom_func, EventMgr, FileUtils, DbPool, RedisPool, TelnetUtils, LogUtils};
 
 use std::env;
@@ -55,6 +57,15 @@ fn main() {
     register_custom_func(lua);
     let _ : Option<()> = LuaEngine::instance().get_lua().exec_string(format!("require '{:?}'", global_config.start_lua));
     EventMgr::instance().add_lua_excute();
+
+
+    //timer check server status, example db connect is idle 
+    fn check_server_status(_ : &mut EventLoop, _ : u32, _ : EventFlags, _ : *mut ()) -> i32 {
+        DbPool::instance().check_connect_timeout();
+        0
+    }
+    EventMgr::instance().get_event_loop().add_timer(EventEntry::new_timer(5 * 60 * 1000_000, true, Some(check_server_status), None)); 
+
     let _ = EventMgr::instance().get_event_loop().run();
 
     println!("Finish Server!");

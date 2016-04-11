@@ -40,6 +40,10 @@ local function logic_connect_callback(agent, arg)
     end
     agent:set_server_type(SERVER_TYPE_GATE)
     connect_agent = agent
+
+    -- for i=1,10000 do
+    --     agent:send_message(LOSE_CLIENT, 0);
+    -- end
     
     trace("logic_connect_callback success fd is %o", connect_agent)
 end

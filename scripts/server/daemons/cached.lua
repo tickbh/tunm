@@ -3,6 +3,8 @@
 -- 缓存数据获取，一切非自己的数据取皆为异步
 module("CACHE_D", package.seeall)
 
+ENABLE_REDIS_CACHE = false
+
 cache_data = {}
 
 cookie_map = {}
@@ -27,7 +29,7 @@ function set_cache_data(rid, data)
     data.is_db = nil
     
     cache_data[rid] = {store = os.time(), data=dup(data)}
-    if need_cache then
+    if need_cache and ENABLE_REDIS_CACHE then
         USER_REDISD.cache_data_to_db(rid, data)
     end
 end
@@ -91,8 +93,13 @@ function get_user_data(rid, callback, callback_arg)
         callback_arg = callback_arg,
     }
     cookie_map[rid] = record
-    local timer_id = set_timer(1000, redis_timer, rid, false)
-    timer_map[rid] = {timer_id = timer_id, callback = load_user_callback}
-    USER_REDISD.load_data_from_db(rid, load_user_callback)
+    if ENABLE_REDIS_CACHE then
+        local timer_id = set_timer(1000, redis_timer, rid, false)
+        timer_map[rid] = {timer_id = timer_id, callback = load_user_callback}
+        USER_REDISD.load_data_from_db(rid, load_user_callback)
+    else
+        USER_DBD.load_data_from_db(rid, load_user_callback)
+    end
+
     return
 end

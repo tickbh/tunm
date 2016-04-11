@@ -5,7 +5,7 @@ use {NetResult, NetMsg, NetConfig, ErrorKind};
 
 use td_rp::{self, Value, encode_proto};
 
-use time::Timespec;
+use time::{self, Timespec};
 use mysql;
 use mysql::{Conn, Result as MyResult, QueryResult};
 
@@ -19,6 +19,7 @@ pub struct DbMysql {
     pub affected_rows: u64,
     pub error: Option<mysql::Error>,
     pub is_connect: bool,
+    pub last_use_time : f64,
 }
 
 impl DbMysql {
@@ -29,6 +30,7 @@ impl DbMysql {
             affected_rows: 0,
             error: None,
             is_connect: true,
+            last_use_time: time::precise_time_s(),
         }
     }
 
@@ -54,6 +56,7 @@ impl DbMysql {
         }
         Ok(())
     }
+
 }
 
 

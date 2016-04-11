@@ -226,9 +226,6 @@ end
 
 -- 析构agent并写日志
 function AGENT_CLASS:destruct_not_verify()
-    if SERVER_TYPE == "gs" and self:is_user() then
-    end
-
     destruct_object(self);
 end
 
@@ -262,7 +259,7 @@ function AGENT_CLASS:set_port_no(port_no)
 
         if type(self.authed) ~= "boolean" or not self.authed then
             -- 该 agent 未验证，则设置超时析构
-            self.timer_id = set_timer(10000, self.destruct_not_verify, self);
+            self.timer_id = set_timer(60000, self.destruct_not_verify, self);
         end
     end
 
