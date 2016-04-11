@@ -1,9 +1,12 @@
 use std::path::Path;
+use std::collections::HashMap;
+
 use time;
 use crypto;
 use libc;
 use td_rlua::{self, Lua, lua_State, LuaPush, LuaRead};
 use {FileUtils, NetConfig, TelnetUtils, CommandMgr, LogUtils};
+use sys_info;
 
 static ENCODE_MAP: &'static [u8; 32] = b"0123456789ACDEFGHJKLMNPQRSTUWXYZ";
 
@@ -130,6 +133,75 @@ fn start_command_input() {
     CommandMgr::start_command_input();
 }
 
+fn system_cpu_num() -> u32 {
+    sys_info::cpu_num().ok().unwrap_or(0) 
+}
+
+fn system_cpu_speed() -> u32 {
+    sys_info::cpu_speed().ok().unwrap_or(0) as u32
+}
+
+fn system_os_type() -> String {
+    sys_info::os_type().ok().unwrap_or(String::new())
+}
+
+fn system_os_release() -> String {
+    sys_info::os_release().ok().unwrap_or(String::new())
+}
+
+fn system_proc_total() -> u32 {
+    sys_info::proc_total().ok().unwrap_or(0) as u32
+}
+
+fn system_loadavg() -> HashMap<String, f32> {
+    let mut map = HashMap::new();
+    if let Some(avg) = sys_info::loadavg().ok() {
+        map.insert("one".to_string(), avg.one as f32);
+        map.insert("five".to_string(), avg.five as f32);
+        map.insert("fifteen".to_string(), avg.fifteen as f32);
+    } else {
+        map.insert("one".to_string(), 0 as f32);
+        map.insert("five".to_string(), 0 as f32);
+        map.insert("fifteen".to_string(), 0 as f32);
+    }
+    map
+}
+
+fn system_disk_info() -> HashMap<String, u32> {
+    let mut map = HashMap::new();
+    if let Some(avg) = sys_info::disk_info().ok() {
+        map.insert("total".to_string(), avg.total as u32);
+        map.insert("free".to_string(), avg.free as u32);
+    } else {
+        map.insert("total".to_string(), 0 as u32);
+        map.insert("free".to_string(), 0 as u32);
+    }
+    map
+}
+
+fn system_mem_info() -> HashMap<String, u32> {
+    let mut map = HashMap::new();
+    if let Some(men) = sys_info::mem_info().ok() {
+        map.insert("total".to_string(), men.total as u32);
+        map.insert("free".to_string(), men.free as u32);
+        map.insert("avail".to_string(), men.avail as u32);
+        map.insert("buffers".to_string(), men.buffers as u32);
+        map.insert("cached".to_string(), men.cached as u32);
+        map.insert("swap_total".to_string(), men.swap_total as u32);
+        map.insert("swap_free".to_string(), men.swap_free as u32);
+    } else {
+        map.insert("total".to_string(), 0 as u32);
+        map.insert("free".to_string(), 0 as u32);
+        map.insert("avail".to_string(), 0 as u32);
+        map.insert("buffers".to_string(), 0 as u32);
+        map.insert("cached".to_string(), 0 as u32);
+        map.insert("swap_total".to_string(), 0 as u32);
+        map.insert("swap_free".to_string(), 0 as u32);
+    }
+    map
+}
+
+
 pub fn register_util_func(lua: &mut Lua) {
     lua.set("lua_print", td_rlua::function1(lua_print));
     lua.set("write_log", td_rlua::function1(write_log));
@@ -143,5 +215,13 @@ pub fn register_util_func(lua: &mut Lua) {
     lua.set("calc_str_md5", td_rlua::function1(calc_str_md5));
     lua.set("start_command_input",
             td_rlua::function0(start_command_input));
+    lua.set("system_cpu_num", td_rlua::function0(system_cpu_num));
+    lua.set("system_cpu_speed", td_rlua::function0(system_cpu_speed));
+    lua.set("system_os_type", td_rlua::function0(system_os_type));
+    lua.set("system_os_release", td_rlua::function0(system_os_release));
+    lua.set("system_proc_total", td_rlua::function0(system_proc_total));
+    lua.set("system_loadavg", td_rlua::function0(system_loadavg));
+    lua.set("system_disk_info", td_rlua::function0(system_disk_info));
+    lua.set("system_mem_info", td_rlua::function0(system_mem_info));
 
 }

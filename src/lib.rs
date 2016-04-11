@@ -4,6 +4,7 @@ extern crate crypto;
 extern crate rustc_serialize;
 extern crate mysql;
 extern crate tiny_http;
+extern crate sys_info;
 
 extern crate td_rlua;
 extern crate td_proto_rust as td_rp;
