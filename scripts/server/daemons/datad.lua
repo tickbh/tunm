@@ -57,12 +57,15 @@ function get_db_name( table_name )
     return tinfo["db"];
 end
 
-function generate_field_map(tablejson)
+function generate_field_map(tablejson, field_table)
     local result = {};
     for _ , value in ipairs(tablejson["fields"]) do
         if value["key"] ~= "index" then
             if value["key"] == "PRI" or value["key"] == "UNI" then
                 value["nullable"] = 0
+            end
+            if field_table[value["field"]] then
+                value["pre_field"] = field_table[value["field"]]
             end
             result[value["field"]] = value;
         end
@@ -97,11 +100,23 @@ function load_database( path )
     for database_name, tablearray in pairs(json_table) do
         database_name = database_name .. (DB_SUFFIX or "")
         db_infos[database_name] = db_infos[database_name] or {}
+
         for _,tablejson in ipairs(tablearray) do
+            local pre_field = nil
+            local field_order = {}
+            local field_table = {}
+            for _ , value in ipairs(tablejson["fields"]) do
+                if value["field"] then
+                    table.insert(field_order, value["field"])
+                    field_table[value["field"]] = pre_field
+                    pre_field = value["field"]
+                end 
+            end
             local table_value = tablejson;
             table_value["db"] = database_name;
-            table_value["field_map"] = generate_field_map(tablejson);
+            table_value["field_map"] = generate_field_map(tablejson, field_table);
             table_value["index_map"] = generate_index_map(tablejson);
+            table_value["field_order"] = field_order;
             table_infos[table_value["name"]] = table_value;
             db_infos[database_name][table_value["name"]] = table_value
         end
@@ -121,7 +136,7 @@ function is_database_exist(dbname)
             end
         end
     end
-    return false
+    return false 
 end
 
 function ensure_exist_database(dbname)
@@ -221,21 +236,21 @@ function is_default_change(default_config, default_db)
     return default_db ~= default_config
 end
 
-function calc_diff_table(table_config, table_in_db)
+function calc_diff_table(tinfo, table_in_db)
     local need_add_cloumn = {}
     local need_modify_cloumn = {}
     local need_del_cloumn = {}
-
-    for field, value in pairs(table_config) do
+    local table_field_order, table_config = tinfo["field_order"], tinfo["field_map"]
+    for _, field in ipairs(table_field_order) do
+        local value = table_config[field]
         local db_value = table_in_db[field]
         if not db_value then
-            need_add_cloumn[field] = value
+            table.insert(need_add_cloumn, value)
         else
             if db_value["type"] ~= value["type"]
              or is_nullable_change(value["nullable"], db_value["nullable"])
              or is_default_change(value["default"], db_value["default"]) then
-                trace("modify db_value is %o, value %o", db_value, value)
-                need_modify_cloumn[field] = value
+                table.insert(need_modify_cloumn, value)
             end
         end
     end
@@ -243,7 +258,7 @@ function calc_diff_table(table_config, table_in_db)
     for field, value in pairs(table_in_db) do
         local config_value = table_config[field]
         if not config_value then
-            need_del_cloumn[field] = value
+            table.insert(need_del_cloumn, value)
         end
     end
 
@@ -255,12 +270,12 @@ function check_table_right(tinfo)
     local tablename = tinfo["name"]
     local table_struct = DB_D.get_table(tablename, dbname)
     local table_convert = DB_D.convert_table_info(table_struct)
-    local need_add_cloumn, need_modify_cloumn, need_del_cloumn = calc_diff_table(tinfo["field_map"], table_convert)
-    for filed,value in pairs(need_add_cloumn) do
+    local need_add_cloumn, need_modify_cloumn, need_del_cloumn = calc_diff_table(tinfo, table_convert)
+    for _,value in ipairs(need_add_cloumn) do
         DB_D.add_cloumn(dbname, tablename, value)
     end
 
-    for filed,value in pairs(need_modify_cloumn) do
+    for _,value in ipairs(need_modify_cloumn) do
         local confirm = true
         if value["field"] ~= test_cloumn then
             trace("sql_cmd dbname  is %o, modify tablename is %o is %o, 确认执行(Y/N)", dbname, tablename, value)
@@ -276,7 +291,7 @@ function check_table_right(tinfo)
         end
     end
 
-    for filed,value in pairs(need_del_cloumn) do
+    for _,value in ipairs(need_del_cloumn) do
         local confirm = true
         if value["field"] ~= test_cloumn then
             trace("sql_cmd dbname  is %o, delete  tablename is %o is %o, 确认执行(Y/N)", dbname, tablename, value)

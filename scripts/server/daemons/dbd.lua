@@ -350,6 +350,15 @@ function gen_cloumn_ext(cloumn)
     return sql
 end
 
+function gen_cloumn_after(cloumn)
+    local sql = ""
+    if cloumn["pre_field"] and sizeof(cloumn["pre_field"]) > 0 then
+        sql = sql .. string.format(" AFTER `%s` ", cloumn["pre_field"])
+    end
+    return sql
+end
+
+
 function gen_unique_ext(cloumn)
     if not cloumn["key"] then
         return ""
@@ -384,6 +393,7 @@ end
 function add_cloumn(db_name, table_name, cloumn)
     local sql = string.format("ALTER TABLE `%s` ADD COLUMN `%s` %s", table_name, cloumn["field"], cloumn["type"])
     sql = sql .. gen_cloumn_ext(cloumn)
+    sql = sql .. gen_cloumn_after(cloumn)
     trace("add_cloumn sql is %o", sql)
     return lua_sync_select(db_name, sql)
 end
