@@ -14,7 +14,7 @@ update("global/base/load_folder");
 
 local function main()
     load_folder("global/include");
-    load_folder("global/base");
+    load_folder("global/base", "util");
     load_folder("global/inherit");
     load_folder("global/daemons", "importd:dbd:sqld:datad");
     load_folder("global/clone");

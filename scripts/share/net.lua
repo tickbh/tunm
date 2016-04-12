@@ -19,7 +19,6 @@ MSG_SALE_OBJECT             = "msg_sale_object"
 MSG_PROPERTY_DELETE         = "msg_property_delete"
 CMD_CHAT                    = "cmd_chat"
 MSG_CHAT                    = "msg_chat"
-
-
+MSG_WAIT_QUEUE_NUMBER       = "msg_wait_queue_number"
 
 MSG_DB_RESULT               = "msg_db_result"

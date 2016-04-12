@@ -1,5 +1,5 @@
 -- global_basic.lua
--- Created by xieyunfeng, 2011.7.21
+-- Created by wugd
 -- 维护基本对象
 
 --变量定义

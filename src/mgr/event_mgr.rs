@@ -120,6 +120,8 @@ impl EventMgr {
         let socket_event = self.connect_ids.get_mut(&fd).unwrap();
         let _ = socket_event.get_out_cache().write(net_msg.get_buffer().get_data());
 
+        println!("out_cache len = {:?}", socket_event.get_out_cache().len());
+
         self.event_loop.add_event(EventEntry::new(fd as u32,
                                              FLAG_WRITE,
                                              Some(Self::write_callback),

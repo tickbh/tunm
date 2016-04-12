@@ -20,6 +20,7 @@ function new_client_init(agent, port, data, ext)
     client_agent:set_all_port_no(port, agent:get_port_no())
     client_agent:set_client_ip(ext["client_ip"])
     client_agent:set_server_type(SERVER_TYPE_CLIENT)
+    client_agent:set_authed(true)
 end
 
 --获取用户列表

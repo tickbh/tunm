@@ -45,9 +45,15 @@ local function check_account_callback(login_info, ret, result_list)
             end
         end
     end
-    
-    -- -- 旧角色登录
-    ACCOUNT_D.login(login_info["agent"], data["rid"], result_list[1]);
+
+    IS_LOGIN_QUEUE_OPEN = true
+    if IS_LOGIN_QUEUE_OPEN then
+        -- 执行登录排队处理
+        LOGIN_QUEUE_D.cache_login(login_info["agent"], data["rid"], result_list[1], ACCOUNT_D.login);
+    else
+        -- 调用模块进行登录处理
+        ACCOUNT_D.login(login_info["agent"], data["rid"], result_list[1]);
+    end
 end
 
 -- 玩家登录验证

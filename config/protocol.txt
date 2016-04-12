@@ -122,6 +122,7 @@
         "msg_property_delete"          : { "msg_type" :    "client", "args" : [ "str[]" ] },
         "cmd_chat"                     : { "msg_type" :    "logic",  "args" : [ "i8", "map" ] },
         "msg_chat"                     : { "msg_type" :    "client", "args" : [ "i8", "map" ] },
+        "msg_wait_queue_number"        : { "msg_type" :    "client", "args" : [ "u32" ] },
 
         "msg_db_result"                : { "msg_type" :    "server", "args" : [ "map[]" ] }
     }

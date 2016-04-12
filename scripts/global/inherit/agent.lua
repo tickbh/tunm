@@ -99,6 +99,14 @@ function AGENT_CLASS:get_port_no()
     return self.port_no;
 end
 
+function AGENT_CLASS:get_uni_port_no()
+    if self.fport_no == -1 then
+        return self.port_no
+    else
+        return self.fport_no
+    end
+end
+
 -- 取得该 agent 是否通过验证
 function AGENT_CLASS:is_authed()
     return self.authed;
@@ -267,7 +275,7 @@ end
 
 -- 判断agent是否有效
 function AGENT_CLASS:is_valid()
-    if self.port_no == -1 or not is_port_valid(self.port_no) then
+    if self.port_no == -1 then
         return false;
     end
 

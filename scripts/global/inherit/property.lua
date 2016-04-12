@@ -1,5 +1,5 @@
 -- property.lua
--- Created by yaxixi, 2011.7.26
+-- Created by wugd
 -- 物件基类
 
 -- 创建类模板
