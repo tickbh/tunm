@@ -10,10 +10,27 @@ local cpu_num = 0
 local cpu_speed = 0
 local os_type = ""
 local os_release = ""
+--{ "one", "five", "fifteen" }
 local load_avg = {}
 local proc_total = 0
+--{ "total", "free", "avail", "buffers", "cached", "swap_total", "swap_free" }
 local mem_info = {}
+--{ "total", "free" }
 local disk_info = {}
+
+function get_cpu_ratio_avg()
+    return (load_avg["one"] or 0.1) * 100
+end
+
+function get_memory_use_ratio()
+    mem_info["total"] = mem_info["total"] or 1
+    mem_info["free"] = mem_info["free"] or 1
+    if mem_info["total"] == 0 then
+        trace("memory get error")
+        return 0
+    end
+    return mem_info["free"] / mem_info["total"] * 100
+end
 
 function reload_mem_loadavg()
     load_avg = system_loadavg()
@@ -30,8 +47,6 @@ local function create()
 
     reload_mem_loadavg()
     set_timer(1000 * 60, reload_mem_loadavg, nil, true)
-
-    trace("SYSTEM_D !!!! %o", {cpu_num, cpu_speed, os_type, os_release, load_avg, proc_total, mem_info, disk_info})
 end
 
 create()

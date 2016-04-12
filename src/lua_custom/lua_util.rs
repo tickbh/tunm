@@ -11,14 +11,16 @@ use sys_info;
 static ENCODE_MAP: &'static [u8; 32] = b"0123456789ACDEFGHJKLMNPQRSTUWXYZ";
 
 
-fn lua_print(val: String) {
-    LogUtils::instance().append(&*val);
+fn lua_print(method : u8, val: String) {
+    if method == 1 || method == 2 {
+        LogUtils::instance().append(method, &*val);    
+    }
     println!("{}", val);
     TelnetUtils::instance().new_message(val);
 }
 
-fn write_log(_val: String) {
-    // println!("{}", val);
+fn write_log(method : u8, val: String) {
+    LogUtils::instance().append(method, &*val);
 }
 
 fn get_rid(server_id: u16, flag: Option<u8>) -> [u8; 12] {
@@ -203,8 +205,8 @@ fn system_mem_info() -> HashMap<String, u32> {
 
 
 pub fn register_util_func(lua: &mut Lua) {
-    lua.set("lua_print", td_rlua::function1(lua_print));
-    lua.set("write_log", td_rlua::function1(write_log));
+    lua.set("lua_print", td_rlua::function2(lua_print));
+    lua.set("write_log", td_rlua::function2(write_log));
     lua.register("get_next_rid", get_next_rid);
     lua.set("get_full_path", td_rlua::function1(get_full_path));
     lua.set("get_file_str", td_rlua::function1(get_file_str));

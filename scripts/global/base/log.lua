@@ -10,8 +10,6 @@ LOG_INFO = 3
 LOG_DEBUG = 4
 LOG_TRACE = 5
 
-lua_print = _G.tel_print
-
 local function format(value, ...)
     local a = {...}
     local i = 0
@@ -46,7 +44,6 @@ function err(value, ...)
 
     value = format(value, ...)
     lua_print(value)
-    write_log(value)
 end
 
 function warn(value, ...)
@@ -55,7 +52,7 @@ function warn(value, ...)
     end
 
     value = format(value, ...)
-    lua_print(value)
+    lua_print(LOG_WARN, value)
 end
 
 function info(value, ...)
@@ -64,7 +61,7 @@ function info(value, ...)
     end
 
     value = format(value, ...)
-    lua_print(value)
+    lua_print(LOG_INFO, value)
 end
 
 function debug(value, ...)
@@ -73,21 +70,17 @@ function debug(value, ...)
     end
 
     value = format(value, ...)
-    lua_print(value)
+    lua_print(LOG_DEBUG, value)
 end
 
 function trace(value, ...)
-    -- if get_log_level() < LOG_TRACE then
-    --     return
-    -- end
+    if get_log_level() < LOG_TRACE then
+        return
+    end
 
     value = format(value, ...)
-    lua_print(value)
-    write_log(value)
-end
-
-if print then
-    print = trace
+    lua_print(LOG_TRACE, value)
+    write_log(LOG_TRACE, value)
 end
 
 if _G.trace then

@@ -104,10 +104,10 @@ impl LogUtils {
         self.get_can_use_filename(filename)
     }
 
-    pub fn append(&mut self, log: &str) {
+    pub fn append(&mut self, method : u8, log: &str) {
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
-        self.append_unlock(log);
+        self.append_unlock(method, log);
     }
 
     pub fn write_bytes(&mut self, bytes: &[u8]) {
@@ -126,7 +126,19 @@ impl LogUtils {
         self.cur_file_size += self.date_cache.as_bytes().len();
     }
 
-    pub fn append_unlock(&mut self, log: &str) {
+    pub fn write_log_method(&mut self, method : u8) {
+        let ret = match method {
+            1 => "[error] ",
+            2 => "[warn!] ",
+            3 => "[info!] ",
+            4 => "[debug] ",
+            _ => "[trace] ",
+        };
+        let _ = self.file.as_ref().unwrap().write(ret.as_bytes());
+        self.cur_file_size += ret.as_bytes().len();
+    }
+
+    pub fn append_unlock(&mut self, method : u8, log: &str) {
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
         if self.file.is_none() {
@@ -136,7 +148,7 @@ impl LogUtils {
         if now != self.cache_time {
             self.cache_time = now;
             let tm = time::now();
-            self.date_cache = format!("{:4}-{:2}-{:2}_{:2}:{:2}:{:2}",
+            self.date_cache = format!("[{:4}-{:02}-{:02} {:02}:{:02}:{:02}] ",
                                       tm.tm_year + 1900,
                                       tm.tm_mon + 1,
                                       tm.tm_mday,
@@ -144,7 +156,8 @@ impl LogUtils {
                                       tm.tm_min,
                                       tm.tm_sec);
         }
-        // self.write_bytes(self.date_cache.as_bytes());
+        self.write_date();
+        self.write_log_method(method);
         self.write_bytes(log.as_bytes());
         self.write_bytes(b"\r\n");
         self.check_file_status();
