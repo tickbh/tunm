@@ -11,6 +11,12 @@ use FileUtils;
 
 const KEEP_ROLE_SECOND: u64 = 60 * 60 * 24;
 
+pub const LOG_ERROR: u8 = 1;
+pub const LOG_WARN:  u8 = 2;
+pub const LOG_INFO:  u8 = 3;
+pub const LOG_DEBUG: u8 = 4;
+pub const LOG_TRACE: u8 = 5;
+
 pub struct LogUtils {
     file: Option<File>,
     mutex: Arc<ReentrantMutex<i32>>,
@@ -128,11 +134,11 @@ impl LogUtils {
 
     pub fn write_log_method(&mut self, method : u8) {
         let ret = match method {
-            1 => "[error] ",
-            2 => "[warn!] ",
-            3 => "[info!] ",
-            4 => "[debug] ",
-            _ => "[trace] ",
+            LOG_ERROR => "[error] ",
+            LOG_WARN  => "[warn!] ",
+            LOG_INFO  => "[info!] ",
+            LOG_DEBUG => "[debug] ",
+            LOG_TRACE | _ => "[trace] ",
         };
         let _ = self.file.as_ref().unwrap().write(ret.as_bytes());
         self.cur_file_size += ret.as_bytes().len();

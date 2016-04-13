@@ -29,7 +29,7 @@ mod mgr;
 pub use global_config::GlobalConfig;
 pub use db::{DbTrait, DbMysql, DbPool, PoolTrait, RedisPool};
 pub use values::{ErrorKind, NetResult, make_extension_error};
-pub use utils::{FileUtils, ThreadUtils, NetUtils, TelnetUtils, LogUtils};
+pub use utils::{FileUtils, ThreadUtils, NetUtils, TelnetUtils, LogUtils, log_utils};
 pub use rp_wrapper::{LuaWrapperValue, LuaWrapperVecValue, LuaWrapperTableValue};
 pub use redis_wrapper::{RedisWrapperResult, RedisWrapperCmd, RedisWrapperMsg,
                         RedisWrapperStringVec};

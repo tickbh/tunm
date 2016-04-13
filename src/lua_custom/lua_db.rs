@@ -6,7 +6,7 @@ use libc;
 use {DbTrait, DbMysql, DbPool, PoolTrait, RedisPool};
 use {LuaEngine, NetMsg, NetConfig, LuaWrapperTableValue, RedisWrapperCmd, RedisWrapperResult,
      RedisWrapperMsg, RedisWrapperStringVec};
-use ThreadUtils;
+use {ThreadUtils, LogUtils, log_utils};
 
 static MYSQL_POOL_NAME: &'static str = "mysql";
 static REDIS_POOL_NAME: &'static str = "redis";
@@ -28,6 +28,10 @@ fn thread_db_select(db_name: &String, _db_type: u8, sql_cmd: &str, cookie: u32) 
     if cookie != 0 {
         LuaEngine::instance().apply_db_result(cookie, ret, mysql.get_error_str(), Some(net_msg));
     }
+    // record sql error
+    if ret != 0 {
+        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql:{:?} --- error:{:?}", sql_cmd, mysql.get_error_str())[..]);
+    }
     DbMysql::release_db_trait(pool, db_name, mysql);
 }
 
@@ -45,6 +49,10 @@ fn thread_db_execute(db_name: &String, _db_type: u8, sql_cmd: &str, cookie: u32)
     let ret = unwrap_or!(result.ok(), mysql.get_error_code());
     if cookie != 0 {
         LuaEngine::instance().apply_db_result(cookie, ret, mysql.get_error_str(), None);
+    }
+    // record sql error
+    if ret != 0 {
+        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql:{:?} --- error:{:?}", sql_cmd, mysql.get_error_str())[..]);
     }
     DbMysql::release_db_trait(pool, db_name, mysql);
 }
@@ -66,6 +74,10 @@ fn thread_db_insert(db_name: &String, _db_type: u8, sql_cmd: &str, cookie: u32) 
     if cookie != 0 {
         LuaEngine::instance().apply_db_result(cookie, ret, mysql.get_error_str(), Some(net_msg));
     }
+    // record sql error
+    if ret != 0 {
+        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql:{:?} --- error:{:?}", sql_cmd, mysql.get_error_str())[..]);
+    }
     DbMysql::release_db_trait(pool, db_name, mysql);
 }
 
@@ -83,7 +95,7 @@ fn thread_db_transaction(db_name: &String, _db_type: u8, sql_cmd_list: Vec<Strin
     let mut ret = 0;
     let _ = mysql.begin_transaction();
 
-    for sql_cmd in sql_cmd_list {
+    for sql_cmd in &sql_cmd_list {
         ret = unwrap_or!(mysql.execute(&*sql_cmd).ok(), {
             failed = true;
             break;
@@ -101,6 +113,10 @@ fn thread_db_transaction(db_name: &String, _db_type: u8, sql_cmd_list: Vec<Strin
 
     if cookie != 0 {
         LuaEngine::instance().apply_db_result(cookie, ret, mysql.get_error_str(), None);
+    }
+    // record sql error
+    if ret != 0 {
+        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql_list:{:?} --- error:{:?}", sql_cmd_list, mysql.get_error_str())[..]);
     }
     DbMysql::release_db_trait(pool, db_name, mysql);
 }
@@ -137,6 +153,10 @@ fn thread_db_batch_execute(db_name: &String,
     }
     if cookie != 0 {
         LuaEngine::instance().apply_db_result(cookie, ret, Some(err_msg), None);
+    }
+    // record sql error
+    if ret != 0 {
+        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql_list:{:?} --- error:{:?}", sql_cmd_list, mysql.get_error_str())[..]);
     }
     DbMysql::release_db_trait(pool, db_name, mysql);
 }
@@ -191,6 +211,10 @@ extern "C" fn db_select_sync(lua: *mut td_rlua::lua_State) -> libc::c_int {
     } else {
         unwrap_or!(mysql.get_error_str(), "unknown error".to_string()).push_to_lua(lua);
     }
+    // record sql error
+    if ret != 0 {
+        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql:{:?} --- error:{:?}", sql_cmd, mysql.get_error_str())[..]);
+    }
     DbMysql::release_db_trait(pool, &db_name, mysql);
     2
 }
@@ -217,6 +241,10 @@ extern "C" fn db_insert_sync(lua: *mut td_rlua::lua_State) -> libc::c_int {
         (mysql.get_last_insert_id() as u32).push_to_lua(lua);
     } else {
         unwrap_or!(mysql.get_error_str(), "unknown error".to_string()).push_to_lua(lua);
+    }
+    // record sql error
+    if ret != 0 {
+        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql:{:?} --- error:{:?}", sql_cmd, mysql.get_error_str())[..]);
     }
     DbMysql::release_db_trait(pool, &db_name, mysql);
     2
