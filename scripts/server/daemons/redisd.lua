@@ -93,6 +93,10 @@ function run_command(...)
     redis_run_command(0, ...)
 end
 
+function run_publish(...)
+    redis_run_command(0, "PUBLISH", ...)
+end
+
 -- 通知操作结果
 function notify_operation_result(cookie, value)
     -- 若不在 cookie_map 中，则认为该通知非法

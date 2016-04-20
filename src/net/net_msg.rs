@@ -10,6 +10,7 @@ pub struct NetMsg {
     buffer: Buffer,
     seq_fd: u16,
     length: u32,
+    cookie: u32,
     pack_name: String,
 }
 
@@ -20,6 +21,7 @@ impl NetMsg {
         NetMsg {
             seq_fd: 0u16,
             length: buffer.len() as u32,
+            cookie: 0u32,
             buffer: buffer,
             pack_name: String::new(),
         }
@@ -37,6 +39,7 @@ impl NetMsg {
         let _ = buffer.write(&data);
         let length: u32 = try!(decode_number(&mut buffer, td_rp::TYPE_U32)).into();
         let seq_fd: u16 = try!(decode_number(&mut buffer, td_rp::TYPE_U16)).into();
+        let cookie: u32 = try!(decode_number(&mut buffer, td_rp::TYPE_U32)).into();
         if data.len() != length as usize {
             println!("data.len() = {:?}, length = {:?}", data.len(), length);
             return Err(make_extension_error("data length not match", None));
@@ -47,6 +50,7 @@ impl NetMsg {
         Ok(NetMsg {
             seq_fd: seq_fd,
             length: length,
+            cookie: cookie,
             buffer: buffer,
             pack_name: pack_name,
         })
@@ -59,6 +63,7 @@ impl NetMsg {
         self.buffer.set_wpos(0);
         let _ = encode_number(&mut self.buffer, &Value::U32(self.length));
         let _ = encode_number(&mut self.buffer, &Value::U16(self.seq_fd));
+        let _ = encode_number(&mut self.buffer, &Value::U32(self.cookie));
         self.buffer.set_wpos(wpos);
     }
 
@@ -120,6 +125,18 @@ impl NetMsg {
 
     pub fn get_seq_fd(&self) -> u16 {
         self.seq_fd
+    }
+
+    pub fn set_cookie(&mut self, cookie: u32) {
+        self.cookie = cookie;
+        let wpos = self.buffer.get_wpos();
+        self.buffer.set_wpos(6);
+        let _ = encode_number(&mut self.buffer, &Value::U32(self.cookie));
+        self.buffer.set_wpos(wpos);
+    }
+
+    pub fn get_cookie(&self) -> u32 {
+        self.cookie
     }
 
     pub fn get_pack_name(&self) -> &String {

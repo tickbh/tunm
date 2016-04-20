@@ -51,6 +51,16 @@ extern "C" fn msg_to_table(lua: *mut td_rlua::lua_State) -> libc::c_int {
     }
 }
 
+extern "C" fn get_data(lua: *mut td_rlua::lua_State) -> libc::c_int {
+    let net_msg: &mut NetMsg = unwrap_or!(LuaRead::lua_read_at_position(lua, 1), return 0);
+    unsafe {
+        let val = net_msg.get_buffer().get_data();
+        td_rlua::lua_pushlstring(lua, val.as_ptr() as *const libc::c_char, val.len());
+    }
+    return 1;
+}
+
+
 fn register_netmsg_func(lua: &mut Lua) {
     let mut value = LuaStruct::<NetMsg>::new_light(lua.state());
     value.create().def("end_msg", td_rlua::function2(NetMsg::end_msg));
@@ -64,8 +74,17 @@ fn register_netmsg_func(lua: &mut Lua) {
                        }));
     value.create().def("get_seq_fd",
                        td_rlua::function1(|net_msg: &mut NetMsg| -> u16 { net_msg.get_seq_fd() }));
+
+    value.create().def("set_cookie",
+                       td_rlua::function2(|net_msg: &mut NetMsg, cookie: u32| {
+                           net_msg.set_cookie(cookie);
+                       }));
+    value.create().def("get_cookie",
+                       td_rlua::function1(|net_msg: &mut NetMsg| -> u32 { net_msg.get_cookie() }));
+
     value.create().def("set_read_data", td_rlua::function1(NetMsg::set_read_data));
     value.create().register("msg_to_table", msg_to_table);
+    value.create().register("get_data", get_data);
 }
 
 pub fn register_userdata_func(lua: &mut Lua) {

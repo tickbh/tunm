@@ -23,7 +23,7 @@ and then modify config/Gate_GlobalConfig.conf and config/Client_GlobalConfig.con
 Run these in different console
 
 ```
-cargo run --example serveres    # Launch first tdengine node  (Gate server) (default as the standalone option)
+cargo run --example server    # Launch first tdengine node  (Gate server) (default as the standalone option)
 cargo run --example client    # Launch a client to connect server
 ```
 
