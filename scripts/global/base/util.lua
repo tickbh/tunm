@@ -125,8 +125,9 @@ end
 function assert(e, msg)
     if not e then
         local err = string.format("Assert Failed: %s\n", tostring(msg));
-        trace(err);
-        traceback(true);
+        error(err)
+        -- trace(err);
+        -- traceback(true);
     end
 end
 

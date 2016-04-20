@@ -60,7 +60,52 @@ function notify_internal_result(cookie, ...)
 end
 
 -- 对指定的server_id进行广播消息
-function send_message(server_id, callback, arg, msg_no, ...)
+function send_room_message(room_name, callback, arg, msg_no, ...)
+
+    local record = {}
+    local msg
+    local msg_arg
+
+    --如果存在回调函数，则第三个或第四个是消息编号
+    if type(callback) == "function" then
+        record["callback"] = callback
+
+        --回调有参数，则第四个是消息编号
+        if type(arg) == "table" then
+            record["arg"] = arg
+            msg     = msg_no
+            msg_arg = {...}
+
+        --否则是第三个参数是消息编号
+        else
+            msg     = arg
+            msg_arg = {msg_no,...}
+        end
+    else
+        msg     = callback
+        msg_arg = {arg, msg_no, ...}
+    end
+
+    
+    --如果有回调函数，则产生一个cookie，默认cookie为该消息的第一个参数
+    if sizeof(record) ~= 0 then
+        local cookie = new_cookie()
+        record["begin_time"] = os.time()
+        cookie_map[tostring(cookie)] = record
+    end
+
+    local net_msg = pack_message(msg, unpack(msg_arg))
+    if not net_msg then
+        return
+    end
+
+    local channel = string.format(CREATE_ROOM_MSG_CHANNEL, room_name)
+    REDIS_D.run_publish(channel, net_msg:get_data())
+    del_message(net_msg)
+end
+
+-- 对指定的server_id进行广播消息
+function send_server_message(server_id, callback, arg, msg_no, ...)
 
     server_id = tonumber(server_id)
     local record = {}

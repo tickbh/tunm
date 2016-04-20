@@ -47,8 +47,13 @@ end
 
 --创建一个场景
 function create_room(roomdata)
-
-    local room = ROOM_CLASS.new(roomdata)
+    local room_class = _G[roomdata.room_class]
+    assert(room_class ~= nil, "场景配置必须存在")
+    local room = clone_object(room_class, roomdata)
+    trace("room name = %o", room:get_room_name())
+    trace("room name = %o", room:get_func_list("get_room_name"))
+    local room = DDZ_ROOM_CLASS.new(roomdata)
+    trace("room name = %o", room:get_room_name())
     room_list[room:get_room_name()] = room
 
     return room
@@ -144,7 +149,7 @@ end
 
 -- 模块的入口执行
 function create()
-    create_allroom("data/txt/room.txt")
+    -- create_allroom("data/txt/room.txt")
 end
 
 create()

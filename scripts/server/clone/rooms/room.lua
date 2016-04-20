@@ -15,6 +15,7 @@ function ROOM_CLASS:create(value)
 
     --创建存放该场景实体的弱表
     self.room_entity = {}
+    trace("ROOM_CLASS:create(value)")
 end
 
 -- 生成对象的唯一ID
@@ -107,6 +108,7 @@ end
 
 --获取场景编号
 function ROOM_CLASS:get_room_name()
+    trace("self.data = %o", self.data)
     return self.data["room_name"]
 end
 
