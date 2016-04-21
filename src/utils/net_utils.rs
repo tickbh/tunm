@@ -2,6 +2,7 @@ use td_rlua::{self, lua_State, LuaRead};
 use td_rp::*;
 use libc;
 use std::mem;
+use std::ptr;
 use std::collections::HashMap;
 pub struct NetUtils;
 
@@ -53,8 +54,12 @@ impl NetUtils {
                 if c_str_raw.is_null() {
                     return None;
                 }
-                let val: Vec<u8> = unsafe { Vec::from_raw_parts(c_str_raw as *mut u8, size, size) };
-                Some(Value::from(val))
+                let mut dst = Vec::with_capacity(size);
+                unsafe {
+                    dst.set_len(size);
+                    ptr::copy(c_str_raw as *mut u8, dst.as_mut_ptr(), size);
+                }
+                Some(Value::from(dst))
             }
             TYPE_MAP => {
                 let mut val: HashMap<String, Value> = HashMap::new();
