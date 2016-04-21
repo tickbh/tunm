@@ -15,7 +15,6 @@ function ROOM_CLASS:create(value)
 
     --创建存放该场景实体的弱表
     self.room_entity = {}
-    trace("ROOM_CLASS:create(value)")
 end
 
 -- 生成对象的唯一ID
@@ -108,7 +107,6 @@ end
 
 --获取场景编号
 function ROOM_CLASS:get_room_name()
-    trace("self.data = %o", self.data)
     return self.data["room_name"]
 end
 
@@ -142,4 +140,8 @@ function ROOM_CLASS:update_entity(rid, pkg_info)
 
         self.room_entity[rid]["packet"] = pkg_info
     end
+end
+
+function ROOM_CLASS:get_listen_channel()
+    return string.format(REDIS_ROOM_MSG_CHANNEL_USER, self:get_room_name())
 end

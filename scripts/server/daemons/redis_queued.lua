@@ -9,8 +9,21 @@ function deal_with_reply(reply)
     
     if reply.channel == REDIS_CHAT_CHANNEL_WORLD then
         CHAT_D.deal_with_new_chat(decode_json(reply.payload))
+    else
+        local room_name, user_rid = string.match(reply.channel, MATCH_ROOM_MSG_CHANNEL_USER)
+        trace("room_name = %o, user_rid = %o", room_name, user_rid)
+        if room_name and user_rid then
+            ROOM_D.dispatch_message(room_name, user_rid, reply.payload)
+            return
+        end
+        
+        local server_id, user_rid = string.match(reply.channel, MATCH_SERVER_MSG_USER)
+        trace("server_id = %o, user_rid = %o", server_id, user_rid)
+        if server_id and user_rid then
+
+        end
     end
-    -- trace("__ REDIS_QUEUED:deal_with_reply() __ is %o \n", reply)
+    trace("__ REDIS_QUEUED:deal_with_reply() __ is %o \n", reply)
 end
 
 function deal_with_respone_list(respone_list)

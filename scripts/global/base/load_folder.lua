@@ -27,7 +27,7 @@ function load_folder(path, arrange, ...)
                  s   = string.sub(arrange,linestart,e-1)
 
                 for k,v in pairs(table_file) do
-                    if string.find(v,'/'..s) or string.find(v,'\\'..s) then
+                    if string.find(v,'/'.. s .. ".lua") or string.find(v,'\\'.. s .. ".lua") then
                         update(v)
                         str[v] = true
                         table.remove(table_file,k)

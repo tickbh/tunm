@@ -123,6 +123,12 @@
         "cmd_chat"                     : { "msg_type" :    "logic",  "args" : [ "i8", "map" ] },
         "msg_chat"                     : { "msg_type" :    "client", "args" : [ "i8", "map" ] },
         "msg_wait_queue_number"        : { "msg_type" :    "client", "args" : [ "u32" ] },
+        "cmd_enter_room"               : { "msg_type" :    "logic",  "args" : [ "str", "map" ] },
+        "msg_enter_room"               : { "msg_type" :    "client", "args" : [ "str", "map" ] },
+        "cmd_leave_room"               : { "msg_type" :    "logic",  "args" : [ "str", "map" ] },
+        "msg_leave_room"               : { "msg_type" :    "client", "args" : [ "str", "map" ] },
+        "cmd_room_message"             : { "msg_type" :    "logic",  "args" : [ "str", "map" ] },
+        "msg_room_message"             : { "msg_type" :    "client", "args" : [ "str", "map" ] },
 
         "msg_db_result"                : { "msg_type" :    "server", "args" : [ "map[]" ] }
     }

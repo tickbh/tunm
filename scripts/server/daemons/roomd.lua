@@ -50,12 +50,9 @@ function create_room(roomdata)
     local room_class = _G[roomdata.room_class]
     assert(room_class ~= nil, "场景配置必须存在")
     local room = clone_object(room_class, roomdata)
-    trace("room name = %o", room:get_room_name())
-    trace("room name = %o", room:get_func_list("get_room_name"))
-    local room = DDZ_ROOM_CLASS.new(roomdata)
-    trace("room name = %o", room:get_room_name())
+    assert(room_list[room:get_room_name()] == nil, "重复配置房间")
     room_list[room:get_room_name()] = room
-
+    REDIS_D.add_subscribe_channel(room:get_listen_channel())
     return room
 end
 
@@ -147,9 +144,34 @@ function update_room_entity(room_name, rid, pkg_info)
     room:update_entity(rid, pkg_info)
 end
 
+function dispatch_message(room_name, user_rid, msg_buf)
+    local room = room_list[room_name]
+    if not is_object(room) then
+        LOG.err("房间'%s'信息不存在", room_name)
+        return
+    end
+    local net_msg = pack_raw_message(msg_buf)
+    if not net_msg then
+        LOG.err("发送给房间:'%s',用户:'%s',消息失败", room_name, user_rid)
+        return
+    end
+
+    local name, args = net_msg:msg_to_table()
+    if name and args then
+        --TODO
+    end
+    del_message(net_msg)
+end
+
+local function publish_room_detail()
+    trace("publish_room_detail!!!")
+end
+
 -- 模块的入口执行
 function create()
-    -- create_allroom("data/txt/room.txt")
+    create_allroom("data/txt/room.txt")
+
+    set_timer(60000, publish_room_detail, nil, true)
 end
 
 create()

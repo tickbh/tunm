@@ -4,71 +4,71 @@
 
 local _class={}
 
-local all_cloned_obs = {};
-setmetatable(all_cloned_obs, { __mode = "kv" });
+local all_cloned_obs = {}
+setmetatable(all_cloned_obs, { __mode = "kv" })
 
 -- 取得所有克隆的对象
 function get_all_cloned_obs()
-    return all_cloned_obs;
+    return all_cloned_obs
 end
 
 -- 取得所有已析构的对象
 function get_all_destructed_obs()
-    local list = {};
+    local list = {}
     for _, ob in pairs(all_cloned_obs) do
         if is_table(ob) and ob.destructed == true then
-            table.insert(list, ob);
+            table.insert(list, ob)
         end
     end
 
-    return list;
+    return list
 end
 
 function nil_func()
-    return nil;
+    return nil
 end
 
 -- 在 table plist 中查找 k
 local function search(k, plist)
     for i = 1, #plist do
         -- 尝试第 i 个基类
-        local v = _class[plist[i]][k];
+        local v = _class[plist[i]][k]
 
         -- 若基类中存在相关的值，则返回父类的值
         if v ~= nil_func then
-            return v;
+            return v
         end
     end
 
-    return;
+    return
 end
 
 function class(...)
-    local class_type={};
-    class_type.create=false;
-    class_type.destruct=false;
-    class_type.name = "";
-    class_type.super={...};
-    class_type.ob_list = {};
-    setmetatable(class_type.ob_list, { __mode = "v" });
+    local class_type={}
+    class_type.create=false
+    class_type.destruct=false
+    class_type.name = ""
+    class_type.super={...}
+    class_type.ob_list = {}
+    setmetatable(class_type.ob_list, { __mode = "v" })
 
     -- 类对象创建函数
     class_type.new=function(...)
         --trace("____class_type.new=function(...)_____")
-        local obj={ is_clone = true, destructed = false };
+        local obj={ is_clone = true, destructed = false }
 
         -- 这一句被我提前了，解决构造函数里不能调成员函数的问题
         -- 设置新对象的元表，其中的 index 元方法设置为一个父类方法查找表
-        setmetatable(obj,{ __index= _class[class_type] });
+        setmetatable(obj,{ __index= _class[class_type] })
 
         do
-            local _create;
+            local _create
 
             -- 创建对象时，依次调用父类的 create 函数
             _create = function(c,...)
                 if table.getn(c.super) > 0 then
                     for i, v in ipairs(c.super) do
-                        _create(v,...);
+                        _create(v,...)
                     end
                 end
                 if c.create then
@@ -80,106 +80,106 @@ function class(...)
         end
 
         -- 记录创建的类对象
-        class_type.ob_list[#class_type.ob_list + 1] = obj;
+        class_type.ob_list[#class_type.ob_list + 1] = obj
 
         -- 将对象加入弱表中，用于内存泄漏的检测
-        all_cloned_obs[#all_cloned_obs + 1] = obj;
+        all_cloned_obs[#all_cloned_obs + 1] = obj
         return obj
     end
 
     -- 取得类对象接口函数
     class_type.get_func_list=function(c)
-        local func_list = {};
-        local _find;
+        local func_list = {}
+        local _find
 
         _find = function(c, func_list)
             if table.getn(c.super) > 0 then
                 for i, v in pairs(c.super) do
-                    _find(v, func_list);
+                    _find(v, func_list)
                 end
             end
 
             if _class[c] then
                 for k, v in pairs(_class[c]) do
                     if v ~= nil_func then
-                        func_list[k] = v;
+                        func_list[k] = v
                     end
                 end
             end
 
-            func_list["is_clone"] = nil;
+            func_list["is_clone"] = nil
         end
 
-        _find(c, func_list);
+        _find(c, func_list)
 
-        return func_list;
+        return func_list
     end
 
     -- 创建一个父类方法的查找表
-    local vtbl = { };
+    local vtbl = { }
     _class[class_type]=vtbl
 
     -- 设置该类的 newindex 元方法
     setmetatable(class_type,{__newindex=
         function(t,k,v)
-            vtbl[k]=v;
+            vtbl[k]=v
         end
     })
 
     -- 类对象析构函数
     vtbl.destruct_object=function(obj)
         do
-            local _destruct;
+            local _destruct
 
             -- 析构对象时，依次调用父类的 destruct 函数
             _destruct = function(c)
                 if c.destruct then
-                    local status, e = pcall(c.destruct, obj);
+                    local status, e = pcall(c.destruct, obj)
                     if not status then
-                        error_handle(tostring(e));
-                        --[[trace("Error:");
-                        trace(tostring(e));
-                        traceback();    ]]
+                        error_handle(tostring(e))
+                        --[[trace("Error:")
+                        trace(tostring(e))
+                        traceback()    ]]
                     end
                 end
 
                 if table.getn(c.super) > 0 then
                     for i = #c.super, 1, -1 do
-                        _destruct(c.super[i]);
+                        _destruct(c.super[i])
                     end
                 end
             end
 
-            _destruct(class_type);
+            _destruct(class_type)
         end
     end
 
     -- 调用基类函数
     vtbl.base=function(obj, c, f, ...)
         -- 取得基类名+函数名的 key
-        local k = string.format("%s%s", c.name, f);
-        local ret = vtbl[k];
+        local k = string.format("%s%s", c.name, f)
+        local ret = vtbl[k]
 
         if ret ~= nil_func then
             -- 已存在该基类函数，直接调用
-            local a, b, c, d, e = ret(obj, ...);
-            return a, b, c, d, e;
+            local a, b, c, d, e = ret(obj, ...)
+            return a, b, c, d, e
         end
 
         -- 遍历基类，查找函数
         if table.getn(c.super) > 0 then
             for i = #c.super, 1, -1 do
-                ret = search(f, c.super);
+                ret = search(f, c.super)
                 if ret then
                     -- 取得基类函数，则调用之
-                    vtbl[k] = ret;
-                    local a, b, c, d, e = ret(obj, ...);
-                    return a, b, c, d, e;
+                    vtbl[k] = ret
+                    local a, b, c, d, e = ret(obj, ...)
+                    return a, b, c, d, e
                 end
             end
         end
 
-        -- vtbl[k] = nil_func;
+        -- vtbl[k] = nil_func
     end
 
     -- 若该类有继承父类，则为父类查找表 vtbl 设置 index 元方法（查找父类的可用方法）
@@ -188,28 +188,28 @@ function class(...)
             function(t,k)
                 local ret
                 if k == "class_type" then
-                    ret = class_type.name;
+                    ret = class_type.name
                 else
-                    ret = search(k, class_type.super);
+                    ret = search(k, class_type.super)
                 end
 
                 if not ret then
-                    ret = nil_func;
+                    ret = nil_func
                 end
 
-                vtbl[k]=ret;
+                vtbl[k]=ret
                 return ret
             end
         })
     else
         setmetatable(vtbl,{__index=
             function(t,k)
-                local ret = nil_func;
+                local ret = nil_func
                 if k == "class_type" then
-                    ret = class_type.name;
+                    ret = class_type.name
                 end
 
-                vtbl[k]=ret;
+                vtbl[k]=ret
                 return ret
             end
         })

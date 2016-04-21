@@ -278,7 +278,8 @@ function global_dispatch_command(port_no, message, buffer)
         end
     end
 
-    local args = buffer:msg_to_table()
+    local name, args = buffer:msg_to_table()
+    assert(name == message)
     del_message(buffer)
     local flag = get_debug_flag()
     if (type(flag) == "number" and flag == 1) or

@@ -59,94 +59,51 @@ function notify_internal_result(cookie, ...)
     end
 end
 
--- 对指定的server_id进行广播消息
-function send_room_message(room_name, callback, arg, msg_no, ...)
-
-    local record = {}
-    local msg
-    local msg_arg
-
-    --如果存在回调函数，则第三个或第四个是消息编号
-    if type(callback) == "function" then
-        record["callback"] = callback
-
-        --回调有参数，则第四个是消息编号
-        if type(arg) == "table" then
-            record["arg"] = arg
-            msg     = msg_no
-            msg_arg = {...}
-
-        --否则是第三个参数是消息编号
-        else
-            msg     = arg
-            msg_arg = {msg_no,...}
-        end
-    else
-        msg     = callback
-        msg_arg = {arg, msg_no, ...}
-    end
-
-    
+function send_room_raw_message(room_name, user_rid, record, net_msg)
     --如果有回调函数，则产生一个cookie，默认cookie为该消息的第一个参数
-    if sizeof(record) ~= 0 then
+    if is_table(record) and sizeof(record) ~= 0 then
         local cookie = new_cookie()
         record["begin_time"] = os.time()
         cookie_map[tostring(cookie)] = record
     end
 
-    local net_msg = pack_message(msg, unpack(msg_arg))
+    local channel = string.format(CREATE_ROOM_MSG_CHANNEL_USER, room_name, user_rid)
+    REDIS_D.run_publish(channel, net_msg:get_data())
+end
+
+-- 对指定的房间，指定的用户进行消息发送
+function send_room_message(room_name, user_rid, record, msg, ...)
+    local net_msg = pack_message(msg, ...)
     if not net_msg then
         return
     end
 
-    local channel = string.format(CREATE_ROOM_MSG_CHANNEL, room_name)
-    REDIS_D.run_publish(channel, net_msg:get_data())
+    send_room_raw_message(room_name, user_rid, record, net_msg)
     del_message(net_msg)
 end
 
--- 对指定的server_id进行广播消息
-function send_server_message(server_id, callback, arg, msg_no, ...)
-
-    server_id = tonumber(server_id)
-    local record = {}
-    local msg
-    local msg_arg
-
-    --如果存在回调函数，则第三个或第四个是消息编号
-    if type(callback) == "function" then
-        record["callback"] = callback
-
-        --回调有参数，则第四个是消息编号
-        if type(arg) == "table" then
-            record["arg"] = arg
-            msg     = msg_no
-            msg_arg = {...}
-
-        --否则是第三个参数是消息编号
-        else
-            msg     = arg
-            msg_arg = {msg_no,...}
-        end
-    else
-        msg     = callback
-        msg_arg = {arg, msg_no, ...}
-    end
-
-    
+function send_server_raw_message(server_id, user_rid, record, net_msg)
     --如果有回调函数，则产生一个cookie，默认cookie为该消息的第一个参数
-    if sizeof(record) ~= 0 then
+    if is_table(record) and sizeof(record) ~= 0 then
         local cookie = new_cookie()
         record["begin_time"] = os.time()
         cookie_map[tostring(cookie)] = record
     end
 
-    local net_msg = pack_message(msg, unpack(msg_arg))
+    local channel = string.format(CREATE_SERVER_USER_MSG, server_id, user_rid)
+    REDIS_D.run_publish(channel, net_msg:get_data())
+end
+
+
+-- 对指定的server_id进行消息发送
+function send_server_message(server_id, user_rid, record, msg, ...)
+    server_id = tonumber(server_id)
+    local net_msg = pack_message(msg, ...)
     if not net_msg then
         return
     end
 
-    local channel = string.format(CREATE_SERVER_MSG, server_id)
-    REDIS_D.run_publish(channel, net_msg:get_data())
+    send_server_raw_message(server_id, user_rid, record, net_msg)
     del_message(net_msg)
 end
 

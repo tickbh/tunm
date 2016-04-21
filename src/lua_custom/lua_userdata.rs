@@ -43,9 +43,10 @@ extern "C" fn msg_to_table(lua: *mut td_rlua::lua_State) -> libc::c_int {
     let net_msg: &mut NetMsg = unwrap_or!(LuaRead::lua_read_at_position(lua, 1), return 0);
     net_msg.set_read_data();
     let instance = NetConfig::instance();
-    if let Ok((_, val)) = td_rp::decode_proto(net_msg.get_buffer(), instance) {
+    if let Ok((name, val)) = td_rp::decode_proto(net_msg.get_buffer(), instance) {
+        name.push_to_lua(lua);
         LuaWrapperTableValue(val).push_to_lua(lua);
-        return 1;
+        return 2;
     } else {
         return 0;
     }

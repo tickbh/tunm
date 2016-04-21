@@ -7,6 +7,8 @@ local ERROR_SUFFIX = "::ERROR"
 local MATCH_STATUS = "(%w+)::STATUS"
 local MATCH_ERROR = "(%w+)::ERROR"
 
+local redis_subs_channel = {}
+
 function check_status(value)
     if type(value) == "string" then
         local status = string.match(value, MATCH_STATUS)
@@ -189,9 +191,20 @@ function subs_get_reply()
     return redis_subs_get_reply()
 end
 
+function add_subscribe_channel(channel)
+    table.insert(redis_subs_channel, channel)
+
+end
+
+function start_psubscribe()
+    trace("redis_subs_channel = %o", redis_subs_channel)
+    subs_command("PUNSUBSCRIBE", {})
+    subs_command("PSUBSCRIBE", redis_subs_channel)
+end
+
 local function create()
-    subs_command("UNSUBSCRIBE", {})
-    subs_command("SUBSCRIBE", REDIS_SUBS_REGISTER)
+    redis_subs_channel = dup(REDIS_SUBS_REGISTER)
 end
 
 create()
+register_post_init(start_psubscribe)
