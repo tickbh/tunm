@@ -8,8 +8,9 @@ module("ROOM_D",package.seeall)
 --场景列表
 local room_list  = {}
 local room_table = {}
-
 local freq_table = {}
+
+local all_room_details = {}
 
 --定义内部接口，按照字母顺序排序
 local function clear_doing_enter_room(entity)
@@ -144,7 +145,29 @@ function update_room_entity(room_name, rid, pkg_info)
     room:update_entity(rid, pkg_info)
 end
 
-function dispatch_message(room_name, user_rid, msg_buf)
+function get_detail_room(room_name)
+    local room = all_room_details[room_name or ""]
+    if not room then
+        return
+    end
+
+    if os.time() - (room.time or 0) > 180 then
+        all_room_details[room_name] = nil
+        room = nil
+    end
+
+    return room
+end
+
+function redis_room_detail(detail)
+    trace("redis_room_detail = %o", detail)
+    for name,value in pairs(detail) do
+        value["time"] = os.time()
+        all_room_details[name] = value
+    end
+end
+
+function redis_dispatch_message(room_name, user_rid, msg_buf)
     local room = room_list[room_name]
     if not is_object(room) then
         LOG.err("房间'%s'信息不存在", room_name)
@@ -163,15 +186,49 @@ function dispatch_message(room_name, user_rid, msg_buf)
     del_message(net_msg)
 end
 
+function room_detail_update(detail)
+
+end
+
+local function logic_cmd_room_message(user, buffer)
+    trace("receiver logic_cmd_room_message")
+    local room_name = user:query_temp("room_name")
+    if sizeof(room_name) == 0 then
+        return
+    end
+
+    INTERNAL_COMM_D.send_room_raw_message(room_name, get_ob_rid(user), buffer)
+end
+
 local function publish_room_detail()
     trace("publish_room_detail!!!")
+    local result = {}
+    for room_name,room in pairs(room_list) do
+        local room_entity = room:get_room_entity()
+        result[room_name] = { amount = sizeof(room_entity), game_type = room:get_game_type() }
+    end
+    REDIS_D.run_publish(SUBSCRIBE_ROOM_DETAIL_RECEIVE, encode_json(result))
 end
 
 -- 模块的入口执行
 function create()
-    create_allroom("data/txt/room.txt")
+    if ENABLE_ROOM then
+        create_allroom("data/txt/room.txt")
+    end
+    
+    register_msg_filter("cmd_room_message", logic_cmd_room_message)
 
-    set_timer(60000, publish_room_detail, nil, true)
+    if SERVER_TYPE == SERVER_LOGIC or STANDALONE then
+        REDIS_D.add_subscribe_channel(SUBSCRIBE_ROOM_DETAIL_RECEIVE)
+    end
+end
+
+local function init()
+    if ENABLE_ROOM then
+        publish_room_detail()
+        set_timer(60000, publish_room_detail, nil, true)
+    end
 end
 
 create()
+register_post_init(init)

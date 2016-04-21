@@ -10,3 +10,8 @@ DDZ_ROOM_CLASS.name = "DDZ_ROOM_CLASS"
 function DDZ_ROOM_CLASS:create(value)
     assert(is_table(value), "room:create para not correct")
 end
+
+--获取房间类型
+function DDZ_ROOM_CLASS:get_game_type()
+    return "ddz"
+end

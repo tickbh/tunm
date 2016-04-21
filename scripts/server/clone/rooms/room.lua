@@ -105,9 +105,14 @@ function ROOM_CLASS:entity_leave(entity)
 
 end
 
---获取场景编号
+--获取房间名称
 function ROOM_CLASS:get_room_name()
     return self.data["room_name"]
+end
+
+--获取房间类型
+function ROOM_CLASS:get_game_type()
+    return self.data["game_type"]
 end
 
 -- 返回房间中的玩家信息

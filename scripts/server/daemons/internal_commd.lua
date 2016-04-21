@@ -59,7 +59,7 @@ function notify_internal_result(cookie, ...)
     end
 end
 
-function send_room_raw_message(room_name, user_rid, record, net_msg)
+function send_room_raw_message(room_name, user_rid, record, net_data)
     --如果有回调函数，则产生一个cookie，默认cookie为该消息的第一个参数
     if is_table(record) and sizeof(record) ~= 0 then
         local cookie = new_cookie()
@@ -68,7 +68,7 @@ function send_room_raw_message(room_name, user_rid, record, net_msg)
     end
 
     local channel = string.format(CREATE_ROOM_MSG_CHANNEL_USER, room_name, user_rid)
-    REDIS_D.run_publish(channel, net_msg:get_data())
+    REDIS_D.run_publish(channel, net_data)
 end
 
 -- 对指定的房间，指定的用户进行消息发送
@@ -78,11 +78,11 @@ function send_room_message(room_name, user_rid, record, msg, ...)
         return
     end
 
-    send_room_raw_message(room_name, user_rid, record, net_msg)
+    send_room_raw_message(room_name, user_rid, record, net_msg:get_data())
     del_message(net_msg)
 end
 
-function send_server_raw_message(server_id, user_rid, record, net_msg)
+function send_server_raw_message(server_id, user_rid, record, net_data)
     --如果有回调函数，则产生一个cookie，默认cookie为该消息的第一个参数
     if is_table(record) and sizeof(record) ~= 0 then
         local cookie = new_cookie()
@@ -91,7 +91,7 @@ function send_server_raw_message(server_id, user_rid, record, net_msg)
     end
 
     local channel = string.format(CREATE_SERVER_USER_MSG, server_id, user_rid)
-    REDIS_D.run_publish(channel, net_msg:get_data())
+    REDIS_D.run_publish(channel, net_data)
 end
 
 
@@ -103,7 +103,7 @@ function send_server_message(server_id, user_rid, record, msg, ...)
         return
     end
 
-    send_server_raw_message(server_id, user_rid, record, net_msg)
+    send_server_raw_message(server_id, user_rid, record, net_msg:get_data())
     del_message(net_msg)
 end
 

@@ -70,3 +70,25 @@ function cmd_chat( user, channel, info )
     end
 
 end
+
+function cmd_enter_room(user, info)
+    local room = ROOM_D.get_detail_room(info.room_name)
+    if not room then
+        user:send_message(MSG_ENTER_ROOM, {ret = -1, err_msg = "房间不存在"})
+        return
+    end
+
+    local base_info = user:query()
+    INTERNAL_COMM_D.send_room_message(info.room_name, get_ob_rid(user), {}, CMD_ROOM_MESSAGE, "enter_room", base_info)
+end
+
+function cmd_leave_room(user, info)
+    local room = ROOM_D.get_detail_room(info.room_name)
+    if not room then
+        user:send_message(MSG_LEAVE_ROOM, {ret = -1, err_msg = "房间不存在"})
+        return
+    end
+
+    local base_info = user:query()
+    INTERNAL_COMM_D.send_room_message(info.room_name, get_ob_rid(user), {}, CMD_ROOM_MESSAGE, "leave_room", base_info)
+end

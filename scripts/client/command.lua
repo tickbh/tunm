@@ -120,3 +120,13 @@ function send_chat(content)
     end
     user:send_message(CMD_CHAT, CHAT_CHANNEL_WORLD, {send_content = content})
 end
+
+function enter_room(room_name)
+    local user = ME_D.get_user()
+    if not is_object(user) then
+        trace("请先登陆游戏")
+        return
+    end
+    room_name = room_name or "ddz1"
+    user:send_message(CMD_ENTER_ROOM, {room_name = room_name})
+end

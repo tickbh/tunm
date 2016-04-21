@@ -51,6 +51,10 @@
         "send_rid"                     : { "index" :    45,    "pattern" : "str" },
         "chat_channel"                 : { "index" :    46,    "pattern" : "str" },
         "chat_info"                    : { "index" :    47,    "pattern" : "map" },
+        "room_name"                    : { "index" :    48,    "pattern" : "str" },
+        "info"                         : { "index" :    49,    "pattern" : "map" },
+        "game_type"                    : { "index" :    50,    "pattern" : "str" },
+        
 
         "i8"                           : { "index" :    50000, "pattern" : "i8" },
         "u8"                           : { "index" :    50001, "pattern" : "u8" },
@@ -123,10 +127,10 @@
         "cmd_chat"                     : { "msg_type" :    "logic",  "args" : [ "i8", "map" ] },
         "msg_chat"                     : { "msg_type" :    "client", "args" : [ "i8", "map" ] },
         "msg_wait_queue_number"        : { "msg_type" :    "client", "args" : [ "u32" ] },
-        "cmd_enter_room"               : { "msg_type" :    "logic",  "args" : [ "str", "map" ] },
-        "msg_enter_room"               : { "msg_type" :    "client", "args" : [ "str", "map" ] },
-        "cmd_leave_room"               : { "msg_type" :    "logic",  "args" : [ "str", "map" ] },
-        "msg_leave_room"               : { "msg_type" :    "client", "args" : [ "str", "map" ] },
+        "cmd_enter_room"               : { "msg_type" :    "logic",  "args" : [ "map" ] },
+        "msg_enter_room"               : { "msg_type" :    "client", "args" : [ "map" ] },
+        "cmd_leave_room"               : { "msg_type" :    "logic",  "args" : [ "map" ] },
+        "msg_leave_room"               : { "msg_type" :    "client", "args" : [ "map" ] },
         "cmd_room_message"             : { "msg_type" :    "logic",  "args" : [ "str", "map" ] },
         "msg_room_message"             : { "msg_type" :    "client", "args" : [ "str", "map" ] },
 

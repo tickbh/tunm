@@ -20,5 +20,12 @@ MSG_PROPERTY_DELETE         = "msg_property_delete"
 CMD_CHAT                    = "cmd_chat"
 MSG_CHAT                    = "msg_chat"
 MSG_WAIT_QUEUE_NUMBER       = "msg_wait_queue_number"
+CMD_ENTER_ROOM              = "cmd_enter_room"
+MSG_ENTER_ROOM              = "msg_enter_room"
+CMD_LEAVE_ROOM              = "cmd_leave_room"
+MSG_LEAVE_ROOM              = "msg_leave_room"
+CMD_ROOM_MESSAGE            = "cmd_room_message"
+MSG_ROOM_MESSAGE            = "msg_room_message"
+
 
 MSG_DB_RESULT               = "msg_db_result"
