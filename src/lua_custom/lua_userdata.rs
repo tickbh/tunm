@@ -17,7 +17,7 @@ impl NewStruct for NetMsg {
 }
 
 impl<'a> LuaRead for &'a mut NetMsg {
-    fn lua_read_at_position(lua: *mut lua_State, index: i32) -> Option<&'a mut NetMsg> {
+    fn lua_read_with_pop(lua: *mut lua_State, index: i32, _pop: i32) -> Option<&'a mut NetMsg> {
         td_rlua::userdata::read_userdata(lua, index)
     }
 }

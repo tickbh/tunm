@@ -88,7 +88,7 @@ impl LuaPush for RedisWrapperMsg {
 
 
 impl LuaRead for RedisWrapperStringVec {
-    fn lua_read_at_position(lua: *mut lua_State, index: i32) -> Option<RedisWrapperStringVec> {
+    fn lua_read_with_pop(lua: *mut lua_State, index: i32, _pop: i32) -> Option<RedisWrapperStringVec> {
         let args = unsafe { td_rlua::lua_gettop(lua) - index.abs() + 1 };
         let mut strings = vec![];
         if args < 0 {
@@ -116,7 +116,7 @@ impl LuaRead for RedisWrapperStringVec {
 }
 
 impl LuaRead for RedisWrapperCmd {
-    fn lua_read_at_position(lua: *mut lua_State, index: i32) -> Option<RedisWrapperCmd> {
+    fn lua_read_with_pop(lua: *mut lua_State, index: i32, _pop: i32) -> Option<RedisWrapperCmd> {
         let strings: RedisWrapperStringVec = unwrap_or!(LuaRead::lua_read_at_position(lua, index),
                                                         return None);
         let mut cmd = Cmd::new();
