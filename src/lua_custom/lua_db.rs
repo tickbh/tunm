@@ -5,7 +5,7 @@ use libc;
 
 use {DbTrait, DbMysql, DbPool, PoolTrait, RedisPool};
 use {LuaEngine, NetMsg, NetConfig, LuaWrapperTableValue, RedisWrapperCmd, RedisWrapperResult,
-     RedisWrapperMsg, RedisWrapperStringVec};
+     RedisWrapperMsg, RedisWrapperVecVec};
 use {ThreadUtils, LogUtils, log_utils};
 
 static MYSQL_POOL_NAME: &'static str = "mysql";
@@ -360,7 +360,7 @@ extern "C" fn redis_run_script(lua: *mut td_rlua::lua_State) -> libc::c_int {
     let path: String = unwrap_or!(LuaRead::lua_read_at_position(lua, 2), return 0);
     let hash: String = unwrap_or!(LuaRead::lua_read_at_position(lua, 3), return 0);
     let slot: String = unwrap_or!(LuaRead::lua_read_at_position(lua, 4), return 0);
-    let strings: RedisWrapperStringVec = unwrap_or!(LuaRead::lua_read_at_position(lua, 5),
+    let strings: RedisWrapperVecVec = unwrap_or!(LuaRead::lua_read_at_position(lua, 5),
                                                     return 0);
     let pool = ThreadUtils::instance().get_pool(&REDIS_POOL_NAME.to_string());
     pool.execute(move || {

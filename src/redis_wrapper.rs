@@ -1,3 +1,6 @@
+use std::mem;
+use std::ptr;
+
 use td_rlua::{self, LuaPush, lua_State, LuaRead};
 use libc;
 use td_rredis::{Value, RedisError, RedisResult, Cmd, Msg};
@@ -10,11 +13,13 @@ pub struct RedisWrapperError(pub RedisError);
 pub struct RedisWrapperResult(pub RedisResult<Value>);
 pub struct RedisWrapperMsg(pub Msg);
 
-pub struct RedisWrapperStringVec(pub Vec<String>);
+pub struct RedisWrapperVecVec(pub Vec<Vec<u8>>);
 pub struct RedisWrapperCmd(pub Cmd);
 
 impl LuaPush for RedisWrapperValue {
     fn push_to_lua(self, lua: *mut lua_State) -> i32 {
+
+        println!("top = {:?}", unsafe { td_rlua::lua_gettop(lua) });
         match self.0 {
             Value::Nil => ().push_to_lua(lua),
             Value::Int(val) => (val as u32).push_to_lua(lua),
@@ -66,6 +71,7 @@ impl LuaPush for RedisWrapperMsg {
 
             let payload: RedisResult<Value> = self.0.get_payload();
             if payload.is_ok() {
+                println!("payload = {:?}", payload);
                 "payload".push_to_lua(lua);
                 RedisWrapperValue(payload.ok().unwrap()).push_to_lua(lua);
                 td_rlua::lua_settable(lua, -3);
@@ -87,40 +93,52 @@ impl LuaPush for RedisWrapperMsg {
 }
 
 
-impl LuaRead for RedisWrapperStringVec {
-    fn lua_read_with_pop(lua: *mut lua_State, index: i32, _pop: i32) -> Option<RedisWrapperStringVec> {
+impl LuaRead for RedisWrapperVecVec {
+    fn lua_read_with_pop(lua: *mut lua_State, index: i32, _pop: i32) -> Option<RedisWrapperVecVec> {
         let args = unsafe { td_rlua::lua_gettop(lua) - index.abs() + 1 };
-        let mut strings = vec![];
+        let mut vecs = vec![];
         if args < 0 {
             return None;
         }
         for i in 0..args {
-            let mut val: Option<String> = LuaRead::lua_read_at_position(lua, i + index);
-            if val.is_none() {
-                let bval: Option<bool> = LuaRead::lua_read_at_position(lua, i + index);
-                if let Some(b) = bval {
-                    if b {
-                        val = Some("1".to_string());
-                    } else {
-                        val = Some("0".to_string());
-                    }
+            let mut val: Option<Vec<u8>> = None;
+            let bval: Option<bool> = LuaRead::lua_read_at_position(lua, i + index);
+            if let Some(b) = bval {
+                if b {
+                    val = Some("1".to_string().into_bytes());
+                } else {
+                    val = Some("0".to_string().into_bytes());
                 }
+            }
+            if val.is_none() {
+                let mut size: libc::size_t = unsafe { mem::uninitialized() };
+                let c_str_raw = unsafe { td_rlua::lua_tolstring(lua, i + index, &mut size) };
+                if c_str_raw.is_null() {
+                    return None;
+                }
+
+                let mut dst = Vec::with_capacity(size);
+                unsafe {
+                    dst.set_len(size);
+                    ptr::copy(c_str_raw as *mut u8, dst.as_mut_ptr(), size);
+                }
+                val = Some(dst);
             }
             if val.is_none() {
                 return None;
             }
-            strings.push(val.unwrap());
+            vecs.push(val.unwrap());
         }
-        Some(RedisWrapperStringVec(strings))
+        Some(RedisWrapperVecVec(vecs))
     }
 }
 
 impl LuaRead for RedisWrapperCmd {
     fn lua_read_with_pop(lua: *mut lua_State, index: i32, _pop: i32) -> Option<RedisWrapperCmd> {
-        let strings: RedisWrapperStringVec = unwrap_or!(LuaRead::lua_read_at_position(lua, index),
-                                                        return None);
+        let vecs: RedisWrapperVecVec = unwrap_or!(LuaRead::lua_read_at_position(lua, index),
+                                                  return None);
         let mut cmd = Cmd::new();
-        cmd.arg(strings.0);
+        cmd.arg(vecs.0);
         Some(RedisWrapperCmd(cmd))
     }
 }
