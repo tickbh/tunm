@@ -108,6 +108,7 @@ extern "C" fn pack_raw_message(lua: *mut td_rlua::lua_State) -> libc::c_int {
         }
         let val: Vec<u8> = Vec::from_raw_parts(c_str_raw as *mut u8, size, size);
         let net_msg = unwrap_or!(NetMsg::new_by_data(&val[..]).ok(), return 0);
+        mem::forget(val);
         net_msg.push_to_lua(lua);
         1
     }

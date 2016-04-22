@@ -180,6 +180,7 @@ function redis_dispatch_message(room_name, user_rid, msg_buf)
     end
 
     local name, args = net_msg:msg_to_table()
+    trace("name, args = %o", {name, args})
     if name and args then
         --TODO
     end
