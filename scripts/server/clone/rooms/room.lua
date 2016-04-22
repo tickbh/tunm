@@ -56,31 +56,26 @@ function ROOM_CLASS:broadcast_message(msg, ...)
 end
 
 --玩家进入房间
-function ROOM_CLASS:entity_enter(entity)
-
-    local query_func = entity.query
-    local set_func = entity.set_temp
-    local entity_type = query_func(entity, "ob_type")
-    local send_message = get_class_func(USER_CLASS, "send_message")
-    local user
-    local entity_rid = query_func(entity, "rid")
-    local rno = self.data["rno"]
-
-    --若果entity为玩家，通知entity，加入到了该场景
-    if entity_type == OB_TYPE_USER then
-        local cookie = new_cookie()
-        entity:set_temp("enter_room_cookie", cookie)
+function ROOM_CLASS:entity_enter(server_id, user_rid, cookie, info)
+    local user_ob = find_object_by_rid(user_rid)
+    if not user_ob then
+        user_ob = USER_D.create_user(info)
     end
+    assert(user_ob ~= nil, "ob must exist")
+    user_ob:set_temp("room_server_id", server_id)
 
     --将新实体加该场景
-    self.room_entity[entity_rid] = {
-        ob_type = entity_type,
+    self.room_entity[user_rid] = {
+        server_id = server_id,
     }
 
-    -- 更新玩家的位置信息
-    set_func(entity, "room", rno)
+    local channel = string.format(CREATE_RESPONE_SERVER_INFO, server_id, cookie)
+    REDIS_D.run_publish(channel, "")
 
-    assert(entity:query_temp("room"))
+    INTERNAL_COMM_D.send_server_message(server_id, user_rid, {}, MSG_ROOM_MESSAGE, "success_enter_room", {rid = user_rid})
+
+    trace("success entity_enter %o", user_ob)
+
 end
 
 --玩家离开房间
@@ -149,4 +144,8 @@ end
 
 function ROOM_CLASS:get_listen_channel()
     return string.format(REDIS_ROOM_MSG_CHANNEL_USER, self:get_room_name())
+end
+
+function ROOM_CLASS:get_respone_channel()
+    return string.format(REDIS_RESPONE_ROOM_INFO, self:get_room_name())
 end

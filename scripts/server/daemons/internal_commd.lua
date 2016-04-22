@@ -61,13 +61,14 @@ end
 
 function send_room_raw_message(room_name, user_rid, record, net_data)
     --如果有回调函数，则产生一个cookie，默认cookie为该消息的第一个参数
+    local cookie = 0
     if is_table(record) and sizeof(record) ~= 0 then
-        local cookie = new_cookie()
+        cookie = new_cookie()
         record["begin_time"] = os.time()
         cookie_map[tostring(cookie)] = record
     end
 
-    local channel = string.format(CREATE_ROOM_MSG_CHANNEL_USER, room_name, user_rid)
+    local channel = string.format(CREATE_ROOM_MSG_CHANNEL_USER, room_name, user_rid, cookie)
     REDIS_D.run_publish(channel, net_data)
 end
 
@@ -84,13 +85,14 @@ end
 
 function send_server_raw_message(server_id, user_rid, record, net_data)
     --如果有回调函数，则产生一个cookie，默认cookie为该消息的第一个参数
+    local cookie = 0
     if is_table(record) and sizeof(record) ~= 0 then
-        local cookie = new_cookie()
+        cookie = new_cookie()
         record["begin_time"] = os.time()
         cookie_map[tostring(cookie)] = record
     end
 
-    local channel = string.format(CREATE_SERVER_USER_MSG, server_id, user_rid)
+    local channel = string.format(CREATE_SERVER_MSG_USER, server_id, user_rid, cookie)
     REDIS_D.run_publish(channel, net_data)
 end
 
@@ -114,6 +116,12 @@ end
 -- 模块的入口执行
 function create()
     set_timer(1000, timer_handle, nil, true)
+
+    if SERVER_TYPE == SERVER_LOGIC or STANDALONE then
+        REDIS_D.add_subscribe_channel(string.format(REDIS_SERVER_MSG_USER, SERVER_ID))
+        REDIS_D.add_subscribe_channel(string.format(REDIS_RESPONE_SERVER_INFO, SERVER_ID))
+    end
+
 end
 
 create()

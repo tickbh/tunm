@@ -12,17 +12,41 @@ function deal_with_reply(reply)
     elseif reply.channel == SUBSCRIBE_ROOM_DETAIL_RECEIVE then
         ROOM_D.redis_room_detail(decode_json(reply.payload))
     else
-        local room_name, user_rid = string.match(reply.channel, MATCH_ROOM_MSG_CHANNEL_USER)
+        local room_name, user_rid, cookie = string.match(reply.channel, MATCH_ROOM_MSG_CHANNEL_USER)
         trace("room_name = %o, user_rid = %o", room_name, user_rid)
         if room_name and user_rid then
-            ROOM_D.redis_dispatch_message(room_name, user_rid, reply.payload)
+            ROOM_D.redis_dispatch_message(room_name, user_rid, cookie, reply.payload)
             return
         end
         
-        local server_id, user_rid = string.match(reply.channel, MATCH_SERVER_MSG_USER)
+        local server_id, user_rid, cookie = string.match(reply.channel, MATCH_SERVER_MSG_USER)
         trace("server_id = %o, user_rid = %o", server_id, user_rid)
         if server_id and user_rid then
+            local user = find_object_by_rid(user_rid)
+            local net_msg = pack_raw_message(reply.payload)
+            if not net_msg then
+                return
+            end
+            if user then
+                user:send_net_msg(net_msg)
+            end
+            del_message(net_msg)
+            return
+        end
 
+
+        local server_id, cookie = string.match(reply.channel, MATCH_RESPONE_SERVER_INFO)
+        trace("MATCH_RESPONE_SERVER_INFO server_id = %o, cookie = %o", server_id, cookie)
+        if server_id and cookie then
+            INTERNAL_COMM_D.notify_internal_result(cookie, reply.payload)
+            return
+        end
+
+        local room_name, cookie = string.match(reply.channel, MATCH_ROOM_MSG_CHANNEL_USER)
+        trace("room_name = %o, cookie = %o", room_name, cookie)
+        if room_name and cookie then
+
+            return
         end
     end
     trace("__ REDIS_QUEUED:deal_with_reply() __ is %o \n", reply)

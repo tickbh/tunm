@@ -70,3 +70,7 @@ function msg_chat( user, channel, info )
         trace("收到来自:%s的世界聊天, 内容为:\"%s\"", info.send_name, info.chat_info.send_content)
     end
 end
+
+function msg_room_message(user, oper, info)
+    trace("user = %o, oper = %o, info = %o", user, oper, info)
+end

@@ -71,7 +71,6 @@ impl LuaPush for RedisWrapperMsg {
 
             let payload: RedisResult<Value> = self.0.get_payload();
             if payload.is_ok() {
-                println!("payload = {:?}", payload);
                 "payload".push_to_lua(lua);
                 RedisWrapperValue(payload.ok().unwrap()).push_to_lua(lua);
                 td_rlua::lua_settable(lua, -3);

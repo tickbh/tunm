@@ -54,6 +54,7 @@ function create_room(roomdata)
     assert(room_list[room:get_room_name()] == nil, "重复配置房间")
     room_list[room:get_room_name()] = room
     REDIS_D.add_subscribe_channel(room:get_listen_channel())
+    REDIS_D.add_subscribe_channel(room:get_respone_channel())
     return room
 end
 
@@ -167,7 +168,21 @@ function redis_room_detail(detail)
     end
 end
 
-function redis_dispatch_message(room_name, user_rid, msg_buf)
+function cmd_room_message(room_name, user_rid, cookie, oper, info)
+    trace("cmd_room_message %o", {room_name, user_rid, oper, info})
+    local room = room_list[room_name]
+    if not room then
+        trace("房间:%o不存在", room_name)
+        return
+    end
+    if oper == "enter_room" then
+        local server_id = remove_get(info, "server_id")
+        assert(is_int(server_id), "server_id must exist")
+        room:entity_enter(server_id, user_rid, cookie, info)
+    end
+end
+
+function redis_dispatch_message(room_name, user_rid, cookie, msg_buf)
     local room = room_list[room_name]
     if not is_object(room) then
         LOG.err("房间'%s'信息不存在", room_name)
@@ -181,8 +196,8 @@ function redis_dispatch_message(room_name, user_rid, msg_buf)
 
     local name, args = net_msg:msg_to_table()
     trace("name, args = %o", {name, args})
-    if name and args then
-        --TODO
+    if name and args and ROOM_D[name] then
+        ROOM_D[name](room_name, user_rid, cookie, unpack(args))
     end
     del_message(net_msg)
 end

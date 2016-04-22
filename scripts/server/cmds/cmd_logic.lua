@@ -78,7 +78,8 @@ function cmd_enter_room(user, info)
         return
     end
 
-    local base_info = user:query()
+    local base_info = dup(user:query())
+    base_info["server_id"] = tonumber(SERVER_ID)
     INTERNAL_COMM_D.send_room_message(info.room_name, get_ob_rid(user), {}, CMD_ROOM_MESSAGE, "enter_room", base_info)
 end
 
@@ -89,6 +90,6 @@ function cmd_leave_room(user, info)
         return
     end
 
-    local base_info = user:query()
+    local base_info = dup(user:query())
     INTERNAL_COMM_D.send_room_message(info.room_name, get_ob_rid(user), {}, CMD_ROOM_MESSAGE, "leave_room", base_info)
 end
