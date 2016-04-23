@@ -64,8 +64,8 @@ function send_room_raw_message(room_name, user_rid, record, net_data)
     local cookie = 0
     if is_table(record) and sizeof(record) ~= 0 then
         cookie = new_cookie()
-        record["begin_time"] = os.time()
-        cookie_map[tostring(cookie)] = record
+        local new_record = { begin_time = os.time(), callback = record[1], arg = record[2] }
+        cookie_map[tostring(cookie)] = new_record
     end
 
     local channel = string.format(CREATE_ROOM_MSG_CHANNEL_USER, room_name, user_rid, cookie)
@@ -88,8 +88,8 @@ function send_server_raw_message(server_id, user_rid, record, net_data)
     local cookie = 0
     if is_table(record) and sizeof(record) ~= 0 then
         cookie = new_cookie()
-        record["begin_time"] = os.time()
-        cookie_map[tostring(cookie)] = record
+        local new_record = { begin_time = os.time(), callback = record[1], arg = record[2] }
+        cookie_map[tostring(cookie)] = new_record
     end
 
     local channel = string.format(CREATE_SERVER_MSG_USER, server_id, user_rid, cookie)

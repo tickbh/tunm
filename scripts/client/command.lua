@@ -11,22 +11,21 @@ function c1()
     connect("aa1", "bb1")
 end
 
-local function add_attrib(field, amount)
+local function command_send_message(...)
     local user = ME_D.get_user()
     if not is_object(user) then
         trace("请先登陆游戏")
         return
     end
-    user:send_message(CMD_COMMON_OP, {oper = "add", field = field, amount = amount})
+    user:send_message(...)
+end
+
+local function add_attrib(field, amount)
+    command_send_message(CMD_COMMON_OP, {oper = "add", field = field, amount = amount})
 end
 
 local function cost_attrib(field, amount)
-    local user = ME_D.get_user()
-    if not is_object(user) then
-        trace("请先登陆游戏")
-        return
-    end
-    user:send_message(CMD_COMMON_OP, {oper = "cost", field = field, amount = amount})
+    command_send_message(CMD_COMMON_OP, {oper = "cost", field = field, amount = amount})
 end
 
 function add_gold(amount)
@@ -51,12 +50,7 @@ end
 
 function add_item(class_id, amount)
     amount = amount or 1
-    local user = ME_D.get_user()
-    if not is_object(user) then
-        trace("请先登陆游戏")
-        return
-    end
-    user:send_message(CMD_COMMON_OP, {oper = "add_item", class_id = class_id, amount = amount})
+    command_send_message(CMD_COMMON_OP, {oper = "add_item", class_id = class_id, amount = amount})
 end
 
 function show_items()
@@ -104,29 +98,18 @@ end
 
 function sale_object(rid, amount)
     amount = amount or 1
-    local user = ME_D.get_user()
-    if not is_object(user) then
-        trace("请先登陆游戏")
-        return
-    end
-    user:send_message(CMD_SALE_OBJECT, {rid = rid, amount = amount})
+    command_send_message(CMD_SALE_OBJECT, {rid = rid, amount = amount})
 end
 
 function send_chat(content)
-    local user = ME_D.get_user()
-    if not is_object(user) then
-        trace("请先登陆游戏")
-        return
-    end
-    user:send_message(CMD_CHAT, CHAT_CHANNEL_WORLD, {send_content = content})
+    command_send_message(CMD_CHAT, CHAT_CHANNEL_WORLD, {send_content = content})
 end
 
 function enter_room(room_name)
-    local user = ME_D.get_user()
-    if not is_object(user) then
-        trace("请先登陆游戏")
-        return
-    end
     room_name = room_name or "ddz1"
-    user:send_message(CMD_ENTER_ROOM, {room_name = room_name})
+    command_send_message(CMD_ENTER_ROOM, {room_name = room_name})
+end
+
+function leave_room()
+    command_send_message(CMD_LEAVE_ROOM, {})
 end

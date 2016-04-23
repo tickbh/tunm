@@ -175,10 +175,19 @@ function cmd_room_message(room_name, user_rid, cookie, oper, info)
         trace("房间:%o不存在", room_name)
         return
     end
+    local ret = 0
+    local server_id = remove_get(info, "server_id")
     if oper == "enter_room" then
-        local server_id = remove_get(info, "server_id")
         assert(is_int(server_id), "server_id must exist")
-        room:entity_enter(server_id, user_rid, cookie, info)
+        ret = room:entity_enter(server_id, user_rid, cookie, info)
+    elseif oper == "leave_room" then
+        assert(is_int(server_id), "server_id must exist")
+        ret = room:entity_leave(server_id, user_rid, cookie, info)
+    end
+    
+    if server_id and cookie and cookie ~= 0 then
+        local channel = string.format(CREATE_RESPONE_SERVER_INFO, server_id, cookie)
+        REDIS_D.run_publish(channel, encode_json({ret = ret}))
     end
 end
 

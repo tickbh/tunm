@@ -73,4 +73,25 @@ end
 
 function msg_room_message(user, oper, info)
     trace("user = %o, oper = %o, info = %o", user, oper, info)
+    if oper == "success_enter_room" then
+        trace("成功进入房间:\"%s\"", info.room_name)
+    end
+end
+
+function msg_enter_room(user, info)
+    if info.ret and info.ret < 0 then
+        trace("进入房间错误:\"%s\"", info.err_msg)
+        return
+    end
+    trace("msg_enter_room info = %o", info)
+    trace("成功进入房间:\"%s\"", info.room_name)
+end
+
+function msg_leave_room(user, info)    
+    if info.ret and info.ret < 0 then
+        trace("离开房间错误:\"%s\"", info.err_msg)
+        return
+    end
+    trace("msg_leave_room info = %o", info)
+    trace("成功离开房间:\"%s\"", info.room_name)
 end

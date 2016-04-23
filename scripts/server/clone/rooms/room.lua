@@ -63,41 +63,34 @@ function ROOM_CLASS:entity_enter(server_id, user_rid, cookie, info)
     end
     assert(user_ob ~= nil, "ob must exist")
     user_ob:set_temp("room_server_id", server_id)
+    user_ob:set_temp("room_name", self:get_room_name())
 
     --将新实体加该场景
     self.room_entity[user_rid] = {
         server_id = server_id,
     }
 
-    local channel = string.format(CREATE_RESPONE_SERVER_INFO, server_id, cookie)
-    REDIS_D.run_publish(channel, "")
-
-    INTERNAL_COMM_D.send_server_message(server_id, user_rid, {}, MSG_ROOM_MESSAGE, "success_enter_room", {rid = user_rid})
+    INTERNAL_COMM_D.send_server_message(server_id, user_rid, {}, MSG_ROOM_MESSAGE, "success_enter_room", {rid = user_rid, room_name = self:get_room_name()})
 
     trace("success entity_enter %o", user_ob)
-
+    return 0
 end
 
 --玩家离开房间
-function ROOM_CLASS:entity_leave(entity)
+function ROOM_CLASS:entity_leave(user_rid, cookie, info)
+    local user_ob = find_object_by_rid(user_rid)
+    if not user_ob then
+        return -1
+    end
 
-    local query_func = entity.query
-    local entity_rid = query_func(entity, "rid")
-
-    if not self.room_entity[entity_rid] then
+    if not self.room_entity[user_rid] then
         write_log(string.format("Error:对象%s离开房间%s时找不到自己(%s)\n",
-                                entity_rid, self:get_room_name(), entity:query_temp("room") or "nil"))
-        assert(nil)
+                                user_rid, self:get_room_name(), user_ob:query_temp("room_name") or "nil"))
     end
 
     --将该实体从场景中删除，并发送离开场景消息
-    self.room_entity[entity_rid] = nil
-
-    local send_message = get_class_func(USER_CLASS, "send_message")
-    if query_func(entity, "ob_type") == OB_TYPE_USER then
-        send_message(entity, MSG_LEAVE_ROOM, self:get_room_name())
-    end
-
+    self.room_entity[user_rid] = nil
+    return 0
 end
 
 --获取房间名称

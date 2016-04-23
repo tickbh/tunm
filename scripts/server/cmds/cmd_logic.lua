@@ -78,18 +78,40 @@ function cmd_enter_room(user, info)
         return
     end
 
-    local base_info = dup(user:query())
-    base_info["server_id"] = tonumber(SERVER_ID)
-    INTERNAL_COMM_D.send_room_message(info.room_name, get_ob_rid(user), {}, CMD_ROOM_MESSAGE, "enter_room", base_info)
-end
-
-function cmd_leave_room(user, info)
-    local room = ROOM_D.get_detail_room(info.room_name)
-    if not room then
-        user:send_message(MSG_LEAVE_ROOM, {ret = -1, err_msg = "房间不存在"})
+    if user:query_temp("room_name") ~= nil then
+        user:send_message(MSG_ENTER_ROOM, {ret = -2, err_msg = "您已在房间内", room_name = user:query_temp("room_name")})
         return
     end
 
+    local function enter_room_callback(args, ext)
+        trace("enter_room_callback!!!")
+        if not is_object(user) then
+            return
+        end
+        user:set_temp("room_name", info.room_name)
+        user:send_message(MSG_ENTER_ROOM, {room_name = info.room_name})
+    end
+
     local base_info = dup(user:query())
-    INTERNAL_COMM_D.send_room_message(info.room_name, get_ob_rid(user), {}, CMD_ROOM_MESSAGE, "leave_room", base_info)
+    base_info["server_id"] = tonumber(SERVER_ID)
+    INTERNAL_COMM_D.send_room_message(info.room_name, get_ob_rid(user), {enter_room_callback, {user = user, info = info}}, CMD_ROOM_MESSAGE, "enter_room", base_info)
+end
+
+function cmd_leave_room(user, info)
+    local room_name = user:query_temp("room_name")
+    if not room_name then
+        user:send_message(MSG_LEAVE_ROOM, {ret = -1, err_msg = "您未在房间内"})
+        return
+    end
+
+    local function leave_room_callback(args, ext)
+        trace("leave_room_callback!!!")
+        if not is_object(user) then
+            return
+        end
+        user:send_message(MSG_LEAVE_ROOM, {room_name = room_name})
+    end
+
+    INTERNAL_COMM_D.send_room_message(room_name, get_ob_rid(user), {leave_room_callback, {}}, CMD_ROOM_MESSAGE, "leave_room", {server_id = tonumber(SERVER_ID)})
+    user:delete_temp("room_name")
 end
