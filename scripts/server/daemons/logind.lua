@@ -12,6 +12,7 @@ LOGIN_FLAG_TIMEOUT = 3600 * 24
 -- 定义内部接口，按照字母顺序排序
 
 local function check_account_callback(login_info, ret, result_list)
+    local agent = login_info["agent"]
     if type(result_list) ~= "table" or #result_list == 0 then
         -- trace("create new ACCOUNT_D!! ret = %o, result_list is = %o", ret, result_list)
         -- 创建新角色
@@ -38,7 +39,7 @@ local function check_account_callback(login_info, ret, result_list)
                        account_ob, device_id, account_ob:query("device_id"));
                 account_ob:connection_lost(true)
             else
-                account_ob:accept_relay(login_info["agent"]);
+                account_ob:accept_relay(agent);
                 account_ob:send_message(MSG_LOGIN_NOTIFY_STATUS, {ret=0})
                 ACCOUNT_D.success_login(account_ob, true)
                 return;
@@ -46,13 +47,19 @@ local function check_account_callback(login_info, ret, result_list)
         end
     end
 
+    if ACCOUNT_D.is_account_freeze(data["rid"]) then
+        agent:send_message(MSG_LOGIN_NOTIFY_STATUS, {err_msg="账号数据保存中，请稍后", ret=-1})
+        agent:connection_lost(true)
+        return
+    end
+
     IS_LOGIN_QUEUE_OPEN = true
     if IS_LOGIN_QUEUE_OPEN then
         -- 执行登录排队处理
-        LOGIN_QUEUE_D.cache_login(login_info["agent"], data["rid"], result_list[1], ACCOUNT_D.login);
+        LOGIN_QUEUE_D.cache_login(agent, data["rid"], result_list[1], ACCOUNT_D.login);
     else
         -- 调用模块进行登录处理
-        ACCOUNT_D.login(login_info["agent"], data["rid"], result_list[1]);
+        ACCOUNT_D.login(agent, data["rid"], result_list[1]);
     end
 end
 

@@ -7,10 +7,21 @@ function deal_with_reply(reply)
         return
     end
     
+    trace("__ REDIS_QUEUED:deal_with_reply() __ is %o \n", reply)
     if reply.channel == REDIS_CHAT_CHANNEL_WORLD then
         CHAT_D.deal_with_new_chat(decode_json(reply.payload))
     elseif reply.channel == SUBSCRIBE_ROOM_DETAIL_RECEIVE then
         ROOM_D.redis_room_detail(decode_json(reply.payload))
+    elseif reply.channel == REDIS_ACCOUNT_START_HIBERNATE then
+        if not is_rid_vaild(reply.payload) then
+            return
+        end
+        ACCOUNT_D.add_account_freeze(reply.payload)
+    elseif reply.channel == REDIS_ACCOUNT_END_HIBERNATE then
+        if not is_rid_vaild(reply.payload) then
+            return
+        end
+        ACCOUNT_D.remove_account_freeze(reply.payload)
     else
         local room_name, user_rid, cookie = string.match(reply.channel, MATCH_ROOM_MSG_CHANNEL_USER)
         trace("room_name = %o, user_rid = %o", room_name, user_rid)
@@ -49,7 +60,6 @@ function deal_with_reply(reply)
             return
         end
     end
-    trace("__ REDIS_QUEUED:deal_with_reply() __ is %o \n", reply)
 end
 
 function deal_with_respone_list(respone_list)

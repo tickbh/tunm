@@ -1,5 +1,9 @@
 
 function msg_login_notify_status( agent, info )
+    trace("msg_login_notify_status!!!!!!!!!!!!")
+    if info.ret and info.ret ~= 0 then
+        trace("登陆时发生错误:%s", info.err_msg)
+    end
 end
 
 --msg_user_list

@@ -18,8 +18,6 @@ pub struct RedisWrapperCmd(pub Cmd);
 
 impl LuaPush for RedisWrapperValue {
     fn push_to_lua(self, lua: *mut lua_State) -> i32 {
-
-        println!("top = {:?}", unsafe { td_rlua::lua_gettop(lua) });
         match self.0 {
             Value::Nil => ().push_to_lua(lua),
             Value::Int(val) => (val as u32).push_to_lua(lua),

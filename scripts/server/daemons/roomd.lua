@@ -161,7 +161,6 @@ function get_detail_room(room_name)
 end
 
 function redis_room_detail(detail)
-    trace("redis_room_detail = %o", detail)
     for name,value in pairs(detail) do
         value["time"] = os.time()
         all_room_details[name] = value

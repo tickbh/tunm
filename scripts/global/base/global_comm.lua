@@ -96,7 +96,7 @@ end
 
 -- 收到新连接
 function cmd_new_connection(cookie, fd, client_ip, server_port)
-    trace("收到新连接(%d)。端口(%d), new connect info\n", fd, server_port)
+    trace("收到新连接(%d)。端口(%d), 客户端地址(%s), new connect info\n", fd, server_port, client_ip)
     local f = new_connection_callback[cookie]
     if type(f) == "function" then
         -- 若该连接有回调，则调用之

@@ -9,18 +9,15 @@ module("ACCOUNT_D", package.seeall);
 local account_list = {};
 setmetatable(account_list, { __mode = "v" });
 
+-- 冻结玩家数据，在保存数据的过程中不允许用户登陆
+local account_freeze = {}
+
 -- 创建玩家
 function create_account(dbase)
     local account = ACCOUNT_CLASS.new(dbase);
     account_list[#account_list + 1] = account;
     return account;
 end
-
--- 冻结玩家记录
-function hiberate(user, save_callback)
-
-end
-
 
 -- 新增玩家记录的回调
 local function create_new_account_callback(info, ret, result_list)
@@ -229,6 +226,21 @@ function request_select_user(account, rid)
     end
 end
 
+function add_account_freeze(account_rid)
+    account_freeze[account_rid] = {time=os.time()}
+end
+
+function remove_account_freeze(account_rid)
+    account_freeze[account_rid] = nil
+end
+
+function is_account_freeze(account_rid)
+    local data = account_freeze[account_rid]
+    if not data then
+        return false
+    end
+    return os.time() - (data.time or 0) < 100
+end
 
 local function init()
 end

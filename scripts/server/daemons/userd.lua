@@ -73,7 +73,10 @@ end
 
 -- 冻结玩家记录的回调
 local function hiberate_callback(info, ret, result_list)
-    -- local save_callback = info.save_callback
+    info.sql_count = (info.sql_count or 0) - 1
+    if info.sql_count <= 0 then
+        REDIS_D.run_publish(REDIS_ACCOUNT_END_HIBERNATE, info.account_rid or "")
+    end
 
 end
 
@@ -82,9 +85,12 @@ function hiberate(user, save_callback)
     local arg = {
         user          = user,
         user_rid      = user:get_rid(),
+        account_rid   = user:query("account_rid"),
         save_callback = save_callback,
+        sql_count     = 0,
     }
     
+    REDIS_D.run_publish(REDIS_ACCOUNT_START_HIBERNATE, user:query("account_rid"))
     user:set_change_to_db(hiberate_callback, arg)
 end
 

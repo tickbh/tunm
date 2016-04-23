@@ -119,9 +119,6 @@ impl EventMgr {
 
         let socket_event = self.connect_ids.get_mut(&fd).unwrap();
         let _ = socket_event.get_out_cache().write(net_msg.get_buffer().get_data());
-
-        println!("out_cache len = {:?}", socket_event.get_out_cache().len());
-
         self.event_loop.add_event(EventEntry::new(fd as u32,
                                              FLAG_WRITE,
                                              Some(Self::write_callback),
@@ -276,7 +273,7 @@ impl EventMgr {
         let sock_ev = unwrap_or!(self.connect_ids.remove(&fd), return);
         self.event_loop.del_event(sock_ev.get_socket_fd() as u32, EventFlags::all());
         self.event_loop
-            .add_timer(EventEntry::new_timer(200,
+            .add_timer(EventEntry::new_timer(200000,
                                              false,
                                              Some(EventMgr::kick_callback),
                                              Some(Box::into_raw(Box::new(sock_ev)) as *mut ())));

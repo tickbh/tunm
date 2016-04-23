@@ -86,9 +86,6 @@ end
 
 -- 客户端登录请求缓存到队列
 function cache_login(agent, rid, login_info, func)
-
-    trace("is_valid = %o", agent:is_valid())
-    trace("is_authed = %o", agent:is_authed())
     -- 判断连接是否有效
     if agent:is_valid() and agent:is_authed() then
 

@@ -86,8 +86,16 @@ local function init_network_status()
 end
 
 local function create()
+    if SERVER_TYPE == SERVER_LOGIC or STANDALONE then
+        REDIS_D.add_subscribe_channel(REDIS_ACCOUNT_START_HIBERNATE)
+        REDIS_D.add_subscribe_channel(REDIS_ACCOUNT_END_HIBERNATE)
+    end
+end
+
+local function init()
     REDIS_SCRIPTD.load_script("gate_select", gate_prefix)
     init_network_status()
 end
 
-register_post_data_init(create)
+create()
+register_post_data_init(init)
