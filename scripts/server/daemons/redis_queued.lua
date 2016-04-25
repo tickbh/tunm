@@ -42,6 +42,12 @@ function deal_with_reply(reply)
             return
         end
         raise_issue(EVENT_ACCOUNT_WAIT_LOGIN, reply.payload)
+    elseif reply.channel == REDIS_USER_ENTER_WORLD then
+        local data = decode_json(reply.payload)
+        if not is_rid_vaild(data.rid) then
+            return
+        end
+        raise_issue(EVENT_USER_OBJECT_CONSTRUCT, data.rid, data.server_id)
     else
         local room_name, user_rid, cookie = string.match(reply.channel, MATCH_ROOM_MSG_CHANNEL_USER)
         trace("room_name = %o, user_rid = %o", room_name, user_rid)
@@ -54,11 +60,16 @@ function deal_with_reply(reply)
         trace("server_id = %o, user_rid = %o", server_id, user_rid)
         if server_id and user_rid then
             local user = find_object_by_rid(user_rid)
-            local net_msg = pack_raw_message(reply.payload)
+            if not user then
+                return
+            end
+            local name, net_msg = pack_raw_message(reply.payload)
             if not net_msg then
                 return
             end
-            if user then
+            if get_message_type(name) == MESSAGE_LOGIC then
+                oper_message(user, name, net_msg)
+            else
                 user:send_net_msg(net_msg)
             end
             del_message(net_msg)

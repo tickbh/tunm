@@ -88,10 +88,13 @@ function cmd_enter_room(user, info)
         if not is_object(user) then
             return
         end
+
+        user:set_temp("room_server_id", tonumber(SERVER_ID))
         user:set_temp("room_name", info.room_name)
         user:send_message(MSG_ENTER_ROOM, {room_name = info.room_name})
     end
 
+    --get room type, user base info, room game data
     local base_info = dup(user:query())
     base_info["server_id"] = tonumber(SERVER_ID)
     INTERNAL_COMM_D.send_room_message(info.room_name, get_ob_rid(user), {enter_room_callback, {user = user, info = info}}, CMD_ROOM_MESSAGE, "enter_room", base_info)
@@ -114,4 +117,8 @@ function cmd_leave_room(user, info)
 
     INTERNAL_COMM_D.send_room_message(room_name, get_ob_rid(user), {leave_room_callback, {}}, CMD_ROOM_MESSAGE, "leave_room", {server_id = tonumber(SERVER_ID)})
     user:delete_temp("room_name")
+end
+
+function respone_room_message(user, oper, info)
+    trace("respone_room_message %o", {user, oper, info})
 end

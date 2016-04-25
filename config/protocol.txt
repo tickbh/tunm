@@ -133,6 +133,7 @@
         "msg_leave_room"               : { "msg_type" :    "client", "args" : [ "map" ] },
         "cmd_room_message"             : { "msg_type" :    "logic",  "args" : [ "str", "map" ] },
         "msg_room_message"             : { "msg_type" :    "client", "args" : [ "str", "map" ] },
+        "respone_room_message"         : { "msg_type" :    "logic",  "args" : [ "str", "map" ] },
 
         "msg_db_result"                : { "msg_type" :    "server", "args" : [ "map[]" ] }
     }

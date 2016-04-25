@@ -196,7 +196,7 @@ function redis_dispatch_message(room_name, user_rid, cookie, msg_buf)
         LOG.err("房间'%s'信息不存在", room_name)
         return
     end
-    local net_msg = pack_raw_message(msg_buf)
+    local name, net_msg = pack_raw_message(msg_buf)
     if not net_msg then
         LOG.err("发送给房间:'%s',用户:'%s',消息失败", room_name, user_rid)
         return
@@ -234,10 +234,21 @@ local function publish_room_detail()
     REDIS_D.run_publish(SUBSCRIBE_ROOM_DETAIL_RECEIVE, encode_json(result))
 end
 
+local function user_login(user_rid, server_id)
+    for room_name,room in pairs(room_list) do
+        local data = room:get_data_by_rid(user_rid)
+        if data then
+            data.server_id = server_id
+            INTERNAL_COMM_D.send_server_message(server_id, user_rid, {}, RESPONE_ROOM_MESSAGE, "reconnect_user", {room_name = room_name, rid = user_rid})
+        end
+    end
+end
+
 -- 模块的入口执行
 function create()
     if ENABLE_ROOM then
         create_allroom("data/txt/room.txt")
+        register_as_audience("ROOM_D", {EVENT_USER_OBJECT_CONSTRUCT = user_login})
     end
     
     register_msg_filter("cmd_room_message", logic_cmd_room_message)

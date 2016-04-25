@@ -222,9 +222,28 @@ function get_message_manage_type(message, server_type)
     end
 end
 
+function oper_message(agent, message, msg_buf)
+    local name, args = msg_buf:msg_to_table()
+    assert(name == message)
+    local flag = get_debug_flag()
+    if (type(flag) == "number" and flag == 1) or
+           (type(flag) == "table" and self:is_user() and flag[self:get_rid()]) then
+        trace("------------- msg : %s -------------\n%o\n", message, args)
+    end
+    
+    local message_handler = _G[message]
+    if not message_handler then
+        trace("global_dispatch_command message_handler : %o 未定义消息处理函数!\n", message)
+        return
+    end
+
+    -- 为客户端，直接执行消息处理函数
+    message_handler(agent, unpack(args or {}))
+end
+
 -- 派发消息的入口函数
 function global_dispatch_command(port_no, message, buffer)
-    local message_handler = _G[message]
+    
 
     -- 判断是否已存在对应的 agent
     local agent = find_agent_by_port(port_no)
@@ -246,7 +265,7 @@ function global_dispatch_command(port_no, message, buffer)
     end
 
 
-    local mm_type = get_message_manage_type(message,  agent:get_server_type())
+    local mm_type = get_message_manage_type(message, agent:get_server_type())
     if mm_type == MESSAGE_DISCARD then
         trace("------------- discard port_no is %o, cmd : %s -------------\n", port_no, message)
         del_message(buffer)
@@ -283,22 +302,9 @@ function global_dispatch_command(port_no, message, buffer)
         return
     end
 
-    local name, args = buffer:msg_to_table()
-    assert(name == message)
+    oper_message(agent, message, buffer)
     del_message(buffer)
-    local flag = get_debug_flag()
-    if (type(flag) == "number" and flag == 1) or
-           (type(flag) == "table" and self:is_user() and flag[self:get_rid()]) then
-        trace("------------- msg : %s -------------\n%o\n", message, args)
-    end
 
-    if not message_handler then
-        trace("global_dispatch_command message_handler : %o 未定义消息处理函数!\n", message)
-        return
-    end
-
-    -- 为客户端，直接执行消息处理函数
-    message_handler(agent, unpack(args or {}))
     if agent:is_user() then
         update_operation_time(agent)
         if PACKAGE_STATD then

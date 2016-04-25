@@ -26,6 +26,7 @@ CMD_LEAVE_ROOM              = "cmd_leave_room"
 MSG_LEAVE_ROOM              = "msg_leave_room"
 CMD_ROOM_MESSAGE            = "cmd_room_message"
 MSG_ROOM_MESSAGE            = "msg_room_message"
+RESPONE_ROOM_MESSAGE        = "respone_room_message"
 
 
 MSG_DB_RESULT               = "msg_db_result"

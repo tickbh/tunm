@@ -53,35 +53,25 @@ function ROOM_CLASS:broadcast_message(msg, ...)
             end
         end
     end
+
+    del_message(msg_buf)
 end
 
 --玩家进入房间
 function ROOM_CLASS:entity_enter(server_id, user_rid, cookie, info)
-    local user_ob = find_object_by_rid(user_rid)
-    if not user_ob then
-        user_ob = USER_D.create_user(info)
-    end
-    assert(user_ob ~= nil, "ob must exist")
-    user_ob:set_temp("room_server_id", server_id)
-    user_ob:set_temp("room_name", self:get_room_name())
-
     --将新实体加该场景
     self.room_entity[user_rid] = {
         server_id = server_id,
+        data = clone_object(DBASE_CLASS, info)
     }
 
     INTERNAL_COMM_D.send_server_message(server_id, user_rid, {}, MSG_ROOM_MESSAGE, "success_enter_room", {rid = user_rid, room_name = self:get_room_name()})
-
     trace("success entity_enter %o", user_ob)
     return 0
 end
 
 --玩家离开房间
 function ROOM_CLASS:entity_leave(user_rid, cookie, info)
-    local user_ob = find_object_by_rid(user_rid)
-    if not user_ob then
-        return -1
-    end
 
     if not self.room_entity[user_rid] then
         write_log(string.format("Error:对象%s离开房间%s时找不到自己(%s)\n",
@@ -90,6 +80,7 @@ function ROOM_CLASS:entity_leave(user_rid, cookie, info)
 
     --将该实体从场景中删除，并发送离开场景消息
     self.room_entity[user_rid] = nil
+    --room info dbase
     return 0
 end
 
@@ -106,6 +97,11 @@ end
 -- 返回房间中的玩家信息
 function ROOM_CLASS:get_room_entity()
     return self.room_entity
+end
+
+-- 返回房间中的玩家信息
+function ROOM_CLASS:get_data_by_rid(user_rid)
+    return self.room_entity[user_rid]
 end
 
 --判断是否是vip场景

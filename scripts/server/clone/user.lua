@@ -12,6 +12,7 @@ function USER_CLASS:create(value)
     self:freeze_dbase()
 
     self:set_temp("container", clone_object(CONTAINER_CLASS, {rid = get_ob_rid(self)}))
+
 end
 
 function USER_CLASS:destruct()
@@ -108,6 +109,8 @@ function USER_CLASS:enter_world()
 
     -- 日志记录玩家登录
     LOG_D.to_log(LOG_TYPE_LOGIN_RECORD, get_ob_rid(self), tostring(self:query("account_rid")), "", "")
+
+    REDIS_D.run_publish(REDIS_USER_ENTER_WORLD, encode_json({rid = get_ob_rid(self), server_id = tonumber(SERVER_ID)}))
 end
 
 -- 取得对象类
