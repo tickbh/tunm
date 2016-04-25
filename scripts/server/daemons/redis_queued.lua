@@ -16,12 +16,32 @@ function deal_with_reply(reply)
         if not is_rid_vaild(reply.payload) then
             return
         end
-        ACCOUNT_D.add_account_freeze(reply.payload)
+        raise_issue(EVENT_ACCOUNT_START_HIBERNATE, reply.payload)
     elseif reply.channel == REDIS_ACCOUNT_END_HIBERNATE then
         if not is_rid_vaild(reply.payload) then
             return
         end
-        ACCOUNT_D.remove_account_freeze(reply.payload)
+        raise_issue(EVENT_ACCOUNT_END_HIBERNATE, reply.payload)
+    elseif reply.channel == REDIS_ACCOUNT_OBJECT_CONSTRUCT then
+        if not is_rid_vaild(reply.payload) then
+            return
+        end
+        raise_issue(EVENT_ACCOUNT_OBJECT_CONSTRUCT, reply.payload)
+    elseif reply.channel == REDIS_ACCOUNT_OBJECT_DESTRUCT then
+        if not is_rid_vaild(reply.payload) then
+            return
+        end
+        raise_issue(EVENT_ACCOUNT_OBJECT_DESTRUCT, reply.payload)
+    elseif reply.channel == REDIS_NOTIFY_ACCOUNT_OBJECT_DESTRUCT then
+        if not is_rid_vaild(reply.payload) then
+            return
+        end
+        raise_issue(EVENT_NOTIFY_ACCOUNT_OBJECT_DESTRUCT, reply.payload)   
+    elseif reply.channel == REDIS_ACCOUNT_WAIT_LOGIN then
+        if not is_rid_vaild(reply.payload) then
+            return
+        end
+        raise_issue(EVENT_ACCOUNT_WAIT_LOGIN, reply.payload)
     else
         local room_name, user_rid, cookie = string.match(reply.channel, MATCH_ROOM_MSG_CHANNEL_USER)
         trace("room_name = %o, user_rid = %o", room_name, user_rid)

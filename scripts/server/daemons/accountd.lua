@@ -10,7 +10,13 @@ local account_list = {};
 setmetatable(account_list, { __mode = "v" });
 
 -- 冻结玩家数据，在保存数据的过程中不允许用户登陆
-local account_freeze = {}
+local account_freeze_list = {}
+
+-- 所有的账号登陆的信息情况
+local account_online_list = {}
+
+-- 所有的等待登陆的信息情况
+local account_wait_list = {}
 
 -- 创建玩家
 function create_account(dbase)
@@ -227,15 +233,50 @@ function request_select_user(account, rid)
 end
 
 function add_account_freeze(account_rid)
-    account_freeze[account_rid] = {time=os.time()}
+    account_freeze_list[account_rid] = {time=os.time()}
 end
 
 function remove_account_freeze(account_rid)
-    account_freeze[account_rid] = nil
+    account_freeze_list[account_rid] = nil
+    raise_issue(EVENT_SUCCESS_ACCOUNT_END_HIBERNATE, account_rid)
 end
 
 function is_account_freeze(account_rid)
-    local data = account_freeze[account_rid]
+    local data = account_freeze_list[account_rid]
+    if not data then
+        return false
+    end
+    return os.time() - (data.time or 0) < 100
+end
+
+function add_account_online(account_rid)
+    account_online_list[account_rid] = {time=os.time()}
+    remove_account_wait_login(account_rid)
+end
+
+function remove_account_online(account_rid)
+    account_online_list[account_rid] = nil
+    raise_issue(EVENT_SUCCESS_ACCOUNT_OBJECT_DESTRUCT, account_rid)
+end
+
+function is_account_online(account_rid)
+    local data = account_online_list[account_rid]
+    if not data then
+        return false
+    end
+    return os.time() - (data.time or 0) < 10000
+end
+
+function add_account_wait_login(account_rid)
+    account_wait_list[account_rid] = {time=os.time()}
+end
+
+function remove_account_wait_login(account_rid)
+    account_wait_list[account_rid] = nil
+end
+
+function is_account_wait(account_rid)
+    local data = account_wait_list[account_rid]
     if not data then
         return false
     end
@@ -246,7 +287,20 @@ local function init()
 end
 
 function create()
-    register_post_init(init)
+    register_as_audience("ACCOUNT_D", {EVENT_ACCOUNT_START_HIBERNATE = add_account_freeze})
+    register_as_audience("ACCOUNT_D", {EVENT_ACCOUNT_END_HIBERNATE = remove_account_freeze})
+    register_as_audience("ACCOUNT_D", {EVENT_ACCOUNT_WAIT_LOGIN = add_account_wait_login})
+    register_as_audience("ACCOUNT_D", {EVENT_ACCOUNT_CANCEL_WAIT_LOGIN = remove_account_wait_login})
+    register_as_audience("ACCOUNT_D", {EVENT_ACCOUNT_OBJECT_CONSTRUCT = add_account_online})
+    register_as_audience("ACCOUNT_D", {EVENT_ACCOUNT_OBJECT_DESTRUCT = remove_account_online})
+    register_as_audience("ACCOUNT_D", {EVENT_NOTIFY_ACCOUNT_OBJECT_DESTRUCT = function(rid)
+        local ob = find_object_by_rid(rid)
+        if not is_object(ob) then
+            return
+        end
+        ob:connection_lost(true)   
+    end})
 end
 
 create();
+register_post_init(init)
