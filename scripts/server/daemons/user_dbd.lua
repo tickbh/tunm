@@ -1,7 +1,9 @@
 -- user_dbd.lua
 -- create by wugd
 -- 缓存数据获取，一切非自己的数据取皆为异步
-module("USER_DBD", package.seeall)
+USER_DBD = {}
+setmetatable(USER_DBD, {__index = _G})
+local _ENV = USER_DBD
 
 cookie_map = {}
 

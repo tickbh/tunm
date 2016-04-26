@@ -1,8 +1,9 @@
 -- chatd.lua
 -- Created by wugd
 -- 负责聊天相关的模块
-
-module("CHAT_D", package.seeall)
+CHAT_D = {}
+setmetatable(CHAT_D, {__index = _G})
+local _ENV = CHAT_D
 
 --[[
 {

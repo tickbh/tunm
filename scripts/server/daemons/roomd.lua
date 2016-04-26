@@ -3,7 +3,9 @@
 --负责房间相关的功能模块
 
 --创建模块声明
-module("ROOM_D",package.seeall)
+ROOM_D = {}
+setmetatable(ROOM_D, {__index = _G})
+local _ENV = ROOM_D
 
 --场景列表
 local room_list  = {}

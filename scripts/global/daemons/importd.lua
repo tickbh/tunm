@@ -1,10 +1,11 @@
 -- importd.lua
 -- 读取csv文件，并转成相应的格式
 -- 声明模块名
+IMPORT_D = {}
+setmetatable(IMPORT_D, {__index = _G})
+local _ENV = IMPORT_D
 
-module("IMPORT_D", package.seeall);
-
-local splitChar = "\t";
+local splitChar = "\t"
 
 -- 定义内部接口，按照字母顺序排序
 
@@ -25,7 +26,7 @@ local function handle_line(line)
         line = trim(string.gsub(line,"(\"?)$",""))
         csv["transformation"] = restore_value(line)]]--
     else
-        line = line .. splitChar;
+        line = line .. splitChar
         local linestart = 1
 
         repeat
@@ -40,7 +41,7 @@ local function handle_line(line)
             until c ~= "\""
 
             if not i then
-                assert(nil);
+                assert(nil)
                 error("unmatched")
             end
 
@@ -51,46 +52,46 @@ local function handle_line(line)
             else
                 local nexti = string.find(line, splitChar, linestart)
                 row[#row+1] = trim(string.sub(line,linestart,nexti-1))
-                linestart   = nexti + 1;
+                linestart   = nexti + 1
             end
         until linestart > string.len(line)
     end
 
-    return row;
+    return row
 end
 
 --读取csv文件，存入数组，以#开头的为注释
 --正文第一行为字段的类型，第二行为字段名
 local function readcsv (file)
-    local csv = {};
-    local row = {};
-    local failed = false;
+    local csv = {}
+    local row = {}
+    local failed = false
 
-    local fp = io.open(get_full_path(file));
+    local fp = io.open(get_full_path(file))
 
     if fp then
         for line in fp:lines() do
 
             if (string.find(line,"^#test_section") or string.find(line,"^\"#test_section")) then
-                break;
+                break
             end
-            row = handle_line(line);
+            row = handle_line(line)
             --判断该行是否空行,若为空则不加入
             for _,v in ipairs(row) do
                 if v ~= "" then
-                    csv[#csv + 1] = row;
-                    break;
+                    csv[#csv + 1] = row
+                    break
                 end
             end
         end
 
-        io.close(fp);
+        io.close(fp)
     end
 
     if failed then
-        print(R.."加载文件(%o)时找不到该文件。\n"..W, file);
+        print(R.."加载文件(%o)时找不到该文件。\n"..W, file)
     end
-    return csv;
+    return csv
 end
 
 -- 定义公共接口，按照字母顺序排序
@@ -116,28 +117,28 @@ function array_to_mapping(array)
                 if fieldtype[j] == "string" then
                     row[fieldname[j]] = array[i][j]
                 elseif fieldtype[j] == "int" and sizeof(array[i][j]) == 0 then
-                    row[fieldname[j]] = 0;
+                    row[fieldname[j]] = 0
                 elseif fieldtype[j] == "table" then
-                    row[fieldname[j]] = restore_json(array[i][j]);
+                    row[fieldname[j]] = restore_json(array[i][j])
                 elseif fieldtype[j] == "float" and sizeof(array[i][j]) == 0 then
-                    row[fieldname[j]] = 0;
+                    row[fieldname[j]] = 0
                 else
-                    row[fieldname[j]] = restore_value(array[i][j]);
+                    row[fieldname[j]] = restore_value(array[i][j])
                 end
             end
 
             if fieldtype[1] == "string" then
                 mapping[array[i][1]] = row
             elseif fieldtype[1] == "int" and sizeof(array[i][1]) == 0 then
-                mapping[0] = row;
+                mapping[0] = row
             elseif fieldtype[1] == "float" and sizeof(array[i][1]) == 0 then
-                mapping[0] = row;
+                mapping[0] = row
             elseif fieldtype[1] == "table" and sizeof(array[i][1]) == 0 then
-                row[{}] = row;
+                row[{}] = row
             else
-                local index = restore_value(array[i][1]);
+                local index = restore_value(array[i][1])
                 if not index then
-                    print(R.."%o未定义! 配置表结构如下:\n%o\n"..W, array[i][1], fieldname);
+                    print(R.."%o未定义! 配置表结构如下:\n%o\n"..W, array[i][1], fieldname)
                 end
                 mapping[index] = set_table_read_only(row)
             end
@@ -167,17 +168,17 @@ function array_to_tables(array)
             if fieldtype[j] == "string" then
                 row[fieldname[j]] = array[i][j]
             elseif fieldtype[j] == "int" and sizeof(array[i][j]) == 0 then
-                row[fieldname[j]] = 0;
+                row[fieldname[j]] = 0
             elseif fieldtype[j] == "table" then
-                row[fieldname[j]] = restore_json(array[i][j]);
+                row[fieldname[j]] = restore_json(array[i][j])
            elseif fieldtype[j] == "float" and sizeof(array[i][j]) == 0  then
-                row[fieldname[j]] = 0;
+                row[fieldname[j]] = 0
             else
                 row[fieldname[j]] = restore_value(array[i][j])
             end
         end
 
-        tables[#tables + 1] = row;
+        tables[#tables + 1] = row
     end
 
     return tables
@@ -185,53 +186,53 @@ end
 
 -- 构造csv表其中两列的映射关系
 function build_mapping(table, field_key, field_value)
-    local result = {};
+    local result = {}
     -- readcsv_to_tables产生的类型
     if is_array(table) then
         for _, value in ipairs(table) do
-            result[value[field_key]] = value[field_value];
+            result[value[field_key]] = value[field_value]
         end
     -- readcsv_to_mapping产生的类型
     elseif is_table(table) then
         for _, value in pairs(table) do
-            result[value[field_key]] = value[field_value];
+            result[value[field_key]] = value[field_value]
         end
     -- 其他类型，出错！
     else
-        return ;
+        return 
     end
 
-    return result;
+    return result
 end
 
 --检查key是否有重复，默认第一列为key，默认array第一行为字段类型,
 --第二行为字段名。
 function checkkeys(array)
     if #array < 2 then
-        return nil;
+        return nil
     end
 
-    local keys = {};
+    local keys = {}
 
     --获取key
     for i = 3,#array do
-        keys[i-2] = array[i][1];
+        keys[i-2] = array[i][1]
     end
 
-    local keys_map = {};
+    local keys_map = {}
     for i = 1,#keys do
 
         --检查新现出的key是否已存在keys_map中，若有则key重复
         if not keys_map[keys[i]] then
-            keys_map[keys[i]] = true;
+            keys_map[keys[i]] = true
         else
-            local error_info = string.format("the %s key repeat, please check", keys[i]);
-            assert(false, error_info);
-            return nil;
+            local error_info = string.format("the %s key repeat, please check", keys[i])
+            assert(false, error_info)
+            return nil
         end
     end
 
-    return true;
+    return true
 end
 
 -- 从csv读取出来的数组中提取一列
@@ -239,42 +240,42 @@ function extract_column(csv_tables, column_name)
     -- mapping类型而非tables类型，需要作转化
     if not is_array(csv_tables) then
         if not is_table(csv_tables) then
-            return nil;
+            return nil
         else
-            local temp = {};
+            local temp = {}
             for _, value in pairs(csv_tables) do
-                temp[#temp+1] = value;
+                temp[#temp+1] = value
             end
-            csv_tables = temp;
+            csv_tables = temp
         end
 
     end
 
     local column = {}
     for i, csv_record in ipairs(csv_tables) do
-        column[i] = csv_record[column_name];
+        column[i] = csv_record[column_name]
     end
 
-    return column;
+    return column
 end
 
 --读取csv文件，返回mapping,以#开头的为注释
 --正文第一行为字段的类型，第二行为字段名
 function readcsv_to_mapping(file)
-    return (array_to_mapping(readcsv(file)));
+    return (array_to_mapping(readcsv(file)))
 end
 
 --读取csv文件,返回一个具有映射关系的table,以#开头的为注释
 --正文第一行为字段的类型，第二行为字段名
 function readcsv_to_tables(file)
-    return (array_to_tables(readcsv(file)));
+    return (array_to_tables(readcsv(file)))
 end
 
 -- 读取csv文件，取出指定列的数据存入一个table数组
 function readcsv_column_to_array(file, column_name)
-    local csv_tables = readcsv_to_tables(file);
-    local csv_column  = extract_column(csv_tables, column_name);
-    return csv_column;
+    local csv_tables = readcsv_to_tables(file)
+    local csv_column  = extract_column(csv_tables, column_name)
+    return csv_column
 end
 
 --去除字符两端的空格
@@ -286,4 +287,4 @@ end
 function create()
 end
 
-create();
+create()

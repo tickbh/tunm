@@ -2,24 +2,26 @@
 -- 分析数据库组成结构
 
 -- 声明模块名
-module("DATA_D", package.seeall);
+DATA_D = {}
+setmetatable(DATA_D, {__index = _G})
+local _ENV = DATA_D
 
 -- 内部变量声明
-local table_infos = {};
+local table_infos = {}
 local db_infos = {}
 
 local test_cloumn = "only_test_for_create"
 
 function get_table_info(table_name) 
-    return table_infos[table_name];
+    return table_infos[table_name]
 end
 
 function get_table_fields( table_name )
-    local tinfo = table_infos[table_name];
+    local tinfo = table_infos[table_name]
     if not tinfo then
-        return {};
+        return {}
     end
-    return tinfo["field_map"];
+    return tinfo["field_map"]
 end
 
 function is_field_exist(table_name, field)
@@ -32,7 +34,7 @@ local function create_db(db_name,tinfo)
     for _, sql_cmd in ipairs(tinfo["sql_cmds"]) do
         -- 替换自增长的定义字段
         sql_cmd = string.gsub(sql_cmd, "$AUTO_INCREMENT",
-                                      DB_D.get_auto_increment_desc());
+                                      DB_D.get_auto_increment_desc())
         DB_D.execute_db(db_name, sql_cmd)
     end
 end
@@ -50,15 +52,15 @@ function ensure_database()
 end
 
 function get_db_name( table_name )
-    local tinfo = table_infos[table_name];
+    local tinfo = table_infos[table_name]
     if not tinfo then
-        return nil;
+        return nil
     end
-    return tinfo["db"];
+    return tinfo["db"]
 end
 
 function generate_field_map(tablejson, field_table)
-    local result = {};
+    local result = {}
     for _ , value in ipairs(tablejson["fields"]) do
         if value["key"] ~= "index" then
             if value["key"] == "PRI" or value["key"] == "UNI" then
@@ -67,14 +69,14 @@ function generate_field_map(tablejson, field_table)
             if field_table[value["field"]] then
                 value["pre_field"] = field_table[value["field"]]
             end
-            result[value["field"]] = value;
+            result[value["field"]] = value
         end
     end
-    return result;
+    return result
 end
 
 function generate_index_map(tablejson)
-    local result = {};
+    local result = {}
     for _ , value in ipairs(tablejson["fields"]) do
         if value["key"] == "index" then
             value = dup(value)
@@ -92,11 +94,11 @@ function generate_index_map(tablejson)
             result[value["name"]] = value
         end
     end
-    return result;
+    return result
 end
 
 function load_database( path )
-    local json_table = get_file_json(path);
+    local json_table = get_file_json(path)
     for database_name, tablearray in pairs(json_table) do
         database_name = database_name .. (DB_SUFFIX or "")
         db_infos[database_name] = db_infos[database_name] or {}
@@ -112,12 +114,12 @@ function load_database( path )
                     pre_field = value["field"]
                 end 
             end
-            local table_value = tablejson;
-            table_value["db"] = database_name;
-            table_value["field_map"] = generate_field_map(tablejson, field_table);
-            table_value["index_map"] = generate_index_map(tablejson);
-            table_value["field_order"] = field_order;
-            table_infos[table_value["name"]] = table_value;
+            local table_value = tablejson
+            table_value["db"] = database_name
+            table_value["field_map"] = generate_field_map(tablejson, field_table)
+            table_value["index_map"] = generate_index_map(tablejson)
+            table_value["field_order"] = field_order
+            table_infos[table_value["name"]] = table_value
             db_infos[database_name][table_value["name"]] = table_value
         end
     end
@@ -125,7 +127,7 @@ end
 
 function is_database_exist(dbname)
     local sql = string.format("SHOW DATABASES LIKE '%s'", dbname)
-    local err, ret = DB_D.lua_sync_select("", sql, DB_D.get_db_index());
+    local err, ret = DB_D.lua_sync_select("", sql, DB_D.get_db_index())
     if err ~= 0 then
         return false
     end
@@ -141,21 +143,21 @@ end
 
 function ensure_exist_database(dbname)
     if is_database_exist(dbname) then
-        return true;
+        return true
     end
     local sql = string.format("CREATE DATABASE `%s`", dbname)
-    local err, ret = DB_D.lua_sync_select("", sql, DB_D.get_db_index());
-    return true;
+    local err, ret = DB_D.lua_sync_select("", sql, DB_D.get_db_index())
+    return true
 end
 
 function is_table_exist(tablename, dbname)
     dbname = dbname or DATA_D.get_db_name(tablename)
     if dbname == nil then
         trace("unknow table %o in which db ", tablename)
-        return false;
+        return false
     end
     local sql = string.format("SHOW TABLES LIKE '%s'", tablename)
-    local err, ret = DB_D.lua_sync_select(dbname, sql, DB_D.get_db_index());
+    local err, ret = DB_D.lua_sync_select(dbname, sql, DB_D.get_db_index())
     if err ~= 0 then
         return false
     end
@@ -173,15 +175,15 @@ function ensure_exist_table(tablename, dbname)
     dbname = dbname or DATA_D.get_db_name(tablename)
     if dbname == nil then
         trace("unknow table %o in which db ", tablename)
-        return false;
+        return false
     end
 
     if is_table_exist(tablename, dbname) then
-        return true;
+        return true
     end
     local sql = string.format("CREATE TABLE `%s` (`%s` int)", tablename, test_cloumn)
-    local err, ret = DB_D.lua_sync_select(dbname, sql, DB_D.get_db_index());
-    return true;
+    local err, ret = DB_D.lua_sync_select(dbname, sql, DB_D.get_db_index())
+    return true
 end
 
 function get_pk(table_info)
@@ -343,9 +345,9 @@ function check_table_index_right(tinfo)
 end
 
 function create( )
-    load_database("config/dba_database.json");
-    ensure_database();
+    load_database("config/dba_database.json")
+    ensure_database()
 end
 
 
-create();
+create()

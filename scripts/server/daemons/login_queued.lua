@@ -3,7 +3,9 @@
 -- 登录排队机制
 
 -- 声明模块名
-module("LOGIN_QUEUE_D", package.seeall)
+LOGIN_QUEUE_D = {}
+setmetatable(LOGIN_QUEUE_D, {__index = _G})
+local _ENV = LOGIN_QUEUE_D
 
 -- 服务端负载
 local online_limit = 600

@@ -3,9 +3,11 @@
 -- 结束进程
 
 -- 声明模块名
-module("EXIT_D", package.seeall);
+EXIT_D = {}
+setmetatable(EXIT_D, {__index = _G})
+local _ENV = EXIT_D
 
-local shutdown_status = false;
+local shutdown_status = false
 
 -- 定义公共接口
 
@@ -20,17 +22,17 @@ function shutdown()
     -- CONNECT_D.closeConnectingInfo()
     --通知其它服务器关闭
     set_shutdown_status(true)
-    exit();
+    exit()
 end
 
 function set_shutdown_status(flag)
-    shutdown_status = flag;
+    shutdown_status = flag
 end
 
 function is_shutdown()
-    return shutdown_status;
+    return shutdown_status
 end
 
 function create()
 end
-create();
+create()

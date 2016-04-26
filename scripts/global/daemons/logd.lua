@@ -3,7 +3,9 @@
 -- 日志记录
 
 -- 声明模块名
-module("LOG_D", package.seeall);
+LOG_D = {}
+setmetatable(LOG_D, {__index = _G})
+local _ENV = LOG_D
 
 local table_name = "log"
 
@@ -24,4 +26,7 @@ end
 local function create()
 end
 
-create();
+create()
+IMPORT_D = {}
+setmetatable(IMPORT_D, {__index = _G})
+local _ENV = IMPORT_D

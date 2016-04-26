@@ -3,11 +3,13 @@
 -- 负责玩家相关的功能模块
 
 -- 声明模块名
-module("ACCOUNT_D", package.seeall);
+ACCOUNT_D = {}
+setmetatable(ACCOUNT_D, {__index = _G})
+local _ENV = ACCOUNT_D
 
 -- 创建弱引用表
-local account_list = {};
-setmetatable(account_list, { __mode = "v" });
+local account_list = {}
+setmetatable(account_list, { __mode = "v" })
 
 -- 冻结玩家数据，在保存数据的过程中不允许用户登陆
 local account_freeze_list = {}
@@ -20,24 +22,24 @@ local account_wait_list = {}
 
 -- 创建玩家
 function create_account(dbase)
-    local account = ACCOUNT_CLASS.new(dbase);
-    account_list[#account_list + 1] = account;
-    return account;
+    local account = ACCOUNT_CLASS.new(dbase)
+    account_list[#account_list + 1] = account
+    return account
 end
 
 -- 新增玩家记录的回调
 local function create_new_account_callback(info, ret, result_list)
-    local account_ob = info["account_ob"];
+    local account_ob = info["account_ob"]
     if ret ~= 0 then
-        do return; end
+        do return end
     end
 
-    login(account_ob, info["rid"], info);
+    login(account_ob, info["rid"], info)
 end
 
 function login(agent, account_rid, account_dbase)
-    assert(account_rid == account_dbase["rid"]);
-    local account = create_account(account_dbase);
+    assert(account_rid == account_dbase["rid"])
+    local account = create_account(account_dbase)
     account:accept_relay(agent)
     account:send_message(MSG_LOGIN_NOTIFY_STATUS, {ret = 0})
     success_login(account, false)
@@ -59,20 +61,20 @@ end
 
 -- 创建 user 表记录
 function create_new_account(login_info)
-    local agent = login_info["agent"];
+    local agent = login_info["agent"]
     local device_id = login_info["device_id"]
 
     if not is_object(agent) then
-        return;
+        return
     end
 
     -- 检查信息是否合法
     if not is_string(device_id) then
         trace("创建新角色信息不合法。\n")
-        return;
+        return
     end
 
-    local user_rid = NEW_RID();
+    local user_rid = NEW_RID()
 
     -- 记录其它必备的玩家属性
     local account_dbase = {
@@ -84,21 +86,21 @@ function create_new_account(login_info)
         password    = login_info["password"],
         switch_time = 0,
         device_md5  = calc_str_md5(device_id),
-    };
+    }
     local sql = SQL_D.insert_sql("account", account_dbase)
     account_dbase["account_ob"] = agent
     DB_D.execute_db("account", sql, create_new_account_callback, account_dbase)
 end
 
 function get_account_list()
-    return account_list;
+    return account_list
 end
 
 function account_logout(account)
     if not is_object(account) then
-        return;
+        return
     end
-    destruct_object(account);
+    destruct_object(account)
 end
 
 local function callback_get_user_list(account, ret, result_list)
@@ -139,7 +141,7 @@ local function create_new_user_callback(info, ret, result_list)
     if ret ~= 0 then
         account_ob:send_message(MSG_CREATE_USER, {status=1})
         destruct_object(account_ob)
-        do return; end
+        do return end
     end
     account_ob:send_message(MSG_CREATE_USER, {status=0})
     info["status"] = 0
@@ -156,7 +158,7 @@ local function create_new_user_callback(info, ret, result_list)
     USER_D.publish_user_attr_update(table_data)
 
     user_list[info.rid] = info
-    LOG_D.to_log(LOG_TYPE_CREATE_NEW_USER, info.rid, account_ob:query("name"), "", "");
+    LOG_D.to_log(LOG_TYPE_CREATE_NEW_USER, info.rid, account_ob:query("name"), "", "")
 
     raise_issue(EVENT_NEW_USER_CREATE, info)
     request_select_user(account_ob, info.rid)
@@ -302,5 +304,5 @@ function create()
     end})
 end
 
-create();
+create()
 register_post_init(init)

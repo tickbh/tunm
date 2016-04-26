@@ -73,6 +73,7 @@ function USER_CLASS:connection_lost(at_once)
     self:set("last_logout_time", os.time())
     if self:query_temp("login_act_time") ~= nil then
         self:add_attrib("all_login_time", os.time() - self:query_temp("login_act_time"))
+        self:delete_temp("login_act_time")
     end
 
     if at_once then
@@ -83,6 +84,8 @@ function USER_CLASS:connection_lost(at_once)
             self.logout_timer = set_timer(30, self.logout_callback, self)--30000
         end
     end
+
+    REDIS_D.run_publish(REDIS_USER_CONNECTION_LOST, get_ob_rid(self))
 end
 
 -- 玩家进入世界

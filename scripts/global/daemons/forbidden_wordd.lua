@@ -1,8 +1,9 @@
 --forbidden_wordd.lua
 --屏蔽字库
 --create by wugd
-
-module("FORBIDDEN_WORDD", package.seeall )
+FORBIDDEN_WORDD = {}
+setmetatable(FORBIDDEN_WORDD, {__index = _G})
+local _ENV = FORBIDDEN_WORDD
 
 local forbidden_table = {}
 local max_length = 1

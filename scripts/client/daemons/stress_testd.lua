@@ -10,7 +10,9 @@
 --]]
 
 --声明模块
-module("STRESS_TEST_D", package.seeall)
+STRESS_TEST_D = {}
+setmetatable(STRESS_TEST_D, {__index = _G})
+local _ENV = STRESS_TEST_D
 
 -- console是否繁忙标识
 local is_system_busy          = false

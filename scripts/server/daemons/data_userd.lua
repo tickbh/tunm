@@ -3,7 +3,9 @@
 -- 负责缓存数据相关的功能模块
 
 -- 声明模块名
-module("DATA_USERD", package.seeall)
+DATA_USERD = {}
+setmetatable(DATA_USERD, {__index = _G})
+local _ENV = DATA_USERD
 
 --缓存角色 rid，名字，竞技场区，战力，战斗详细数据
 user_rid_data = {}

@@ -3,7 +3,9 @@
 -- 负责玩家相关的功能模块
 
 -- 声明模块名
-module("USER_D", package.seeall)
+USER_D = {}
+setmetatable(USER_D, {__index = _G})
+local _ENV = USER_D
 
 local exp_user_file = "data/txt/exp_user.txt"
 local exp_user_table = {}

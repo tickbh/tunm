@@ -3,7 +3,9 @@
 -- 负责竞技场相关的功能模块
 
 -- 声明模块名
-module("REDIS_SCRIPTD", package.seeall)
+REDIS_SCRIPTD = {}
+setmetatable(REDIS_SCRIPTD, {__index = _G})
+local _ENV = REDIS_SCRIPTD
 
 script_folder = "server/redis_scripts/"
 cache_hashs = {}

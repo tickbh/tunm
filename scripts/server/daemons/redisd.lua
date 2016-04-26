@@ -1,6 +1,8 @@
 -- redisd.lua
 -- 声明模块名
-module("REDIS_D", package.seeall)
+REDIS_D = {}
+setmetatable(REDIS_D, {__index = _G})
+local _ENV = REDIS_D
 
 local STATUS_SUFFIX = "::STATUS"
 local ERROR_SUFFIX = "::ERROR"

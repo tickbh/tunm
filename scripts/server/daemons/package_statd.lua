@@ -1,5 +1,7 @@
 
-module( "PACKAGE_STATD", package.seeall )
+PACKAGE_STATD = {}
+setmetatable(PACKAGE_STATD, {__index = _G})
+local _ENV = PACKAGE_STATD
 -- 玩家接收到的包裹统计
 
 MAX_PACKAGE_ONESEC = 30			-- 每秒最多允许30个包

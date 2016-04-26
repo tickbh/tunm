@@ -3,7 +3,9 @@
 -- 负责机器当前情况
 
 -- 声明模块名
-module("SYSTEM_D", package.seeall);
+SYSTEM_D = {}
+setmetatable(SYSTEM_D, {__index = _G})
+local _ENV = SYSTEM_D
 
 local cpu_num = 0
 -- Such as 2500, that is 2500 MHz.

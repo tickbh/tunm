@@ -1,7 +1,9 @@
 -- user_redisd.lua
 -- create by wugd
 -- 缓存数据获取，一切非自己的数据取皆为异步
-module("USER_REDISD", package.seeall)
+USER_REDISD = {}
+setmetatable(USER_REDISD, {__index = _G})
+local _ENV = USER_REDISD
 
 cookie_map = {}
 local use_serialize = true

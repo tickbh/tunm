@@ -3,7 +3,9 @@
 -- 发送信息内部管理的类
 
 -- 声明模块名
-module("INTERNAL_COMM_D", package.seeall)
+INTERNAL_COMM_D = {}
+setmetatable(INTERNAL_COMM_D, {__index = _G})
+local _ENV = INTERNAL_COMM_D
 
 local cookie_map = {}
 local TIMEOUT = 15

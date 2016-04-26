@@ -3,7 +3,9 @@
 -- 登录相关模块
 
 -- 声明模块名
-module("ME_D", package.seeall)
+ME_D = {}
+setmetatable(ME_D, {__index = _G})
+local _ENV = ME_D
 
 local me_rid
 local me_agent

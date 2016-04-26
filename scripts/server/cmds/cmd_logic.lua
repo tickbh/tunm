@@ -121,4 +121,7 @@ end
 
 function respone_room_message(user, oper, info)
     trace("respone_room_message %o", {user, oper, info})
+    if oper == "reconnect_user" then
+        user:send_message(MSG_ROOM_MESSAGE, "pre_room", info)
+    end
 end

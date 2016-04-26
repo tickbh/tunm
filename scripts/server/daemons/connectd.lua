@@ -1,6 +1,8 @@
 --connectd.lua
 --connectd 服务
-module("CONNECT_D", package.seeall)
+CONNECT_D = {}
+setmetatable(CONNECT_D, {__index = _G})
+local _ENV = CONNECT_D
 
 local connect_agent = nil
 local connect_timer = nil
@@ -42,7 +44,7 @@ local function logic_connect_callback(agent, arg)
     connect_agent = agent
 
     -- for i=1,10000 do
-    --     agent:send_message(LOSE_CLIENT, 0);
+    --     agent:send_message(LOSE_CLIENT, 0)
     -- end
     
     trace("logic_connect_callback success fd is %o", connect_agent)

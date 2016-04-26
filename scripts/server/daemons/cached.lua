@@ -1,7 +1,9 @@
 -- cached.lua
 -- create by wugd
 -- 缓存数据获取，一切非自己的数据取皆为异步
-module("CACHE_D", package.seeall)
+CACHE_D = {}
+setmetatable(CACHE_D, {__index = _G})
+local _ENV = CACHE_D
 
 ENABLE_REDIS_CACHE = false
 

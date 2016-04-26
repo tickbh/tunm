@@ -3,7 +3,9 @@
 -- 登录相关模块
 
 -- 声明模块名
-module("LOGIN_D", package.seeall)
+LOGIN_D = {}
+setmetatable(LOGIN_D, {__index = _G})
+local _ENV = LOGIN_D
 
 local private_key = "wugdGame"
 

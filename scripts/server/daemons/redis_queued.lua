@@ -1,6 +1,8 @@
 --redis_queued.lua
 --redis消息队列处理
-module("REDIS_QUEUED", package.seeall)
+REDIS_QUEUED = {}
+setmetatable(REDIS_QUEUED, {__index = _G})
+local _ENV = REDIS_QUEUED
 
 function deal_with_reply(reply)
     if not is_table(reply) then
@@ -48,6 +50,12 @@ function deal_with_reply(reply)
             return
         end
         raise_issue(EVENT_USER_OBJECT_CONSTRUCT, data.rid, data.server_id)
+    elseif reply.channel == REDIS_USER_CONNECTION_LOST then
+        if not is_rid_vaild(reply.payload) then
+            return
+        end
+        raise_issue(EVENT_USER_CONNECTION_LOST, reply.payload)
+
     else
         local room_name, user_rid, cookie = string.match(reply.channel, MATCH_ROOM_MSG_CHANNEL_USER)
         trace("room_name = %o, user_rid = %o", room_name, user_rid)

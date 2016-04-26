@@ -3,7 +3,9 @@
 -- 聊天测试
 
 -- 声明模块名
-module("CHAT_TESTD", package.seeall);
+CHAT_TESTD = {}
+setmetatable(CHAT_TESTD, {__index = _G})
+local _ENV = CHAT_TESTD
 
 -- 达到每个玩家的该模块间隔时间，则调用该函数
 function operation(player)
