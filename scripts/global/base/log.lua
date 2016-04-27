@@ -26,7 +26,7 @@ local function format(value, ...)
     end
 
     for idx = i + 1, #a do
-        value = value .. string.format(" args : %d, value : %s", idx, watch(a[i]))
+        value = value .. string.format(" args : %d, value : %s", idx, watch(a[idx]))
     end
     return value
 end

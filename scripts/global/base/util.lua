@@ -1143,3 +1143,16 @@ function child_objects(c)
     clean_array(c.ob_list);
     return c.ob_list;
 end
+
+function assert_eq(a, b, msg)
+    if type(a) ~= type(b) then
+        assert(false, msg)
+    elseif type(a) == "table" then
+        assert(sizeof(a) == sizeof(b), msg)
+        for k,v in pairs(a) do
+            assert(v == b[k], msg)
+        end
+    else
+        assert(a == b, msg)
+    end
+end

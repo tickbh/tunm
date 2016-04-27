@@ -40,6 +40,7 @@ local function main()
     load_folder("server/clone")
     load_folder("server/clone/rooms", "room:ddz_room")
     load_folder("server/daemons", "sqld:dbd:datad:redisd:redis_queued:redis_scriptd") --,"propertyd" 强制加载优先顺序
+    load_folder("server/daemons/poker")
     load_folder("server/cmds")
     load_folder("server/msgs")
 
