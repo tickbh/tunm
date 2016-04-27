@@ -1,5 +1,5 @@
-#场景编号，以数字为编号*	场景类名	游戏类型(确定根据游戏类型获取相关的数据)	场景名称*	地图未开放，0开放 1不开放	若是VIP场景则填1，不是填0	进入等级	适合等级
-string	string	string	string	int	int	int	string
-room_name	room_class	game_type	name	is_unopen	is_vip	level	suit_level
-ddz1	DDZ_ROOM_CLASS	ddz	斗地主1	1	0		
-ddz2	DDZ_ROOM_CLASS	ddz	斗地主2	1	0		
+#场景编号，以数字为编号*	场景类名	游戏类型(确定根据游戏类型获取相关的数据)	场景名称*	地图未开放，0开放 1不开放	若是VIP场景则填1，不是填0	桌子数量
+string	string	string	string	int	int	int
+room_name	room_class	game_type	name	is_unopen	is_vip	table_num
+ddz1	DDZ_ROOM_CLASS	ddz	斗地主1	1	0	100
+ddz2	DDZ_ROOM_CLASS	ddz	斗地主2	1	0	100

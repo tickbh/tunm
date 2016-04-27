@@ -16,10 +16,22 @@ function ROOM_CLASS:create(value)
     --创建存放该场景实体的弱表
     self.room_entity = {}
 
+    self:init_table_entity()
 end
 
 function ROOM_CLASS:destruct()
+    for _,data in pairs(dup(self.room_entity)) do
+        self:entity_destruct(data)
+    end
+end
 
+function ROOM_CLASS:init_table_entity()
+    --创建该房间的桌子信息
+    self.table_entity = {}
+    local table_num = self.data["table_num"] or 100
+    for i=1,table_num do
+        self.table_entity[i] = clone_object(self:get_table_class(), self)
+    end
 end
 
 -- 生成对象的唯一ID
@@ -40,7 +52,6 @@ function ROOM_CLASS:entity_update(entity)
     if entity.last_logout_time and (os.time() - entity.last_logout_time > 10 or not entity.is_in_game) then
         self:entity_destruct(entity.user_rid)
     end
-
 end
 
 -- 广播消息
@@ -154,6 +165,10 @@ end
 
 function ROOM_CLASS:get_level()
     return self.data["level"]
+end
+
+function ROOM_CLASS:get_table_class()
+    return TABLE_CLASS
 end
 
 -- 判断是否为房间对象

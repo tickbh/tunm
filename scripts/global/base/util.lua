@@ -71,100 +71,100 @@ end
 
 -- 自定义调用栈输出
 function traceback(log_to_file)
-    local result = { "stack traceback:\n", };
+    local result = { "stack traceback:\n", }
 
-    local i = 3;
-    local j = 1;
-    local file, line, func, var, value;
+    local i = 3
+    local j = 1
+    local file, line, func, var, value
 
     -- 遍历所有调用层次
-    local source_info;
-    local debug_get_info = debug.getinfo;
-    local debug_get_local = debug.getlocal;
+    local source_info
+    local debug_get_info = debug.getinfo
+    local debug_get_local = debug.getlocal
     repeat
-        source_info = debug_get_info(i,'Sln'); -- .source;
+        source_info = debug_get_info(i,'Sln') -- .source
         if not source_info then
             do break end
         end
 
         -- 取得文件名、行号、函数名信息
-        file = source_info.short_src or "";
-        line = source_info.currentline or "";
-        func = source_info.name or "";
+        file = source_info.short_src or ""
+        line = source_info.currentline or ""
+        func = source_info.name or ""
 
         table.insert(result, string.format("\t(%d)%s:%s: in function '%s'\n",
-                                           i - 2, file, line, func));
+                                           i - 2, file, line, func))
         if source_info.what ~= "C" and
            func ~= "_create" and func ~= "_destruct" and func ~= "new" then
             -- 遍历该层次的所有 local 变量
-            j = 1;
+            j = 1
             repeat
-                var, value = debug_get_local(i, j);
+                var, value = debug_get_local(i, j)
                 if var and not string.find(var, "%b()") then
                     if value then
                         table.insert(result, string.format("\t\t%s : %s\n", tostring(var),
-                                                           watch(value, "\t\t", 1)));
+                                                           watch(value, "\t\t", 1)))
                     else
-                        table.insert(result, string.format("\t\t%s : <nil>\n", tostring(var)));
+                        table.insert(result, string.format("\t\t%s : <nil>\n", tostring(var)))
                     end
                 end
 
-                j = j + 1;
-            until not var;
+                j = j + 1
+            until not var
         end
 
-        i = i + 1;
-    until not source_info;
+        i = i + 1
+    until not source_info
 
-    local str = table.concat(result, "");
-    trace(str);
-    return str;
+    local str = table.concat(result, "")
+    trace(str)
+    return str
 end
 
 -- 重新定义assert函数，打印调用栈
 function assert(e, msg)
     if not e then
-        local err = string.format("Assert Failed: %s\n", tostring(msg));
+        local err = string.format("Assert Failed: %s\n", tostring(msg))
         error(err)
-        -- trace(err);
-        -- traceback(true);
+        -- trace(err)
+        -- traceback(true)
     end
 end
 
 -- 异常处理函数，打印调用栈
 function error_handle(...)
-    local err_msg = ...;
+    local err_msg = ...
     if is_table(err_msg) then
-        err_msg = err_msg[1];
+        err_msg = err_msg[1]
     end
 
-    err_msg = string.format( "Error:\n%s\n", err_msg);
-    trace( "%s", err_msg );
-    traceback(true);
-    return "";
+    err_msg = string.format( "Error:\n%s\n", err_msg)
+    trace( "%s", err_msg )
+    traceback(true)
+    return ""
 end
 
 __G__TRACKBACK__ = error_handle
 
 function tdcall(f, ...)
-    local args = {...};
-    return xpcall(function() return f(unpack(args)); end, error_handle);
+    local args = {...}
+    return xpcall(function() return f(unpack(args)) end, error_handle)
 end
 
 --合并一个table
 function merge(src, t)
     if type(src) ~= "table" or type(t) ~= "table" then
-        return src;
+        return src
     end
     for k, v in pairs(t) do
-        src[k] = v;
+        src[k] = v
     end
-    return src;
+    return src
 end
 
 function overload_same(src, t)
     if type(src) ~= "table" or type(t) ~= "table" then
-        return src;
+        return src
     end
     for k,v in pairs(src) do
         if t[k] then
@@ -177,14 +177,14 @@ end
 -- 复制一个table
 function dup(t)
     if (type(t) ~= "table") then
-        return t;
+        return t
     end
 
-    local new_t = {};
+    local new_t = {}
     for k, v in pairs(t) do
-        new_t[k] = v;
+        new_t[k] = v
     end
-    return new_t;
+    return new_t
 end
 
 --筛选两个数组中的不同元素
@@ -205,89 +205,89 @@ end
 -- table_record 是用来记录内嵌的 table，防止死循环
 function table_to_string(t, table_record)
     if (type(t) ~= "table") then
-        return (tostring(t));
+        return (tostring(t))
     end
 
-    local s = "{";
-    local tr = table_record;
+    local s = "{"
+    local tr = table_record
 
     -- 缓存该 table 已被处理
     if type(tr) == "table" then
-        tr[t] = true;
+        tr[t] = true
     else
-        tr = {};
-        tr[t] = true;
+        tr = {}
+        tr[t] = true
     end
 
     for k, v in pairs(t) do
-        local key, value;
+        local key, value
         if type(k) == "string" then
-            key = k;
+            key = k
         else
-            key = "[" .. tostring(k) .. "]";
+            key = "[" .. tostring(k) .. "]"
         end
         if type(v) == "string" then
             if (string.sub(v, 1, 1) == "{") and (string.sub(v, -1, -1) == "}") then
-                value = v;
+                value = v
             else
-                value = "\"" .. v .. "\"";
+                value = "\"" .. v .. "\""
             end
         elseif type(v) == "table" and not tr[v] then
-            value = table_to_string(v, tr);
+            value = table_to_string(v, tr)
         elseif type(v) == "table" then
             -- 存在嵌套 table
-            assert(false, "table overflow!");
-            return;
+            assert(false, "table overflow!")
+            return
         elseif type(is_buffer) == "function" and is_buffer(v) then
             -- 存在buffer
-            value = (string.format("\"::%s::\"", buffer_to_string( v )));
+            value = (string.format("\"::%s::\"", buffer_to_string( v )))
         else
-            value = tostring(v);
+            value = tostring(v)
         end
-        s = s .. key .. "=" .. value .. ",";
+        s = s .. key .. "=" .. value .. ","
     end
-    s = s .. "}";
-    return s;
+    s = s .. "}"
+    return s
 end
 
 -- 将array类型的table用string表示，此结果可以用restore_value还原
 function array_to_string(t)
     if (type(t) ~= "table") then
-        return (tostring(t));
+        return (tostring(t))
     end
 
-    local s = "{";
+    local s = "{"
     for i, v in ipairs(t) do
-        local value;
+        local value
         if type(v) == "string" then
             if (string.sub(v, 1, 1) == "{") and (string.sub(v, -1, -1) == "}") then
-                value = v;
+                value = v
             else
-                value = "\"" .. v .. "\"";
+                value = "\"" .. v .. "\""
             end
         else
-            value = tostring(v);
+            value = tostring(v)
         end
-        s = s .. value .. ",";
+        s = s .. value .. ","
     end
-    s = s .. "}";
-    return s;
+    s = s .. "}"
+    return s
 end
 
 function table.val_to_str ( v )
   if "string" == type( v ) then
     v = string.gsub( v, "\n", "\\n" )
     if string.match( string.gsub(v,"[^'\"]",""), '^"+$' ) then
-      return (string.format("'%s'", v));
+      return (string.format("'%s'", v))
     end
-    return (string.format("\"%s\"", string.gsub(v,'"', '\\"' )));
+    return (string.format("\"%s\"", string.gsub(v,'"', '\\"' )))
   else
       if "table" == type( v ) then
-          return (table.tostring( v ));
+          return (table.tostring( v ))
       elseif type(is_buffer) == "function" and is_buffer(v) then
-          return (string.format("\"::%s::\"", buffer_to_string( v )));
+          return (string.format("\"::%s::\"", buffer_to_string( v )))
       else
-          return (tostring( v ));
+          return (tostring( v ))
       end
   end
 end
@@ -296,7 +296,7 @@ function table.key_to_str ( k )
   if "string" == type( k ) and string.match( k, "^[_%a][_%a%d]*$" ) then
     return k
   else
-    return (string.format("[%s]", save_string( k )));
+    return (string.format("[%s]", save_string( k )))
   end
 end
 
@@ -309,10 +309,10 @@ function table.tostring( tbl )
   for k, v in pairs( tbl ) do
     if not done[ k ] then
       table.insert( result,
-        string.format("%s=%s", table.key_to_str( k ), save_string( v ) ));
+        string.format("%s=%s", table.key_to_str( k ), save_string( v ) ))
     end
   end
-  return (string.format("{%s}", table.concat( result, "," )));
+  return (string.format("{%s}", table.concat( result, "," )))
 end
 
 function table_kv_to_array(t)
@@ -351,177 +351,177 @@ end
 -- 保存成 string
 function save_string(t)
     if (type(t) == "number") then
-        return (tostring(t));
+        return (tostring(t))
     elseif (type(t) == "string") then
         t = string.gsub(t, "[\r,\n,\\,\"]",
                       function(c)
                            if c == "\\" then
-                               return "\\\\";
+                               return "\\\\"
                            elseif c == "\r" then
-                               return "\\r";
+                               return "\\r"
                            elseif c == "\n" then
-                               return "\\n";
+                               return "\\n"
                            elseif c == "\"" then
-                               return '\\"';
+                               return '\\"'
                            end
                       end
-        );
-        return (string.format("\"%s\"", t));
+        )
+        return (string.format("\"%s\"", t))
     elseif (type(t) == "table") then
-        return (table.tostring(t));
+        return (table.tostring(t))
     elseif type(is_buffer) == "function" and is_buffer(t) then
-        return (string.format("\"::%s::\"", buffer_to_string( t )));
+        return (string.format("\"::%s::\"", buffer_to_string( t )))
     else
-        return (tostring(t));
+        return (tostring(t))
     end
 end
 
 -- 将字符串表示的变量还原
 function restore_value(s, ignore_buffer)
-    assert(type(s) == "string", "restore_value arg error");
+    assert(type(s) == "string", "restore_value arg error")
 
     if ignore_buffer then
         -- 替换buffer
-        s = string.gsub(s, "\"::(%w+)::\"", replace_buffer);
+        s = string.gsub(s, "\"::(%w+)::\"", replace_buffer)
     end
 
-    local f, e = loadstring(string.format("return %s", s));
+    local f, e = loadstring(string.format("return %s", s))
     if f then
-        return (f());
+        return (f())
     else
-        assert(false, string.format("restore_value: %s \r\nExeption: %s", s, tostring(e)));
+        assert(false, string.format("restore_value: %s \r\nExeption: %s", s, tostring(e)))
     end
 end
 
 -- 执行字符串命令
 function do_command(s)
-    assert(type(s) == "string", "do_command arg error: " .. s);
+    assert(type(s) == "string", "do_command arg error: " .. s)
 
     -- 如果第一个字符为"'"
     if string.find(s, "'") == 1 then
-        s = "watch(" .. string.sub(s, 2) .. ")";
+        s = "watch(" .. string.sub(s, 2) .. ")"
     end
 
-    local f, e = loadstring(string.format("%s", s));
+    local f, e = loadstring(string.format("%s", s))
     if f then
-        return (f());
+        return (f())
     else
-        assert(false, "do_command: " .. s .. "\r\nExeption: " .. tostring(e));
+        assert(false, "do_command: " .. s .. "\r\nExeption: " .. tostring(e))
     end
 end
 
 -- 查看变量
 function watch(s, prefix, stack)
-    local result = "";
-    local sign = true;
+    local result = ""
+    local sign = true
 
-    prefix = prefix or "";
-    stack = stack or 0;
+    prefix = prefix or ""
+    stack = stack or 0
     if not prefix then
-        prefix = "";
+        prefix = ""
     end
 
     if s == nil then
-        result = "<nil>";
+        result = "<nil>"
     elseif (type(s) == "table") and type(s.is_clone) == "boolean" then
         -- 对象，不希望打印出所有的 table 信息
-        local ob_id = s.get_ob_id and s:get_ob_id();
+        local ob_id = s.get_ob_id and s:get_ob_id()
         if is_string(ob_id) then
             if s.destructed == true then
-                result = string.format("object(%s<destructed>)", ob_id);
+                result = string.format("object(%s<destructed>)", ob_id)
             else
-                result = string.format("object(%s)", ob_id);
+                result = string.format("object(%s)", ob_id)
             end
         else
-            result = string.format("object(%s)", save_string(s.class_type));
+            result = string.format("object(%s)", save_string(s.class_type))
         end
 
     elseif (type(s) == "table") then
-        local size = sizeof(s);
+        local size = sizeof(s)
         --栈的深度设为3，避免循环
         if stack > 3 then
-            return string.format("%s\tsize is %d,\r\n", prefix, size);
+            return string.format("%s\tsize is %d,\r\n", prefix, size)
         end
         if string.len(prefix) > 20 then
-            result = "<table overflow>";
+            result = "<table overflow>"
         else
-            local str_list = { string.format("<table>   size : %d\r\n%s{\r\n", size, prefix) };
+            local str_list = { string.format("<table>   size : %d\r\n%s{\r\n", size, prefix) }
 
-            local times = 1;
+            local times = 1
             for i, v in pairs(s) do
-                sign = true;
+                sign = true
                 if (type(i) == "string") and (type(v) == "table") then
                     -- 如果key值是以下划线开头，隐藏table的内容
                     -- 这个处理为避免上下级互相引用时出现死循环
-                    local key = i;
+                    local key = i
 
                     if (string.len(key) > 0) and (string.sub(key, 1, 1) == '_') then
                         table.insert(str_list, string.format("%s\t%s: <table hide>,\r\n",
-                                     prefix, watch(i, prefix .. "\t", stack + 1)));
-                        sign = false;
+                                     prefix, watch(i, prefix .. "\t", stack + 1)))
+                        sign = false
                     end
                 end
 
                 if sign then
                     table.insert(str_list, string.format("%s\t%s:%s,\r\n", prefix,
-                                 watch(i, prefix .. "\t", stack + 1), watch(v, prefix .. "\t", stack + 1)));
+                                 watch(i, prefix .. "\t", stack + 1), watch(v, prefix .. "\t", stack + 1)))
                 end
 
-                times = times + 1;
+                times = times + 1
                 if times > 100 then
-                    table.insert(str_list, "... ...");
-                    break;
+                    table.insert(str_list, "... ...")
+                    break
                 end
 
             end
-            table.insert(str_list, string.format("%s}", prefix));
-            result = table.concat(str_list, "");
+            table.insert(str_list, string.format("%s}", prefix))
+            result = table.concat(str_list, "")
         end
     elseif (type(s) == "function") then
-        result = "<function>";
+        result = "<function>"
     elseif (type(s) == "string") then
-        result = string.format("\"%s\"", string.gsub(s,'"', '\\"' ));
+        result = string.format("\"%s\"", string.gsub(s,'"', '\\"' ))
     elseif (type(s) == "number") then
-        result = tostring(s);
+        result = tostring(s)
     elseif (type(s) == "boolean") then
-        result = (s and "true" or "false");
+        result = (s and "true" or "false")
     else
-        result = "unknow";
+        result = "unknow"
     end
 
-    return result;
+    return result
 end
 
 if not std_print then
-    std_print = print;
+    std_print = print
 end
 
 function __FUNC__(level)
-    local _level = 2;
+    local _level = 2
     if level ~= nil then
-        _level = level + 2;
+        _level = level + 2
     end
 
-    local name = debug.getinfo(_level,'n').name;
+    local name = debug.getinfo(_level,'n').name
     if name == nil then
-        name = "";
+        name = ""
     end
 
-    return name;
+    return name
 end
 
 function __LINE__(level)
-    local _level = 2;
+    local _level = 2
     if level ~= nil then
-        _level = level + 2;
+        _level = level + 2
     end
 
-    local currentline = debug.getinfo(_level, 'l').currentline;
+    local currentline = debug.getinfo(_level, 'l').currentline
     if currentline == nil then
-        currentline = "";
+        currentline = ""
     end
 
-    return currentline;
+    return currentline
 end
 
 function deep_dup(object)
@@ -544,137 +544,137 @@ end
 
 -- 创建对象
 function clone_object(ob, ...)
-    return (ob.new(...));
+    return (ob.new(...))
 end
 
 -- 析构对象
 function destruct_object(ob)
-    local type = type;
+    local type = type
     if type(ob.destructing) ~= "boolean" and ob.destructed ~= true then
-        ob.destructing = true;
+        ob.destructing = true
         if ob.destruct ~= nil_func then
-            ob.destruct();
+            ob.destruct()
         elseif ob.destruct_object ~= nil_func then
-            ob:destruct_object();
+            ob:destruct_object()
         end
-        ob.destructed = true;
+        ob.destructed = true
     end
 end
 
 -- 查看脚本对象信息
 function info_object(ob)
     if not is_table(ob) and type(ob) ~= "userdata" then
-        return;
+        return
     end
 
-    local info = {};
+    local info = {}
     if type(ob.is_clone) == "boolean" then
         -- 对象，需要依次取出基类对象的接口
 
         -- 取得该对象对应的类模板
-        local class_type = _G[ob.class_type];
+        local class_type = _G[ob.class_type]
         if not class_type then
-            return;
+            return
         end
 
         -- 取得该类模板的接口列表
-        info = class_type:get_func_list();
+        info = class_type:get_func_list()
 
         -- 取得该对象自身的接口
         for k, v in pairs(ob) do
-            info[k] = v;
+            info[k] = v
         end
     elseif ob.get_func_list then
-        info = ob:get_func_list();
+        info = ob:get_func_list()
     elseif type(ob) == "userdata" and tolua and tolua.type(ob) ~= "userdata" then
         -- c++ 对象，取得该对象接口
-        local meta = getmetatable(ob);
-        local first_char;
+        local meta = getmetatable(ob)
+        local first_char
         while meta do
             for key, value in pairs(meta) do
-                first_char = string.sub(key, 1, 1);
+                first_char = string.sub(key, 1, 1)
                 -- 下划线或点开头的不处理
                 if first_char ~= '_' and first_char ~= '.' and not info[key] then
-                    info[key] = value;
+                    info[key] = value
                 end
             end
 
-            meta = getmetatable(meta);
+            meta = getmetatable(meta)
         end
     else
-        info = ob;
+        info = ob
     end
 
     -- 若有 is_clone 字段，则 watch 会显示一个 ob_id
     if info["is_clone"] then
-        info["is_clone"] = nil;
+        info["is_clone"] = nil
     end
 
     -- 遍历信息，对方法和变量进行排序分类
-    local methods, variables = {}, {};
+    local methods, variables = {}, {}
     for name, value in pairs(info) do
         if is_function(value) then
-            methods[#methods + 1] = name;
+            methods[#methods + 1] = name
         else
-            variables[#variables + 1] = name;
+            variables[#variables + 1] = name
         end
     end
 
     -- 排序
-    table.sort(methods);
-    table.sort(variables);
+    table.sort(methods)
+    table.sort(variables)
 
     return {
         methods = methods,
         variables = variables,
-    };
+    }
 end
 
 -- 判断对象是否有效
 function is_object(ob)
     if type(ob) == "table" and
        ob.destructed == false then
-        return true;
+        return true
     else
-        return false;
+        return false
     end
 end
 
 -- 判断是否为整数
 function is_int(v)
     if type(v) == "number" then
-        return true;
+        return true
     else
-        return false;
+        return false
     end
 end
 
 -- 判断是否为字符串
 function is_string(v)
     if type(v) == "string" then
-        return true;
+        return true
     else
-        return false;
+        return false
     end
 end
 
 -- 判断是否为 table
 function is_table(v)
     if type(v) == "table" then
-        return true;
+        return true
     else
-        return false;
+        return false
     end
 end
 
 -- 判断是否为 array
 function is_array(v)
     if type(v) ~= "table" then
-        return false;
+        return false
     elseif table.getn(v) == 0 then
-        return false;
+        return false
     else
-        return true;
+        return true
     end
 end
 
@@ -682,18 +682,18 @@ end
 -- mapping 不允许存在 int 型的 key，有 int 型的key 被认为是 array
 function is_mapping(v)
     if type(v) ~= "table" then
-        return false;
+        return false
     elseif table.getn(v) == 0 then
-        return true;
+        return true
     else
-        return false;
+        return false
     end
 end
 
 -- 判断是否为 function
 function is_function(v)
     if type(v) == "function" then
-        return true;
+        return true
     else
         return false
     end
@@ -702,26 +702,26 @@ end
 -- 将变量转换成整数
 function to_int(v)
     if is_int(v) then
-        return v;
+        return v
     elseif not is_string(v) then
-        return 0;
+        return 0
     else
-        return (tonumber(v));
+        return (tonumber(v))
     end
 end
 
 function sizeof(t)
-    local n = 0;
+    local n = 0
     if type(t) == "table" then
         -- 遍历 table，累加元素个数
         for __, __ in pairs(t) do
-            n = n + 1;
+            n = n + 1
         end
     elseif type(t) == "string" then
-        n = string.len(t);
+        n = string.len(t)
     end
 
-    return n;
+    return n
 end
 
 function is_empty_table(t)
@@ -742,65 +742,65 @@ function clean_array(t)
         return
     end
 
-    local n = 1;
-    local p, max;
-    local type = type;
-    local is_object = is_object;
+    local n = 1
+    local p, max
+    local type = type
+    local is_object = is_object
 
-    local tmp = {};
+    local tmp = {}
     for _,v in pairs(t) do
-        p = type(v);
+        p = type(v)
         if p ~= "nil" and
            (p ~= "table" or not v.is_clone or is_object(v)) then
             -- 需要重新整理数组
-            tmp[n] = v;
-            n = n + 1;
+            tmp[n] = v
+            n = n + 1
         end
     end 
-    t = tmp;
-    return t, n - 1;
+    t = tmp
+    return t, n - 1
 end
 
 function trim(s)
-  return s:match'^()%s*$' and '' or s:match'^%s*(.*%S)';
+  return s:match'^()%s*$' and '' or s:match'^%s*(.*%S)'
 end
 
 -- 将字符串根据标识符打断，组成 array
 function explode(str, flag)
-    local t, ll;
-    t = {};
-    ll = 0;
+    local t, ll
+    t = {}
+    ll = 0
 
     if #str == 0 then
         return {}
     end
 
     if(#str == 1) then
-        return { str };
+        return { str }
     end
 
-    local l;
+    local l
     while true do
         -- find the next d in the string
-        l = string.find(str, flag, ll, true);
+        l = string.find(str, flag, ll, true)
 
         -- if "not not" found then..
         if l ~= nil then
             -- Save it in our array.
-            table.insert(t, string.sub(str, ll, l-1 ));
+            table.insert(t, string.sub(str, ll, l-1 ))
 
             -- save just after where we found it for searching next time.
-            ll = l + 1;
+            ll = l + 1
         else
             -- Save what's left in our array.
-            table.insert(t, string.sub(str, ll));
+            table.insert(t, string.sub(str, ll))
 
              -- Break at end, as it should be, according to the lua manual.
-             break;
+             break
          end
     end
 
-    return t;
+    return t
 end
 
 
@@ -826,86 +826,86 @@ function is_in_array(value, array)
         end
     end
 
-    return nil;
+    return nil
 end
 
 function index_in_array(value, array)
     for id,v in ipairs(array) do
         if v == value then
-            return id;
+            return id
         end
     end
-    return nil;
+    return nil
 end
 
 function restore_json(s)
-    assert(type(s) == "string", "restore_json arg error");
+    assert(type(s) == "string", "restore_json arg error")
     if sizeof(s) == 0 then
-        return {};
+        return {}
     end
     local success, ret = pcall(json.decode, s)
     if success then
-        return ret;
+        return ret
     else
-        assert(false, string.format("restore_json: %s \r\nExeption: %s", s, tostring(e)));
+        assert(false, string.format("restore_json: %s \r\nExeption: %s", s, tostring(e)))
     end
 end
 
 function decode_json(s)
-    assert(type(s) == "string", "decode_json arg error");
+    assert(type(s) == "string", "decode_json arg error")
     if sizeof(s) == 0 then
-        return {};
+        return {}
     end
     local success, ret = pcall(cjson.decode, s)
     if type(ret) ~= "table" then
         success = false
     end
     if success then
-        return ret;
+        return ret
     else
-        return {};
+        return {}
     end
 end
 
 function encode_json(s)
-    assert(type(s) == "table", "encode_json arg error");
+    assert(type(s) == "table", "encode_json arg error")
     local success, ret = pcall(cjson.encode, s)
     if success then
-        return ret;
+        return ret
     else
-        return "{}";
+        return "{}"
     end
 end
 
 function decode_json_check(s)
-    assert(type(s) == "string", "decode_json_check arg error");
+    assert(type(s) == "string", "decode_json_check arg error")
     if sizeof(s) == 0 then
-        return {};
+        return {}
     end
     local success, ret = pcall(cjson.decode, s)
     if type(ret) ~= "table" then
         success = false
     end
     if success then
-        return ret, success;
+        return ret, success
     else
-        return {}, success;
+        return {}, success
     end
 end
 
 function encode_json_check(s)
-    assert(type(s) == "table", "encode_json_check arg error");
+    assert(type(s) == "table", "encode_json_check arg error")
     local success, ret = pcall(cjson.encode, s)
     if success then
-        return ret, success;
+        return ret, success
     else
-        return "{}", success;
+        return "{}", success
     end
 end
 
 
 function get_rid(serverid)
-    return get_next_rid(serverid or 1);
+    return get_next_rid(serverid or 1)
 end
 
 function get_first_key_value(t)
@@ -942,131 +942,130 @@ function remove_get(t, key)
 end
 
 function array_sub(array, pos_start, pos_end)
-    local result = {};
+    local result = {}
     for i = pos_start, pos_end do
-        result[#result + 1] = array[i];
+        result[#result + 1] = array[i]
     end
-    return result;
+    return result
 end
 
 -- 随机从数组array中取number个元素
 function array_get_rand(array, number, filter_func, arg)
     -- 保存array数组下标
-    local result = {};
+    local result = {}
     for i, data in pairs(array) do
         if filter_func then
             if filter_func(arg, i, data) then
-                result[#result+1] = i;
+                result[#result+1] = i
             end
         else
-            result[#result+1] = i;
+            result[#result+1] = i
         end
     end
 
-    local array_size = #result;
-    local rand,temp;
+    local array_size = #result
+    local rand,temp
     if number < array_size then
         -- 前number个进行随机排序
         for i=1,number do
-            rand = math.random(1,array_size);
-            temp         = result[i];
-            result[i]    = result[rand];
-            result[rand] = temp;
+            rand = math.random(1,array_size)
+            temp         = result[i]
+            result[i]    = result[rand]
+            result[rand] = temp
         end
 
     else
-        number = array_size;
+        number = array_size
     end
 
     -- result的前number个元素就是数组array随机取值的下标
-    return array_sub(result, 1, number), number;
+    return array_sub(result, 1, number), number
 end
 
 --随机排列数组
 function rand_sort_array(array)
-    local size = #array;
+    local size = #array
     local result = dup(array)
-    local rand,temp;
-    for i=1, size do
-        rand = math.random(1, size);
-        temp         = result[i];
-        result[i]    = result[rand];
-        result[rand] = temp;
+    local rand,temp
+    for i = 1, size do
+        rand = math.random(1, size)
+        temp         = result[i]
+        result[i]    = result[rand]
+        result[rand] = temp
     end
-    return result;
+    return result
 end
 
 -- 从文本文件中按行获取信息，读入一个array
 function get_info_from_file(filename)
-
-    local info_array = {};
-    local file_str;
+    local info_array = {}
+    local file_str
     filename = get_full_path(filename)
-    local fp = io.open(filename);
+    local fp = io.open(filename)
     if fp then
-        io.input(filename);
-        file_str   = io.read("*all");
-        io.close(fp);
+        io.input(filename)
+        file_str   = io.read("*all")
+        io.close(fp)
     else
         return {}
     end
 
     -- 兼容windows、unix格式
-    file_str = string.gsub(file_str, "\r\n", "\n");
-    info_array = explode(file_str, "\n");
+    file_str = string.gsub(file_str, "\r\n", "\n")
+    info_array = explode(file_str, "\n")
 
     -- 去掉空白行
     for i, line in ipairs(info_array) do
-        line = trim(line);
+        line = trim(line)
         if line == "" then
-            info_array[i] = nil;
+            info_array[i] = nil
         else
-            info_array[i] = line;
+            info_array[i] = line
         end
     end
-    clean_array(info_array);
+    clean_array(info_array)
 
-    return info_array;
+    return info_array
 end
 
 function get_file_json(filename)
     local filename = get_full_path(filename)
-    local fp = io.open(filename);
-    local file_str;
+    local fp = io.open(filename)
+    local file_str
     if fp then
-        io.input(filename);
-        file_str   = io.read("*all");
-        io.close(fp);
+        io.input(filename)
+        file_str   = io.read("*all")
+        io.close(fp)
     end
-    return decode_json(file_str);
+    return decode_json(file_str)
 end
 
 function get_file_content(filename)
     local filename = get_full_path(filename)
-    local fp = io.open(filename);
-    local file_str;
+    local fp = io.open(filename)
+    local file_str
     if fp then
-        io.input(filename);
-        file_str   = io.read("*all");
-        io.close(fp);
+        io.input(filename)
+        file_str   = io.read("*all")
+        io.close(fp)
     end
-    return file_str;
+    return file_str
 end
 
 function is_absolute_path(path)
-    assert(type(path) == "string", "is_absolute_path arg error");
+    assert(type(path) == "string", "is_absolute_path arg error")
     if string.len(path) == 0 then
         return false
     end
     
     local s, e = string.find(path, "[a-zA-Z]:")
     if s == 1 then
-        return true;
+        return true
     end
     
     s, e = string.find(path, "/")
     if s == 1 then
-        return true;
+        return true
     end
 
     return false
@@ -1109,12 +1108,12 @@ function check_sql_param_vailed(value)
 end
 
 function run_string(str)
-    assert(type(str) == "string", "str must string");
-    local f, e = loadstring(str);
+    assert(type(str) == "string", "str must string")
+    local f, e = loadstring(str)
     if f then
-        return (f());
+        return (f())
     else
-        assert(false, string.format("run_string: %s \r\nExeption: %s", s, tostring(e)));
+        assert(false, string.format("run_string: %s \r\nExeption: %s", s, tostring(e)))
     end
 end
 
@@ -1140,8 +1139,8 @@ end
 
 -- 取得类的所有克隆对象
 function child_objects(c)
-    clean_array(c.ob_list);
-    return c.ob_list;
+    clean_array(c.ob_list)
+    return c.ob_list
 end
 
 function assert_eq(a, b, msg)
