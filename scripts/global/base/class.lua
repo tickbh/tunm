@@ -24,6 +24,14 @@ function get_all_destructed_obs()
     return list
 end
 
+-- 取得指定类的指定函数
+function get_class_func(c, func_name)
+    if not _class[c] then
+        return;
+    end
+
+    return _class[c][func_name]
+end
 function nil_func()
     return nil
 end

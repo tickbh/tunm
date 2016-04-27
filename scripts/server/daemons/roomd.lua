@@ -180,10 +180,10 @@ function cmd_room_message(room_name, user_rid, cookie, oper, info)
     local server_id = remove_get(info, "server_id")
     if oper == "enter_room" then
         assert(is_int(server_id), "server_id must exist")
-        ret = room:entity_enter(server_id, user_rid, cookie, info)
+        ret = room:entity_enter(server_id, user_rid, info)
     elseif oper == "leave_room" then
         assert(is_int(server_id), "server_id must exist")
-        ret = room:entity_leave(server_id, user_rid, cookie, info)
+        ret = room:entity_leave(server_id, user_rid, info)
     end
     
     if server_id and cookie and cookie ~= 0 then
@@ -241,8 +241,29 @@ local function user_login(user_rid, server_id)
         local data = room:get_data_by_rid(user_rid)
         if data then
             data.server_id = server_id
+            data.last_logout_time = nil
+            data.last_op_time = os.time()
             INTERNAL_COMM_D.send_server_message(server_id, user_rid, {}, RESPONE_ROOM_MESSAGE, "reconnect_user", {room_name = room_name, rid = user_rid})
         end
+    end
+end
+
+local function user_logout(user_rid)
+    trace("玩家登出 %o", user_rid)
+    for _, room in pairs(room_list) do
+        local data = room:get_data_by_rid(user_rid)
+        trace("data = %o", data)
+        if data then
+            data.last_op_time = os.time()
+            data.last_logout_time = os.time()
+            -- INTERNAL_COMM_D.send_server_message(server_id, user_rid, {}, RESPONE_ROOM_MESSAGE, "reconnect_user", {room_name = room_name, rid = user_rid})
+        end
+    end
+end
+
+local function time_update()
+    for _,room in pairs(room_list) do
+        room:time_update()
     end
 end
 
@@ -251,6 +272,8 @@ function create()
     if ENABLE_ROOM then
         create_allroom("data/txt/room.txt")
         register_as_audience("ROOM_D", {EVENT_USER_OBJECT_CONSTRUCT = user_login})
+        register_as_audience("ROOM_D", {EVENT_USER_CONNECTION_LOST = user_logout})
+        set_timer(1000, time_update, nil, true)
     end
     
     register_msg_filter("cmd_room_message", logic_cmd_room_message)

@@ -15,6 +15,11 @@ function ROOM_CLASS:create(value)
 
     --创建存放该场景实体的弱表
     self.room_entity = {}
+
+end
+
+function ROOM_CLASS:destruct()
+
 end
 
 -- 生成对象的唯一ID
@@ -23,6 +28,20 @@ function ROOM_CLASS:get_ob_id()
 end
 
 --定义公共接口，按照字母顺序排序
+
+function ROOM_CLASS:time_update()
+    for _,data in pairs(dup(self.room_entity)) do
+        self:entity_update(data)
+    end
+end
+
+function ROOM_CLASS:entity_update(entity)
+    trace("entity_update = %o", entity)
+    if entity.last_logout_time and (os.time() - entity.last_logout_time > 10 or not entity.is_in_game) then
+        self:entity_destruct(entity.user_rid)
+    end
+
+end
 
 -- 广播消息
 function ROOM_CLASS:broadcast_message(msg, ...)
@@ -58,10 +77,18 @@ function ROOM_CLASS:broadcast_message(msg, ...)
 end
 
 --玩家进入房间
-function ROOM_CLASS:entity_enter(server_id, user_rid, cookie, info)
+function ROOM_CLASS:entity_enter(server_id, user_rid, info)
     --将新实体加该场景
     self.room_entity[user_rid] = {
+        user_rid = user_rid,
+        --对像连接的服务器id
         server_id = server_id,
+        --对像的登出时间
+        last_logout_time = nil,
+        --玩家的上次操作时间，确定是否超时
+        last_op_time = os.time(),
+        --是否正在游戏中
+        is_in_game = false,
         data = clone_object(DBASE_CLASS, info)
     }
 
@@ -71,16 +98,28 @@ function ROOM_CLASS:entity_enter(server_id, user_rid, cookie, info)
 end
 
 --玩家离开房间
-function ROOM_CLASS:entity_leave(user_rid, cookie, info)
+function ROOM_CLASS:entity_leave(user_rid)
 
     if not self.room_entity[user_rid] then
-        write_log(string.format("Error:对象%s离开房间%s时找不到自己(%s)\n",
-                                user_rid, self:get_room_name(), user_ob:query_temp("room_name") or "nil"))
+        write_log(string.format("Error:对象%s离开房间%s时找不到自己\n", user_rid, self:get_room_name()))
+    end
+
+    --设置实体的登出时间，如果实体还在游戏中则等待处理，如果实体不在游戏中，则下一秒则析构掉玩家对像
+    local entity = self.room_entity[user_rid]
+    entity.last_logout_time = os.time()
+    return 0
+end
+
+--玩家离开房间
+function ROOM_CLASS:entity_destruct(user_rid)
+    trace("ROOM_CLASS:entity_destruct user_rid = %o", user_rid)
+    if not self.room_entity[user_rid] then
+        write_log(string.format("Error:对象%s析构时找不到自己\n", user_rid))
     end
 
     --将该实体从场景中删除，并发送离开场景消息
-    self.room_entity[user_rid] = nil
-    --room info dbase
+    local entity = remove_get(self.room_entity, user_rid)
+    destruct_object(entity.data)
     return 0
 end
 
