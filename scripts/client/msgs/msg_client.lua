@@ -79,6 +79,7 @@ function msg_room_message(user, oper, info)
     trace("user = %o, oper = %o, info = %o", user, oper, info)
     if oper == "success_enter_room" then
         trace("成功进入房间:\"%s\"", info.room_name)
+        user:send_message(CMD_ROOM_MESSAGE, "enter_table", {})
     elseif oper == "success_enter_table" then
         trace("成功进入桌子:\"%s\"", info.idx)
     elseif oper == "pre_room" then

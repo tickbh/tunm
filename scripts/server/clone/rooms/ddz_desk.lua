@@ -14,3 +14,7 @@ function DDZ_DESK_CLASS:is_full_user()
     trace("is_full_user %o", self:get_user_count() >= 3)
     return self:get_user_count() >= 3
 end
+
+function DDZ_DESK_CLASS:get_play_num()
+    return 3
+end

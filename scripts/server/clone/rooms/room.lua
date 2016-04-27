@@ -55,7 +55,7 @@ function ROOM_CLASS:time_update()
 end
 
 function ROOM_CLASS:entity_update(entity)
-    if entity.last_logout_time and (os.time() - entity.last_logout_time > 10 or not entity.is_in_game) then
+    if entity.last_logout_time and (os.time() - entity.last_logout_time > 10 or not entity.is_enter_game) then
         self:entity_destruct(entity.user_rid)
     end
 end
@@ -185,13 +185,13 @@ function ROOM_CLASS:enter_table(user_rid, idx, enter_method)
         return -1
     end
 
-    local table = self.desk_entity[idx]
-    if not table then
+    local desk = self.desk_entity[idx]
+    if not desk then
         LOG.err("Error:%o桌号不存在\n", idx)
         return -1
     end
 
-    table:user_enter(user_rid)
+    desk:user_enter(user_rid)
     data.enter_desk_idx = idx
     data.is_enter_game = true
 
