@@ -299,6 +299,7 @@ function global_dispatch_command(port_no, message, buffer)
 
     if is_function(msg_filter[message]) then
         msg_filter[message](agent, buffer)
+        del_message(buffer)
         return
     end
 

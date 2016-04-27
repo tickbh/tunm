@@ -71,6 +71,7 @@ function send_room_raw_message(room_name, user_rid, record, net_data)
     end
 
     local channel = string.format(CREATE_ROOM_MSG_CHANNEL_USER, room_name, user_rid, cookie)
+    trace("send_room_raw_message channel = %o net_data = %o", channel, net_data)
     REDIS_D.run_publish(channel, net_data)
 end
 

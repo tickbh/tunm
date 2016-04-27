@@ -21,11 +21,10 @@ function ROOM_CLASS:get_ob_id()
 end
 
 function DDZ_ROOM_CLASS:entity_update(entity)
-    trace("DDZ_ROOM_CLASS:entity_update")
     local room_update = get_class_func(ROOM_CLASS, "entity_update")
     room_update(self, entity)
 end
 
-function ROOM_CLASS:get_table_class()
-    return DDZ_TABLE_CLASS
+function ROOM_CLASS:get_desk_class()
+    return DDZ_DESK_CLASS
 end

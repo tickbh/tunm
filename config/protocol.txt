@@ -54,6 +54,8 @@
         "room_name"                    : { "index" :    48,    "pattern" : "str" },
         "info"                         : { "index" :    49,    "pattern" : "map" },
         "game_type"                    : { "index" :    50,    "pattern" : "str" },
+        "idx"                          : { "index" :    51,    "pattern" : "i32" },
+        "enter_method"                 : { "index" :    52,    "pattern" : "str" },
         
 
         "i8"                           : { "index" :    50000, "pattern" : "i8" },

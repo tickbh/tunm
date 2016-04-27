@@ -44,7 +44,7 @@ function err(value, ...)
     end
 
     value = format(value, ...)
-    lua_print(value)
+    lua_print(LOG_ERROR, value)
 end
 
 function warn(value, ...)

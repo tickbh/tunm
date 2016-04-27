@@ -110,6 +110,16 @@ function enter_room(room_name)
     command_send_message(CMD_ENTER_ROOM, {room_name = room_name})
 end
 
+--桌号，进入方法(游戏(game)，旁观(look))
+function enter_table(idx, method)
+    command_send_message(CMD_ROOM_MESSAGE, "enter_table", {idx = idx, enter_method = method})
+end
+
 function leave_room()
     command_send_message(CMD_LEAVE_ROOM, {})
+end
+
+function enter()
+    enter_room()
+    enter_table()
 end

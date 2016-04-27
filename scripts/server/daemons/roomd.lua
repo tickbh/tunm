@@ -176,6 +176,7 @@ function cmd_room_message(room_name, user_rid, cookie, oper, info)
         trace("房间:%o不存在", room_name)
         return
     end
+    local data = room:get_data_by_rid(user_rid)
     local ret = 0
     local server_id = remove_get(info, "server_id")
     if oper == "enter_room" then
@@ -184,6 +185,12 @@ function cmd_room_message(room_name, user_rid, cookie, oper, info)
     elseif oper == "leave_room" then
         assert(is_int(server_id), "server_id must exist")
         ret = room:entity_leave(server_id, user_rid, info)
+    elseif oper == "enter_table" then
+        if not data then
+            ret = -1
+        else
+            ret = room:enter_table(user_rid, info.idx, info.enter_method)
+        end
     end
     
     if server_id and cookie and cookie ~= 0 then
@@ -217,13 +224,13 @@ function room_detail_update(detail)
 end
 
 local function logic_cmd_room_message(user, buffer)
-    trace("receiver logic_cmd_room_message")
+    trace("receiver logic_cmd_room_message name = %o buffer = %o", user:query_temp("room_name"), buffer)
     local room_name = user:query_temp("room_name")
     if sizeof(room_name) == 0 then
         return
     end
 
-    INTERNAL_COMM_D.send_room_raw_message(room_name, get_ob_rid(user), buffer)
+    INTERNAL_COMM_D.send_room_raw_message(room_name, get_ob_rid(user), {}, buffer:get_data())
 end
 
 local function publish_room_detail()
