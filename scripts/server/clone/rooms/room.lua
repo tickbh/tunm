@@ -117,7 +117,7 @@ function ROOM_CLASS:entity_enter(server_id, user_rid, info)
         data = clone_object(DBASE_CLASS, info)
     }
 
-    INTERNAL_COMM_D.send_server_message(server_id, user_rid, {}, MSG_ROOM_MESSAGE, "success_enter_room", {rid = user_rid, room_name = self:get_room_name()})
+    self:send_rid_message(user_rid, {}, MSG_ROOM_MESSAGE, "success_enter_room", {rid = user_rid, room_name = self:get_room_name()})
     trace("success entity_enter %o", self.room_entity[user_rid])
     return 0
 end
@@ -205,11 +205,27 @@ function ROOM_CLASS:enter_desk(user_rid, idx, enter_method)
     desk:user_enter(user_rid)
     data.enter_desk_idx = idx
     data.is_enter_game = true
-
     trace("enter_desk = %o", data)
-
-    INTERNAL_COMM_D.send_server_message(data.server_id, user_rid, {}, MSG_ROOM_MESSAGE, "success_enter_desk", {idx = idx})
     return 0
+end
+
+function ROOM_CLASS:send_rid_message(user_rid, record, msg, ...)
+    local msg_buf = pack_message(msg, ...)
+    if not msg_buf then
+        trace("广播消息(%s)打包消息失败。\n", msg)
+        return
+    end
+    self:send_rid_raw_message(user_rid, record, msg_buf)
+    del_message(msg_buf)
+end
+
+function ROOM_CLASS:send_rid_raw_message(user_rid, record, msg_buf)
+    local data = self:get_data_by_rid(user_rid)
+    if not data or not data.server_id then
+        trace("获取用户%s数据失败", user_rid)
+        return
+    end
+    INTERNAL_COMM_D.send_server_raw_message(data.server_id, user_rid, record or {}, msg_buf:get_data())
 end
 
 function ROOM_CLASS:desk_op(user_rid, info)
@@ -243,6 +259,15 @@ end
 -- 返回房间中的玩家信息
 function ROOM_CLASS:get_data_by_rid(user_rid)
     return self.room_entity[user_rid]
+end
+
+-- 返回房间中的玩家信息
+function ROOM_CLASS:get_base_info_by_rid(user_rid)
+    local data = self.room_entity[user_rid]
+    if not data then
+        return nil
+    end
+    return data.data:query()
 end
 
 --判断是否是vip场景

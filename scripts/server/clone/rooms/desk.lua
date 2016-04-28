@@ -54,7 +54,7 @@ function DESK_CLASS:user_enter(user_rid)
     self.users[user_rid] = { idx = idx}
     self.wheels[idx] = {rid = user_rid, is_ready = 0}
 
-    --TODO 发送给桌子上的其它人
+    self:broadcast_message(MSG_ROOM_MESSAGE, "success_enter_desk", {rid = user_rid, idx = idx, info = self.room:get_base_info_by_rid(user_rid)})
     return 0
 end
 
@@ -64,9 +64,28 @@ function DESK_CLASS:user_leave(user_rid)
         return -1
     end
     self.wheels[user_data.idx] = {}
-
-    --TODO 发送给桌子上的其它人
+    self:broadcast_message(MSG_ROOM_MESSAGE, "success_leave_desk", {rid = user_rid, idx = idx})
     return 0
+end
+
+
+-- 广播消息
+function DESK_CLASS:broadcast_message(msg, ...)
+
+    local size = sizeof(self.users)
+    local msg_buf = pack_message(msg, ...)
+
+    if not msg_buf then
+        trace("广播消息(%d)打包消息失败。\n", msg)
+        return
+    end
+
+    -- 遍历该房间的所有玩家对象
+    for rid, _ in pairs(self.users) do
+        self.room:send_rid_raw_message(rid, {}, msg_buf)
+    end
+
+    del_message(msg_buf)
 end
 
 function DESK_CLASS:op_info(user_rid, info)
@@ -74,7 +93,7 @@ function DESK_CLASS:op_info(user_rid, info)
     if info.oper == "ready" then
         self.wheels[idx].is_ready = 1
         trace("玩家%s在位置%d已准备", user_rid, idx)
-        --TODO 广播
+        self:broadcast_message(MSG_ROOM_MESSAGE, "success_user_ready", {rid = user_rid, idx = idx})
     end
 end
 
