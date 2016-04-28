@@ -55,8 +55,11 @@ function ROOM_CLASS:time_update()
 end
 
 function ROOM_CLASS:entity_update(entity)
-    if entity.last_logout_time and (os.time() - entity.last_logout_time > 10 or not entity.is_enter_game) then
-        self:entity_destruct(entity.user_rid)
+    --正在游戏中的不做析构处理，等游戏先结束
+    if not entity.is_enter_game then
+        if entity.last_logout_time and os.time() - entity.last_logout_time > 10 then
+            self:entity_destruct(entity.user_rid)
+        end
     end
 end
 
@@ -115,12 +118,12 @@ function ROOM_CLASS:entity_enter(server_id, user_rid, info)
     }
 
     INTERNAL_COMM_D.send_server_message(server_id, user_rid, {}, MSG_ROOM_MESSAGE, "success_enter_room", {rid = user_rid, room_name = self:get_room_name()})
-    trace("success entity_enter %o", user_ob)
+    trace("success entity_enter %o", self.room_entity[user_rid])
     return 0
 end
 
 --玩家离开房间
-function ROOM_CLASS:entity_leave(user_rid)
+function ROOM_CLASS:entity_leave(user_rid, info)
 
     if not self.room_entity[user_rid] then
         LOG.err("Error:对象%s离开房间%s时找不到自己\n", user_rid, self:get_room_name())
@@ -129,6 +132,16 @@ function ROOM_CLASS:entity_leave(user_rid)
     --设置实体的登出时间，如果实体还在游戏中则等待处理，如果实体不在游戏中，则下一秒则析构掉玩家对像
     local entity = self.room_entity[user_rid]
     entity.last_logout_time = os.time()
+    trace("entity = %o", entity)
+    if entity.enter_desk_idx then
+        local desk = self.desk_entity[entity.enter_desk_idx]
+        if not desk:is_playing() then
+            desk:user_leave(user_rid)
+            entity.enter_desk_idx = nil
+            entity.is_enter_game = nil
+            trace("玩家不在游戏状态，掉线时离开桌子")
+        end
+    end
     return 0
 end
 
@@ -164,10 +177,8 @@ function ROOM_CLASS:enter_table(user_rid, idx, enter_method)
     end
     trace("idx = %o, data.enter_desk_idx = %o", idx, data.enter_desk_idx)
     if idx and idx == data.enter_desk_idx then
-        trace("11111111111111111111")
         data.enter_desk_idx = nil
     elseif idx == nil then
-        trace("222222222222222222")
         if data.enter_desk_idx then
             idx = data.enter_desk_idx
             data.enter_desk_idx = nil
@@ -194,6 +205,8 @@ function ROOM_CLASS:enter_table(user_rid, idx, enter_method)
     desk:user_enter(user_rid)
     data.enter_desk_idx = idx
     data.is_enter_game = true
+
+    trace("enter_table = %o", data)
 
     INTERNAL_COMM_D.send_server_message(data.server_id, user_rid, {}, MSG_ROOM_MESSAGE, "success_enter_table", {idx = idx})
     return 0

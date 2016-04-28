@@ -170,7 +170,7 @@ function redis_room_detail(detail)
 end
 
 function cmd_room_message(room_name, user_rid, cookie, oper, info)
-    trace("cmd_room_message %o", {room_name, user_rid, oper, info})
+    trace("cmd_room_message %o", {room_name, user_rid, cookie, oper, info})
     local room = room_list[room_name]
     if not room then
         trace("房间:%o不存在", room_name)
@@ -183,14 +183,17 @@ function cmd_room_message(room_name, user_rid, cookie, oper, info)
         assert(is_int(server_id), "server_id must exist")
         ret = room:entity_enter(server_id, user_rid, info)
     elseif oper == "leave_room" then
-        assert(is_int(server_id), "server_id must exist")
-        ret = room:entity_leave(server_id, user_rid, info)
+        ret = room:entity_leave(user_rid, info)
     elseif oper == "enter_table" then
         if not data then
             ret = -1
         else
             ret = room:enter_table(user_rid, info.idx, info.enter_method)
         end
+    end
+
+    if data then
+        server_id = data.server_id
     end
     
     if server_id and cookie and cookie ~= 0 then
@@ -261,8 +264,7 @@ local function user_logout(user_rid)
         local data = room:get_data_by_rid(user_rid)
         trace("data = %o", data)
         if data then
-            data.last_op_time = os.time()
-            data.last_logout_time = os.time()
+            room:entity_leave(user_rid)
             -- INTERNAL_COMM_D.send_server_message(server_id, user_rid, {}, RESPONE_ROOM_MESSAGE, "reconnect_user", {room_name = room_name, rid = user_rid})
         end
     end

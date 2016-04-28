@@ -37,13 +37,36 @@ function DESK_CLASS:get_empty_wheel()
     return nil
 end
 
+function DESK_CLASS:is_empty()
+    for idx,v in ipairs(self.wheels) do
+        if is_rid_vaild(v.rid) then
+            return false
+        end 
+    end
+    return true
+end
+
 function DESK_CLASS:user_enter(user_rid)
     local idx = self:get_empty_wheel()
     if not idx then
         return -1
     end
-    self.wheels[idx] = {rid = user_rid}
+    self.users[user_rid] = { idx = idx}
+    self.wheels[idx] = {rid = user_rid, is_ready = 0}
     return 0
+end
+
+function DESK_CLASS:user_leave(user_rid)
+    local user_data = self.users[user_rid]
+    if not user_data then
+        return -1
+    end
+    self.wheels[user_data.idx] = {}
+    return 0
+end
+
+function DESK_CLASS:is_playing(user_rid)
+    return false
 end
 
 function DESK_CLASS:get_play_num()
