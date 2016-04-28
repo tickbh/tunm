@@ -53,6 +53,8 @@ function DESK_CLASS:user_enter(user_rid)
     end
     self.users[user_rid] = { idx = idx}
     self.wheels[idx] = {rid = user_rid, is_ready = 0}
+
+    --TODO 发送给桌子上的其它人
     return 0
 end
 
@@ -62,7 +64,18 @@ function DESK_CLASS:user_leave(user_rid)
         return -1
     end
     self.wheels[user_data.idx] = {}
+
+    --TODO 发送给桌子上的其它人
     return 0
+end
+
+function DESK_CLASS:op_info(user_rid, info)
+    local idx = self.users[user_rid].idx
+    if info.oper == "ready" then
+        self.wheels[idx].is_ready = 1
+        trace("玩家%s在位置%d已准备", user_rid, idx)
+        --TODO 广播
+    end
 end
 
 function DESK_CLASS:is_playing(user_rid)

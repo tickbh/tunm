@@ -159,7 +159,7 @@ function ROOM_CLASS:entity_destruct(user_rid)
 end
 
 --TODO优先填取桌子人多但并未满的桌子 
-function ROOM_CLASS:get_can_enter_table()
+function ROOM_CLASS:get_can_enter_desk()
     for idx, t in ipairs(self.desk_entity) do
         if not t:is_full_user() then
             return idx
@@ -168,8 +168,8 @@ function ROOM_CLASS:get_can_enter_table()
     return nil
 end
 
-function ROOM_CLASS:enter_table(user_rid, idx, enter_method)
-    trace("ROOM_CLASS:enter_table user_rid = %o", user_rid)
+function ROOM_CLASS:enter_desk(user_rid, idx, enter_method)
+    trace("ROOM_CLASS:enter_desk user_rid = %o", user_rid)
     local data = self.room_entity[user_rid]
     if not data then
         LOG.err("Error:%s进入桌子时找不到自己\n", user_rid)
@@ -183,7 +183,7 @@ function ROOM_CLASS:enter_table(user_rid, idx, enter_method)
             idx = data.enter_desk_idx
             data.enter_desk_idx = nil
         else
-            idx = self:get_can_enter_table()
+            idx = self:get_can_enter_desk()
         end
     end
 
@@ -206,10 +206,23 @@ function ROOM_CLASS:enter_table(user_rid, idx, enter_method)
     data.enter_desk_idx = idx
     data.is_enter_game = true
 
-    trace("enter_table = %o", data)
+    trace("enter_desk = %o", data)
 
-    INTERNAL_COMM_D.send_server_message(data.server_id, user_rid, {}, MSG_ROOM_MESSAGE, "success_enter_table", {idx = idx})
+    INTERNAL_COMM_D.send_server_message(data.server_id, user_rid, {}, MSG_ROOM_MESSAGE, "success_enter_desk", {idx = idx})
     return 0
+end
+
+function ROOM_CLASS:desk_op(user_rid, info)
+    local data = self.room_entity[user_rid]
+    if not data then
+        return -1
+    end
+    local desk = self.desk_entity[data.enter_desk_idx or 0]
+    if not desk then
+        return -1
+    end
+
+    desk:op_info(user_rid, info)
 end
 
 --获取房间名称
