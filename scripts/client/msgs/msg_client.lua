@@ -15,6 +15,7 @@ end
 
 function msg_enter_game(agent, info)
     ME_D.me_updated(agent, info)
+    enter_room()
 end
 
 function msg_common_op(user, info)
@@ -81,7 +82,10 @@ function msg_room_message(user, oper, info)
         trace("成功进入房间:\"%s\"", info.room_name)
         user:send_message(CMD_ROOM_MESSAGE, "enter_desk", {})
     elseif oper == "success_enter_desk" then
-        trace("成功进入桌子:\"%s\"", info.idx)
+        if info.rid == get_ob_rid(user) then
+            desk_ready()
+        end
+        trace("%s成功进入桌子:\"%d\", 在位置:%d", info.rid, info.idx, info.wheel_idx)
     elseif oper == "pre_room" then
         if info.room_name then
             user:send_message(CMD_ENTER_ROOM, {room_name = info.room_name})            

@@ -11,6 +11,10 @@ function c1()
     connect("aa1", "bb1")
 end
 
+function c2()
+    connect("aa2", "bb2")
+end
+
 local function command_send_message(...)
     local user = ME_D.get_user()
     if not is_object(user) then

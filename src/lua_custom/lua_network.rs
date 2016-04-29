@@ -81,7 +81,7 @@ extern "C" fn pack_message(lua: *mut td_rlua::lua_State) -> libc::c_int {
     unwrap_or!(td_rp::encode_proto(net_msg.get_buffer(), config, &name, value).ok(),
                return 0);
     net_msg.end_msg(0);
-    if net_msg.len() > 0xFFFF {
+    if net_msg.len() > 0xFFFFFF {
         println!("pack message({}) size > 0xFFFF fail!", name);
         return 0;
     }

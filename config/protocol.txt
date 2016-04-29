@@ -57,6 +57,8 @@
         "idx"                          : { "index" :    51,    "pattern" : "i32" },
         "enter_method"                 : { "index" :    52,    "pattern" : "str" },
         "is_ready"                     : { "index" :    53,    "pattern" : "u8" },
+        "wheel_idx"                    : { "index" :    54,    "pattern" : "u8" },
+        "poker_list"                   : { "index" :    55,    "pattern" : "u8[]" },
 
         "i8"                           : { "index" :    50000, "pattern" : "i8" },
         "u8"                           : { "index" :    50001, "pattern" : "u8" },
