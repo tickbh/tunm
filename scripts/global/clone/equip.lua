@@ -3,11 +3,11 @@
 -- 装备对象类
 
 -- 创建类模板
-EQUIP_CLASS = class(DBASE_CLASS, RID_CLASS, PROPERTY_CLASS, ATTRIB_CLASS)
-EQUIP_CLASS.name = "EQUIP_CLASS"
+EQUIP_TDCLS = tdcls(DBASE_TDCLS, RID_TDCLS, PROPERTY_TDCLS, ATTRIB_TDCLS)
+EQUIP_TDCLS.name = "EQUIP_TDCLS"
 
 -- 构造函数
-function EQUIP_CLASS:create(value)
+function EQUIP_TDCLS:create(value)
     assert(type(value) == "table", "equip::create para not corret")
     assert(is_int(value["class_id"]))
 
@@ -17,30 +17,30 @@ function EQUIP_CLASS:create(value)
 end
 
 -- 析构函数
-function EQUIP_CLASS:destruct()
+function EQUIP_TDCLS:destruct()
 end
 
 -- 生成对象的唯一ID
-function EQUIP_CLASS:get_ob_id()
-    return (string.format("EQUIP_CLASS:%s:%s", save_string(self:query("rid")),
+function EQUIP_TDCLS:get_ob_id()
+    return (string.format("EQUIP_TDCLS:%s:%s", save_string(self:query("rid")),
                          save_string(self:query("class_id"))))
 end
 
 -- 定义公共接口，按照字母顺序排序
 
 --获取基本类的对象
-function EQUIP_CLASS:basic_object()
+function EQUIP_TDCLS:basic_object()
     local class_id = self.dbase["class_id"]
     return (find_basic_object_by_class_id(class_id))
 end
 
 -- 道具是否可叠加
-function EQUIP_CLASS:can_combine(ob)
+function EQUIP_TDCLS:can_combine(ob)
    return false
 end
 
 -- 道具扣除数量,返回实际扣除个数
-function EQUIP_CLASS:cost_amount()
+function EQUIP_TDCLS:cost_amount()
     -- 析构道具
     local owner = get_owner(self)
     if owner then
@@ -50,18 +50,18 @@ function EQUIP_CLASS:cost_amount()
 end
 
 -- 取得数据库的保存操作
-function EQUIP_CLASS:get_save_oper()
+function EQUIP_TDCLS:get_save_oper()
     local oper = self:query_temp("not_in_db") and "insert" or "update"
 
     return "equip", self:query("rid"), oper
 end
 
-function EQUIP_CLASS:is_equip()
+function EQUIP_TDCLS:is_equip()
     return true
 end
 
 -- 通知字段变更
-function EQUIP_CLASS:notify_fields_updated(field_names)
+function EQUIP_TDCLS:notify_fields_updated(field_names)
     local owner = get_owner(self)
     if not owner then
         return
@@ -71,7 +71,7 @@ function EQUIP_CLASS:notify_fields_updated(field_names)
 end
 
 -- 取得保存数据库的信息
-function EQUIP_CLASS:save_to_mapping()
+function EQUIP_TDCLS:save_to_mapping()
 
     --insert操作,返回全部数据
     if self:query_temp("not_in_db") then
@@ -98,7 +98,7 @@ function EQUIP_CLASS:save_to_mapping()
 end
 
 -- 还原dbase数据
-function EQUIP_CLASS:restore_from_mapping(data, freeze)
+function EQUIP_TDCLS:restore_from_mapping(data, freeze)
     self:absorb_dbase(data)
 
     -- 设置 dbase 冻结中，若没被解冻，下线不额外进行保存

@@ -17,7 +17,7 @@ function me_updated(agent, data)
     local item_list = remove_get(data, "item_list") or {}
     local equip_list = remove_get(data, "equip_list") or {}
     -- 创建玩家
-    local user = PLAYER_CLASS.new(data.user)
+    local user = PLAYER_TDCLS.new(data.user)
     for k, v in pairs(agent.data) do
         user:set_temp(k, v)
     end

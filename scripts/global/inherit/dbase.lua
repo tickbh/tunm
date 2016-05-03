@@ -3,11 +3,11 @@
 -- 保存数据的基类
 
 -- 创建类模板
-DBASE_CLASS = class();
-DBASE_CLASS.name = "DBASE_CLASS";
+DBASE_TDCLS = tdcls();
+DBASE_TDCLS.name = "DBASE_TDCLS";
 
 -- 构造函数
-function DBASE_CLASS:create()
+function DBASE_TDCLS:create()
     self.dbase = {};
     self.temp_dbase = {};
     self.change_list = {};
@@ -16,7 +16,7 @@ end
 -- 定义公共接口，按照字母顺序排序
 
 -- 吸收传入的 dbase 数据
-function DBASE_CLASS:absorb_dbase(data)
+function DBASE_TDCLS:absorb_dbase(data)
 
     self.change_list["all_change"] = true;
 
@@ -25,7 +25,7 @@ function DBASE_CLASS:absorb_dbase(data)
     end
 end
 
-function DBASE_CLASS:absorb_change_list(list)
+function DBASE_TDCLS:absorb_change_list(list)
 
     for key, _ in pairs(list) do
         self.change_list[key] = true;
@@ -33,14 +33,14 @@ function DBASE_CLASS:absorb_change_list(list)
 end
 
 -- 吸收传入的 temp dbase 数据
-function DBASE_CLASS:absorb_temp_dbase(data)
+function DBASE_TDCLS:absorb_temp_dbase(data)
     for key, value in pairs(data) do
         self.temp_dbase[key] = value;
     end
 end
 
 -- Add value to value in dbase
-function DBASE_CLASS:add(key, val)
+function DBASE_TDCLS:add(key, val)
     local v = self.dbase[key];
     self.change_list[key] = true;
 
@@ -62,7 +62,7 @@ function DBASE_CLASS:add(key, val)
 end
 
 -- Add value to value in temp_dbase
-function DBASE_CLASS:add_temp(key, val)
+function DBASE_TDCLS:add_temp(key, val)
     local v = self.temp_dbase[key];
 
     if not v then
@@ -84,7 +84,7 @@ end
 
 -- Add value to value in dbase
 -- path 可为 "x/y" 格式
-function DBASE_CLASS:add_ex(path, val)
+function DBASE_TDCLS:add_ex(path, val)
     local t = express_add(path, self.dbase, val);
     if not t then
         -- 不存在指定路径
@@ -94,7 +94,7 @@ end
 
 -- Add value to value in temp_dbase
 -- path 可为 "x/y" 格式
-function DBASE_CLASS:add_temp_ex(path, val)
+function DBASE_TDCLS:add_temp_ex(path, val)
     local t = express_add(path, self.temp_dbase, val);
     if not t then
         -- 不存在指定路径
@@ -102,7 +102,7 @@ function DBASE_CLASS:add_temp_ex(path, val)
     end
 end
 
-function DBASE_CLASS:delete(key)
+function DBASE_TDCLS:delete(key)
     if self.dbase[key] then
         self.change_list[key] = true;
     end
@@ -110,7 +110,7 @@ function DBASE_CLASS:delete(key)
     self.dbase[key] = nil;
 end
 
-function DBASE_CLASS:delete_ex(path)
+function DBASE_TDCLS:delete_ex(path)
     if express_query(path, self.dbase) then
         local keys = explode(path, "/");
         self.change_list[keys[1]] = true;
@@ -119,42 +119,42 @@ function DBASE_CLASS:delete_ex(path)
     express_delete(path, self.dbase);
 end
 
-function DBASE_CLASS:delete_temp(key)
+function DBASE_TDCLS:delete_temp(key)
     self.temp_dbase[key] = nil;
 end
 
-function DBASE_CLASS:delete_temp_ex(path)
+function DBASE_TDCLS:delete_temp_ex(path)
     express_delete(path, self.temp_dbase);
 end
 
 -- 冻结 dbase 数据
-function DBASE_CLASS:freeze_dbase()
+function DBASE_TDCLS:freeze_dbase()
     self.change_list = {};
 end
 
 --获取改变的列表
-function DBASE_CLASS:get_change_list()
+function DBASE_TDCLS:get_change_list()
     return self.change_list;
 end
 
 -- 解冻 dbase 数据
-function DBASE_CLASS:unfreeze_dbase()
+function DBASE_TDCLS:unfreeze_dbase()
     self.change_list["all_change"] = true;
 end
 
 -- 判断 dbase 是否冻结中
-function DBASE_CLASS:is_dbase_freezed()
+function DBASE_TDCLS:is_dbase_freezed()
 
     if sizeof(self.change_list) == 0 then
         return true;
     end
 end
 
-function DBASE_CLASS:set_change_value(key, value)
+function DBASE_TDCLS:set_change_value(key, value)
     self.change_list[key] = value
 end
 
-function DBASE_CLASS:query(key, raw)
+function DBASE_TDCLS:query(key, raw)
     local value;
 
     if type(key) == "nil" then
@@ -183,7 +183,7 @@ function DBASE_CLASS:query(key, raw)
     return nil;
 end
 
-function DBASE_CLASS:querys(keys, raw)
+function DBASE_TDCLS:querys(keys, raw)
     local result = {}
     for _,v in ipairs(keys) do
         result[v] = self:query(v, raw)
@@ -191,7 +191,7 @@ function DBASE_CLASS:querys(keys, raw)
     return result;
 end
 
-function DBASE_CLASS:query_ex(path, raw)
+function DBASE_TDCLS:query_ex(path, raw)
     local value;
 
     if type(path) == "nil" then
@@ -219,7 +219,7 @@ function DBASE_CLASS:query_ex(path, raw)
     return nil;
 end
 
-function DBASE_CLASS:query_sub_temp(key, sub_value)
+function DBASE_TDCLS:query_sub_temp(key, sub_value)
     if type(key) == "nil" then
         return
     end
@@ -231,7 +231,7 @@ function DBASE_CLASS:query_sub_temp(key, sub_value)
     return value
 end
 
-function DBASE_CLASS:query_temp(key)
+function DBASE_TDCLS:query_temp(key)
     if type(key) == "nil" then
         return self.temp_dbase;
     else
@@ -239,7 +239,7 @@ function DBASE_CLASS:query_temp(key)
     end
 end
 
-function DBASE_CLASS:query_temp_ex(path)
+function DBASE_TDCLS:query_temp_ex(path)
     if type(path) == "nil" then
         return self.temp_dbase;
     else
@@ -247,18 +247,18 @@ function DBASE_CLASS:query_temp_ex(path)
     end
 end
 
-function DBASE_CLASS:replace_dbase(value)
+function DBASE_TDCLS:replace_dbase(value)
     assert(type(value) == "table", "dbase must be table!");
     self.change_list["all_change"] = true;
     self.dbase = value;
 end
 
-function DBASE_CLASS:replace_temp_dbase(value)
+function DBASE_TDCLS:replace_temp_dbase(value)
     assert(type(value) == "table", "temp_dbase must be table!");
     self.temp_dbase = value;
 end
 
-function DBASE_CLASS:set(key, value)
+function DBASE_TDCLS:set(key, value)
     if self.dbase[key] ~= value or type(self.dbase[key]) == "table"
         or type(self.dbase[key]) == "cdata" then
         self.change_list[key] = true;
@@ -271,7 +271,7 @@ function DBASE_CLASS:set(key, value)
     
 end
 
-function DBASE_CLASS:set_ex(path, value)
+function DBASE_TDCLS:set_ex(path, value)
     local path_value = express_query(path, self.dbase);
 
     if path_value ~= value or type(path_value) == "table"
@@ -283,10 +283,10 @@ function DBASE_CLASS:set_ex(path, value)
     express_set(path, self.dbase, value);
 end
 
-function DBASE_CLASS:set_temp(key, value)
+function DBASE_TDCLS:set_temp(key, value)
     self.temp_dbase[key] = value;
 end
 
-function DBASE_CLASS:set_temp_ex(path, value)
+function DBASE_TDCLS:set_temp_ex(path, value)
     express_set(path, self.temp_dbase, value);
 end

@@ -15,7 +15,7 @@ function new_client_init(agent, port, data, ext)
     if old_agent then
         old_agent:connection_lost(true)
     end
-    local client_agent = clone_object(AGENT_CLASS);
+    local client_agent = clone_object(AGENT_TDCLS);
     -- 设置端口与 agent 的映射关系
     client_agent:set_all_port_no(port, agent:get_port_no())
     client_agent:set_client_ip(ext["client_ip"])

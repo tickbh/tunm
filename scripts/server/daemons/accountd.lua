@@ -22,7 +22,7 @@ local account_wait_list = {}
 
 -- 创建玩家
 function create_account(dbase)
-    local account = ACCOUNT_CLASS.new(dbase)
+    local account = ACCOUNT_TDCLS.new(dbase)
     account_list[#account_list + 1] = account
     return account
 end

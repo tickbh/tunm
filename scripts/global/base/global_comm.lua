@@ -29,7 +29,7 @@ local function socket_connect_callback(cookie, fd, client_ip)
 
     local agent = fd
     if fd ~= -1 then
-        agent = clone_object(AGENT_CLASS)
+        agent = clone_object(AGENT_TDCLS)
         -- 设置验证
         agent:set_authed(true)
         -- 设置端口与 agent 的映射关系
@@ -104,7 +104,7 @@ function cmd_new_connection(cookie, fd, client_ip, server_port)
         return
     end
 
-    local agent = clone_object(AGENT_CLASS)
+    local agent = clone_object(AGENT_TDCLS)
     -- 设置端口与 agent 的映射关系
     agent:set_port_no(fd)
     agent:set_client_ip(client_ip)

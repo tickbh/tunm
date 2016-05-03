@@ -192,7 +192,7 @@ end
 -- 模块的入口执行
 function create()
     -- 初始化登录队列
-    login_queue = clone_object(QUEUE_CLASS)
+    login_queue = clone_object(QUEUE_TDCLS)
 
     -- 响应gs队列中的登录请求
     register_post_init(respond_login)

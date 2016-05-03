@@ -71,7 +71,7 @@ end
 -- 计算当前在线人数
 function online_number()
 
-    local player_list = child_objects(PLAYER_CLASS)
+    local player_list = child_objects(PLAYER_TDCLS)
 
     return (sizeof(player_list))
 end
@@ -159,7 +159,7 @@ end
 -- 批量登出(number个玩家)
 function logout(number)
     -- 在线所有玩家
-    local player_list = child_objects(PLAYER_CLASS)
+    local player_list = child_objects(PLAYER_TDCLS)
 
     for i, player in ipairs(player_list) do
         -- 析构玩家
@@ -201,7 +201,7 @@ function start(number, modules_str)
 
     -- 没有 则对已登陆的玩家进行操作
     else
-        local player_list = child_objects(PLAYER_CLASS)
+        local player_list = child_objects(PLAYER_TDCLS)
         for _, player in ipairs(player_list) do
             player:set("test_modules", test_modules)
         end
@@ -211,7 +211,7 @@ end
 -- 停止指定子模块的测试
 function stop(modules_str)
 
-    local player_list = child_objects(PLAYER_CLASS)
+    local player_list = child_objects(PLAYER_TDCLS)
 
     -- 停止所有子模块的测试
     if not modules_str then
@@ -313,7 +313,7 @@ function create()
     load_folder("client/daemons/stress_test")
 
     -- 注册玩家心跳回调
-    register_heartbeat("PLAYER_CLASS", heartbeat_handler)
+    register_heartbeat("PLAYER_TDCLS", heartbeat_handler)
 
     -- 注册延迟调用回调
     register_post_init(init)

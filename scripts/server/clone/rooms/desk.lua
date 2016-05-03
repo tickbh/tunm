@@ -3,11 +3,11 @@
 --桌子类
 
 --创建类模板
-DESK_CLASS = class()
-DESK_CLASS.name = "DESK_CLASS"
+DESK_TDCLS = tdcls()
+DESK_TDCLS.name = "DESK_TDCLS"
 
 --构造函数
-function DESK_CLASS:create(room, idx)
+function DESK_TDCLS:create(room, idx)
     self.room = room
     self.idx = idx
     --rid=wheel, 玩家所在的位置
@@ -17,19 +17,19 @@ function DESK_CLASS:create(room, idx)
     self.wheels = {{}, {}, {}}
 end
 
-function DESK_CLASS:time_update()
+function DESK_TDCLS:time_update()
 
 end
 
-function DESK_CLASS:is_full_user()
+function DESK_TDCLS:is_full_user()
     return true
 end
 
-function DESK_CLASS:get_user_count()
+function DESK_TDCLS:get_user_count()
     return sizeof(self.users)
 end
 
-function DESK_CLASS:get_empty_wheel()
+function DESK_TDCLS:get_empty_wheel()
     for idx,v in ipairs(self.wheels) do
         if not is_rid_vaild(v.rid) then
             return idx
@@ -39,7 +39,7 @@ function DESK_CLASS:get_empty_wheel()
 end
 
 
-function DESK_CLASS:check_user_wheel(user_rid)
+function DESK_TDCLS:check_user_wheel(user_rid)
     local fix_empty_idx = nil
     for idx,v in ipairs(self.wheels) do
         if v.rid == user_rid then
@@ -55,7 +55,7 @@ function DESK_CLASS:check_user_wheel(user_rid)
     return fix_empty_idx
 end
 
-function DESK_CLASS:is_empty()
+function DESK_TDCLS:is_empty()
     for idx,v in ipairs(self.wheels) do
         if is_rid_vaild(v.rid) then
             return false
@@ -64,7 +64,7 @@ function DESK_CLASS:is_empty()
     return true
 end
 
-function DESK_CLASS:user_enter(user_rid)
+function DESK_TDCLS:user_enter(user_rid)
     local idx = self:check_user_wheel(user_rid)
     if not idx then
         return -1
@@ -76,7 +76,7 @@ function DESK_CLASS:user_enter(user_rid)
     return 0
 end
 
-function DESK_CLASS:user_leave(user_rid)
+function DESK_TDCLS:user_leave(user_rid)
     local user_data = self.users[user_rid]
     if not user_data then
         return -1
@@ -88,7 +88,7 @@ end
 
 
 -- 广播消息
-function DESK_CLASS:broadcast_message(msg, ...)
+function DESK_TDCLS:broadcast_message(msg, ...)
 
     local size = sizeof(self.users)
     local msg_buf = pack_message(msg, ...)
@@ -107,7 +107,7 @@ function DESK_CLASS:broadcast_message(msg, ...)
 end
 
 -- 广播消息
-function DESK_CLASS:send_message(user_rid, msg, ...)
+function DESK_TDCLS:send_message(user_rid, msg, ...)
     local msg_buf = pack_message(msg, ...)
     if not msg_buf then
         trace("发送消息(%s:%o)打包消息失败。\n", msg, {...})
@@ -119,7 +119,7 @@ function DESK_CLASS:send_message(user_rid, msg, ...)
     del_message(msg_buf)
 end
 
-function DESK_CLASS:op_info(user_rid, info)
+function DESK_TDCLS:op_info(user_rid, info)
     local idx = self.users[user_rid].idx
     if info.oper == "ready" then
         self.wheels[idx].is_ready = 1
@@ -129,7 +129,7 @@ function DESK_CLASS:op_info(user_rid, info)
     end
 end
 
-function DESK_CLASS:check_all_ready()
+function DESK_TDCLS:check_all_ready()
     trace("self.wheels = %o", self.wheels)
     for _,data in ipairs(self.wheels) do
         if data.is_ready ~= 1 then
@@ -140,16 +140,16 @@ function DESK_CLASS:check_all_ready()
     self:start_game()
 end
 
-function DESK_CLASS:start_game()
-    trace("DESK_CLASS:start_game!@!!!")
+function DESK_TDCLS:start_game()
+    trace("DESK_TDCLS:start_game!@!!!")
     self.is_start_game = true
     self:broadcast_message(MSG_ROOM_MESSAGE, "success_start_game", {idx = self.idx})
 end
 
-function DESK_CLASS:is_playing(user_rid)
+function DESK_TDCLS:is_playing(user_rid)
     return false
 end
 
-function DESK_CLASS:get_play_num()
+function DESK_TDCLS:get_play_num()
     return 3
 end

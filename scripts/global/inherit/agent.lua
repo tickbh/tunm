@@ -6,11 +6,11 @@
 -- port_no 为真实的端口号
 
 -- 创建类模板
-AGENT_CLASS = class();
-AGENT_CLASS.name = "AGENT_CLASS";
+AGENT_TDCLS = tdcls();
+AGENT_TDCLS.name = "AGENT_TDCLS";
 
 -- 构造函数
-function AGENT_CLASS:create()
+function AGENT_TDCLS:create()
     self.port_no  = -1;
     self.fport_no = -1;
     self.timer_id = -1;
@@ -24,18 +24,18 @@ function AGENT_CLASS:create()
     self.data = {};
 end
 
-function AGENT_CLASS:calc_next_seq(seq)
+function AGENT_TDCLS:calc_next_seq(seq)
     seq = seq + 111;
     seq = bit32.band(seq, 0xFFFF);
     return seq;
 end
 
-function AGENT_CLASS:get_next_server_seq()
+function AGENT_TDCLS:get_next_server_seq()
     self.server_seq = self:calc_next_seq(self.server_seq)
     return self.server_seq
 end
 
-function AGENT_CLASS:check_next_client(seq)
+function AGENT_TDCLS:check_next_client(seq)
     if self.client_seq < 0 then
         self.client_seq = seq
     else
@@ -44,11 +44,11 @@ function AGENT_CLASS:check_next_client(seq)
     return self.client_seq == seq
 end
 
-function AGENT_CLASS:set_client_seq(seq)
+function AGENT_TDCLS:set_client_seq(seq)
     self.client_seq = seq
 end
 
-function AGENT_CLASS:close_agent()
+function AGENT_TDCLS:close_agent()
     if self.fport_no ~= -1 then
         remove_port_agent(self.fport_no);
     elseif self.port_no ~= -1 then
@@ -60,7 +60,7 @@ function AGENT_CLASS:close_agent()
 end
 
 -- 析造函数
-function AGENT_CLASS:destruct()
+function AGENT_TDCLS:destruct()
     self:close_agent()
     if is_valid_timer(self.timer_id) then
         delete_timer(self.timer_id);
@@ -69,37 +69,37 @@ function AGENT_CLASS:destruct()
 end
 
 -- 生成对象的唯一ID
-function AGENT_CLASS:get_ob_id()
-    return (string.format("AGENT_CLASS:%s:%s", save_string(self.fport_no), save_string(self.port_no)));
+function AGENT_TDCLS:get_ob_id()
+    return (string.format("AGENT_TDCLS:%s:%s", save_string(self.fport_no), save_string(self.port_no)));
 end
 
 -- 定义公共接口，按照字母顺序排序
 
 -- 连接断开
-function AGENT_CLASS:connection_lost()
+function AGENT_TDCLS:connection_lost()
     destruct_object(self)
 end
 
 -- 获取数据
-function AGENT_CLASS:get_data(key)
+function AGENT_TDCLS:get_data(key)
     return self.data[key];
 end
 
 -- 保存数据
-function AGENT_CLASS:set_data(key, value)
+function AGENT_TDCLS:set_data(key, value)
     self.data[key] = value;
 end
 
-function AGENT_CLASS:get_fport_no()
+function AGENT_TDCLS:get_fport_no()
     return self.fport_no
 end
 
 -- 取得连接号
-function AGENT_CLASS:get_port_no()
+function AGENT_TDCLS:get_port_no()
     return self.port_no;
 end
 
-function AGENT_CLASS:get_uni_port_no()
+function AGENT_TDCLS:get_uni_port_no()
     if self.fport_no == -1 then
         return self.port_no
     else
@@ -108,12 +108,12 @@ function AGENT_CLASS:get_uni_port_no()
 end
 
 -- 取得该 agent 是否通过验证
-function AGENT_CLASS:is_authed()
+function AGENT_TDCLS:is_authed()
     return self.authed;
 end
 
 -- 转接通讯端口到另一个对象上
-function AGENT_CLASS:relay_comm(to_comm)
+function AGENT_TDCLS:relay_comm(to_comm)
     -- 取消本对象的端口-对象的映射
     if self.port_no == -1 then
         return;
@@ -130,7 +130,7 @@ function AGENT_CLASS:relay_comm(to_comm)
     self.fport_no = -1
 end
 
-function AGENT_CLASS:forward_message(msg)
+function AGENT_TDCLS:forward_message(msg)
     local port_no = self.port_no;
     if port_no == -1 then
         return;
@@ -143,7 +143,7 @@ function AGENT_CLASS:forward_message(msg)
     pcall(forward_to_port, port_no, msg);
 end
 
-function AGENT_CLASS:send_net_msg(net_msg)
+function AGENT_TDCLS:send_net_msg(net_msg)
     if self.fport_no ~= -1 then
         net_msg:set_seq_fd(self.fport_no)
     elseif SERVER_TYPE == "gate" and self.server_type == SERVER_TYPE_CLIENT then
@@ -156,7 +156,7 @@ function AGENT_CLASS:send_net_msg(net_msg)
 end
 
 -- 发送消息
-function AGENT_CLASS:send_message(msg, ...)
+function AGENT_TDCLS:send_message(msg, ...)
     -- trace("###################1 msg : %s ###################\n%o\n", msg, { ... });
     local port_no = self.port_no;
     if port_no == -1 then
@@ -192,7 +192,7 @@ function AGENT_CLASS:send_message(msg, ...)
 end
 
 -- 发送打包好的消息
-function AGENT_CLASS:send_raw_message(msg_buf)
+function AGENT_TDCLS:send_raw_message(msg_buf)
     local port_no = self.port_no;
     if port_no == -1 then
         return;
@@ -219,8 +219,8 @@ function AGENT_CLASS:send_raw_message(msg_buf)
 end
 
 -- 设置该 agent 是否通过验证
-function AGENT_CLASS:set_authed(flag)
-    --trace("_________AGENT_CLASS:set_authed(flag)____%o", flag)
+function AGENT_TDCLS:set_authed(flag)
+    --trace("_________AGENT_TDCLS:set_authed(flag)____%o", flag)
     self.authed = flag;
 
     if flag then
@@ -233,17 +233,17 @@ function AGENT_CLASS:set_authed(flag)
 end
 
 -- 析构agent并写日志
-function AGENT_CLASS:destruct_not_verify()
+function AGENT_TDCLS:destruct_not_verify()
     destruct_object(self);
 end
 
-function AGENT_CLASS:set_all_port_no(fport_no, port_no)
+function AGENT_TDCLS:set_all_port_no(fport_no, port_no)
     self:set_fport_no(fport_no)
     self:set_port_no(port_no)
 end
 
 -- 设置连接号与 agent 的绑定关系
-function AGENT_CLASS:set_port_no(port_no)
+function AGENT_TDCLS:set_port_no(port_no)
     if self.fport_no ~= -1 then
         self.port_no = port_no
     else
@@ -274,7 +274,7 @@ function AGENT_CLASS:set_port_no(port_no)
 end
 
 -- 判断agent是否有效
-function AGENT_CLASS:is_valid()
+function AGENT_TDCLS:is_valid()
     if self.port_no == -1 then
         return false;
     end
@@ -282,29 +282,29 @@ function AGENT_CLASS:is_valid()
     return true;
 end
 
-function AGENT_CLASS:set_client_ip(client_ip)
+function AGENT_TDCLS:set_client_ip(client_ip)
     self.client_ip = client_ip
 end
 
-function AGENT_CLASS:get_client_ip()
+function AGENT_TDCLS:get_client_ip()
     return self.client_ip
 end
 
-function AGENT_CLASS:set_server_type(type)
+function AGENT_TDCLS:set_server_type(type)
     self.server_type = type
     set_type_port(self.server_type, self.fport_no == -1 and self.port_no or self.fport_no)
 end
 
-function AGENT_CLASS:get_server_type()
+function AGENT_TDCLS:get_server_type()
     return self.server_type
 end
 
-function AGENT_CLASS:is_user()
+function AGENT_TDCLS:is_user()
     return false
 end
 
 -- 设置连接号与 agent 的绑定关系
-function AGENT_CLASS:set_fport_no(port_no)
+function AGENT_TDCLS:set_fport_no(port_no)
     -- 之前已存在旧连接，需要关闭旧连接
     if self.fport_no ~= -1 then
         -- 取消本对象的端口-对象的映射
@@ -322,7 +322,7 @@ function AGENT_CLASS:set_fport_no(port_no)
 end
 
 -- 给逻辑服发送消息，网关服调用
-function AGENT_CLASS:send_logic_message(msg, ...)
+function AGENT_TDCLS:send_logic_message(msg, ...)
     local logic_port = get_map_port(self.port_no)
     if logic_port == -1 then
         trace("no logic server for %o", self.port_no)
@@ -334,7 +334,7 @@ function AGENT_CLASS:send_logic_message(msg, ...)
     del_message(net_msg)
 end
 
-function AGENT_CLASS:forward_logic_message(net_msg)
+function AGENT_TDCLS:forward_logic_message(net_msg)
     local logic_port = get_map_port(self.port_no)
     if logic_port == -1 then
         trace("no logic server for %o", self.port_no)
@@ -344,6 +344,6 @@ function AGENT_CLASS:forward_logic_message(net_msg)
     pcall(forward_to_port, logic_port, net_msg);
 end
 
-function AGENT_CLASS:print_fd_info()
-    trace("____AGENT_CLASS:print_fd_info()____\n self is %o, fport_no is %o, and bit fport is %o port_no is %o", self, self.fport_no, bit32.band(self.fport_no, 0xFFFF), self.port_no)
+function AGENT_TDCLS:print_fd_info()
+    trace("____AGENT_TDCLS:print_fd_info()____\n self is %o, fport_no is %o, and bit fport is %o port_no is %o", self, self.fport_no, bit32.band(self.fport_no, 0xFFFF), self.port_no)
 end

@@ -3,11 +3,11 @@
 -- 道具对象类
 
 -- 创建类模板
-ITEM_CLASS = class(DBASE_CLASS, RID_CLASS, PROPERTY_CLASS)
-ITEM_CLASS.name = "ITEM_CLASS"
+ITEM_TDCLS = tdcls(DBASE_TDCLS, RID_TDCLS, PROPERTY_TDCLS)
+ITEM_TDCLS.name = "ITEM_TDCLS"
 
 -- 构造函数
-function ITEM_CLASS:create(value)
+function ITEM_TDCLS:create(value)
     assert(type(value) == "table", "item::create para not corret")
     assert(is_int(value["class_id"]))
 
@@ -26,26 +26,26 @@ function ITEM_CLASS:create(value)
 end
 
 -- 析构函数
-function ITEM_CLASS:destruct()
+function ITEM_TDCLS:destruct()
 end
 
 -- 生成对象的唯一ID
-function ITEM_CLASS:get_ob_id()
-    return (string.format("ITEM_CLASS:%s:%s", save_string(self:query("rid")),
+function ITEM_TDCLS:get_ob_id()
+    return (string.format("ITEM_TDCLS:%s:%s", save_string(self:query("rid")),
                          save_string(self:query("class_id"))))
 end
 
 -- 定义公共接口，按照字母顺序排序
 
 --获取基本类的对象
-function ITEM_CLASS:basic_object()
+function ITEM_TDCLS:basic_object()
     local class_id = self.dbase["class_id"]
     return (find_basic_object_by_class_id(class_id))
 end
 
 -- 道具增加数量
-function ITEM_CLASS:add_amount(count)
-    trace("ITEM_CLASS:add_amount amount is %o", count)
+function ITEM_TDCLS:add_amount(count)
+    trace("ITEM_TDCLS:add_amount amount is %o", count)
     if count <= 0 then
         return
     end
@@ -68,7 +68,7 @@ function ITEM_CLASS:add_amount(count)
 end
 
 -- 道具是否可叠加
-function ITEM_CLASS:can_combine(ob)
+function ITEM_TDCLS:can_combine(ob)
     if not self:query("over_lap") or
        not ob:query("over_lap") or
        self:query("over_lap") <= 1 or
@@ -91,7 +91,7 @@ function ITEM_CLASS:can_combine(ob)
 end
 
 -- 道具扣除数量,返回实际扣除个数
-function ITEM_CLASS:cost_amount(count)
+function ITEM_TDCLS:cost_amount(count)
     local owner = get_owner(self)
     local amount = self:query("amount")
     local update_amount = amount - count
@@ -112,7 +112,7 @@ function ITEM_CLASS:cost_amount(count)
 end
 
 -- 通知字段变更
-function ITEM_CLASS:notify_fields_updated(field_names)
+function ITEM_TDCLS:notify_fields_updated(field_names)
     local owner = get_owner(self)
     if not owner then
         return
@@ -121,18 +121,18 @@ function ITEM_CLASS:notify_fields_updated(field_names)
     owner:notify_property_updated(get_ob_rid(self), field_names)
 end
 
-function ITEM_CLASS:is_item()
+function ITEM_TDCLS:is_item()
     return true
 end
 
 -- 取得数据库的保存操作
-function ITEM_CLASS:get_save_oper()
+function ITEM_TDCLS:get_save_oper()
     local oper = self:query_temp("not_in_db") and "insert" or "update"
     return "item", self:query("rid"), oper
 end
 
 -- 取得保存数据库的信息
-function ITEM_CLASS:save_to_mapping()
+function ITEM_TDCLS:save_to_mapping()
     --insert操作,返回全部数据
     if self:quermy_temp("not_in_db") then
         return (self:query())

@@ -68,7 +68,7 @@ end
 
 -- 创建玩家
 function create_user(dbase)
-    local user = USER_CLASS.new(dbase)
+    local user = USER_TDCLS.new(dbase)
     user_list[#user_list + 1] = user
     return user
 end
@@ -231,7 +231,7 @@ function create()
     load_exp_user_table()
     register_post_init(init)
     -- 注册玩家的心跳回调
-    register_heartbeat("USER_CLASS", when_user_heartbeat)
+    register_heartbeat("USER_TDCLS", when_user_heartbeat)
     register_as_audience("USER_D", {EVENT_EXP_CHANGE=try_level_up})
 end
 

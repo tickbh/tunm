@@ -3,18 +3,18 @@
 -- 心跳基类
 
 -- 创建类模板
-HEARTBEAT_CLASS = class();
-HEARTBEAT_CLASS.name = "HEARTBEAT_CLASS";
+HEARTBEAT_TDCLS = tdcls();
+HEARTBEAT_TDCLS.name = "HEARTBEAT_TDCLS";
 
 -- 构造函数
-function HEARTBEAT_CLASS:create(para)
+function HEARTBEAT_TDCLS:create(para)
     self.heartbeat_timer = -1;
     self.interval        = 0.0;
     self.is_destructed   = false;
 end
 
 -- 析构函数
-function HEARTBEAT_CLASS:destruct()
+function HEARTBEAT_TDCLS:destruct()
     if is_valid_timer(self.heartbeat_timer) then
         delete_timer(self.heartbeat_timer);
         self.heartbeat_timer = -1;
@@ -23,7 +23,7 @@ function HEARTBEAT_CLASS:destruct()
 end
 
 -- 心跳函数
-function HEARTBEAT_CLASS:do_heartbeat()
+function HEARTBEAT_TDCLS:do_heartbeat()
     if self.is_destructed then
         delete_timer(self.heartbeat_timer);
         self.heartbeat_timer = -1;
@@ -36,7 +36,7 @@ end
 -- 定义公共接口，按照字母顺序排序
 
 -- 设置心跳时间
-function HEARTBEAT_CLASS:delete_hearbeat()
+function HEARTBEAT_TDCLS:delete_hearbeat()
     if is_valid_timer(self.heartbeat_timer) then
         delete_timer(self.heartbeat_timer);
         self.heartbeat_timer = -1;
@@ -44,7 +44,7 @@ function HEARTBEAT_CLASS:delete_hearbeat()
 end
 
 -- 设置心跳时间
-function HEARTBEAT_CLASS:set_heartbeat_interval(_interval)
+function HEARTBEAT_TDCLS:set_heartbeat_interval(_interval)
     self:delete_hearbeat()
     assert(_interval >= 10000);
 

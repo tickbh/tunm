@@ -3,11 +3,11 @@
 --房间类
 
 --创建类模板
-ROOM_CLASS = class()
-ROOM_CLASS.name = "ROOM_CLASS"
+ROOM_TDCLS = tdcls()
+ROOM_TDCLS.name = "ROOM_TDCLS"
 
 --构造函数
-function ROOM_CLASS:create(value)
+function ROOM_TDCLS:create(value)
     assert(is_table(value), "room:create para not correct")
 
     --记录该场景的基本信息
@@ -19,7 +19,7 @@ function ROOM_CLASS:create(value)
     self:init_desk_entity()
 end
 
-function ROOM_CLASS:destruct()
+function ROOM_TDCLS:destruct()
     for _,data in pairs(dup(self.room_entity)) do
         self:entity_destruct(data)
     end
@@ -28,7 +28,7 @@ function ROOM_CLASS:destruct()
     end
 end
 
-function ROOM_CLASS:init_desk_entity()
+function ROOM_TDCLS:init_desk_entity()
     --创建该房间的桌子信息
     self.desk_entity = {}
     local desk_num = self.data["desk_num"] or 100
@@ -38,13 +38,13 @@ function ROOM_CLASS:init_desk_entity()
 end
 
 -- 生成对象的唯一ID
-function ROOM_CLASS:get_ob_id()
-    return (string.format("ROOM_CLASS:%s", save_string(self:get_room_name())))
+function ROOM_TDCLS:get_ob_id()
+    return (string.format("ROOM_TDCLS:%s", save_string(self:get_room_name())))
 end
 
 --定义公共接口，按照字母顺序排序
 
-function ROOM_CLASS:time_update()
+function ROOM_TDCLS:time_update()
     for _,data in pairs(dup(self.room_entity)) do
         self:entity_update(data)
     end
@@ -54,7 +54,7 @@ function ROOM_CLASS:time_update()
     end
 end
 
-function ROOM_CLASS:entity_update(entity)
+function ROOM_TDCLS:entity_update(entity)
     --正在游戏中的不做析构处理，等游戏先结束
     if not entity.is_enter_game then
         if entity.last_logout_time and os.time() - entity.last_logout_time > 10 then
@@ -64,7 +64,7 @@ function ROOM_CLASS:entity_update(entity)
 end
 
 -- 广播消息
-function ROOM_CLASS:broadcast_message(msg, ...)
+function ROOM_TDCLS:broadcast_message(msg, ...)
 
     local size = sizeof(self.room_entity)
     local config_amount = ROOM_D.get_msg_amount(msg)
@@ -72,7 +72,7 @@ function ROOM_CLASS:broadcast_message(msg, ...)
     local is_object = is_object
     local user
     local msg_buf = pack_message(msg, ...)
-    local send_raw_message = get_class_func(USER_CLASS, "send_raw_message")
+    local send_raw_message = get_class_func(USER_TDCLS, "send_raw_message")
 
     if not msg_buf then
         trace("广播消息(%d)打包消息失败。\n", msg)
@@ -97,7 +97,7 @@ function ROOM_CLASS:broadcast_message(msg, ...)
 end
 
 --玩家进入房间
-function ROOM_CLASS:entity_enter(server_id, user_rid, info)
+function ROOM_TDCLS:entity_enter(server_id, user_rid, info)
     --将新实体加该场景
     self.room_entity[user_rid] = {
         user_rid = user_rid,
@@ -114,7 +114,7 @@ function ROOM_CLASS:entity_enter(server_id, user_rid, info)
         --进入桌子编号
         enter_desk_idx = nil,
 
-        data = clone_object(DBASE_CLASS, info)
+        data = clone_object(DBASE_TDCLS, info)
     }
 
     self:send_rid_message(user_rid, {}, MSG_ROOM_MESSAGE, "success_enter_room", {rid = user_rid, room_name = self:get_room_name()})
@@ -123,7 +123,7 @@ function ROOM_CLASS:entity_enter(server_id, user_rid, info)
 end
 
 --玩家离开房间
-function ROOM_CLASS:entity_leave(user_rid, info)
+function ROOM_TDCLS:entity_leave(user_rid, info)
 
     if not self.room_entity[user_rid] then
         LOG.err("Error:对象%s离开房间%s时找不到自己\n", user_rid, self:get_room_name())
@@ -146,8 +146,8 @@ function ROOM_CLASS:entity_leave(user_rid, info)
 end
 
 --玩家离开房间
-function ROOM_CLASS:entity_destruct(user_rid)
-    trace("ROOM_CLASS:entity_destruct user_rid = %o", user_rid)
+function ROOM_TDCLS:entity_destruct(user_rid)
+    trace("ROOM_TDCLS:entity_destruct user_rid = %o", user_rid)
     if not self.room_entity[user_rid] then
         LOG.err("Error:对象%s析构时找不到自己\n", user_rid)
     end
@@ -159,7 +159,7 @@ function ROOM_CLASS:entity_destruct(user_rid)
 end
 
 --TODO优先填取桌子人多但并未满的桌子 
-function ROOM_CLASS:get_can_enter_desk()
+function ROOM_TDCLS:get_can_enter_desk()
     for idx, t in ipairs(self.desk_entity) do
         if not t:is_full_user() then
             return idx
@@ -168,8 +168,8 @@ function ROOM_CLASS:get_can_enter_desk()
     return nil
 end
 
-function ROOM_CLASS:enter_desk(user_rid, idx, enter_method)
-    trace("ROOM_CLASS:enter_desk user_rid = %o", user_rid)
+function ROOM_TDCLS:enter_desk(user_rid, idx, enter_method)
+    trace("ROOM_TDCLS:enter_desk user_rid = %o", user_rid)
     local data = self.room_entity[user_rid]
     if not data then
         LOG.err("Error:%s进入桌子时找不到自己\n", user_rid)
@@ -209,7 +209,7 @@ function ROOM_CLASS:enter_desk(user_rid, idx, enter_method)
     return 0
 end
 
-function ROOM_CLASS:send_rid_message(user_rid, record, msg, ...)
+function ROOM_TDCLS:send_rid_message(user_rid, record, msg, ...)
     local msg_buf = pack_message(msg, ...)
     if not msg_buf then
         trace("广播消息(%s)打包消息失败。\n", msg)
@@ -219,7 +219,7 @@ function ROOM_CLASS:send_rid_message(user_rid, record, msg, ...)
     del_message(msg_buf)
 end
 
-function ROOM_CLASS:send_rid_raw_message(user_rid, record, msg_buf)
+function ROOM_TDCLS:send_rid_raw_message(user_rid, record, msg_buf)
     local data = self:get_data_by_rid(user_rid)
     if not data or not data.server_id then
         trace("获取用户%s数据失败", user_rid)
@@ -228,7 +228,7 @@ function ROOM_CLASS:send_rid_raw_message(user_rid, record, msg_buf)
     INTERNAL_COMM_D.send_server_raw_message(data.server_id, user_rid, record or {}, msg_buf:get_data())
 end
 
-function ROOM_CLASS:desk_op(user_rid, info)
+function ROOM_TDCLS:desk_op(user_rid, info)
     local data = self.room_entity[user_rid]
     if not data then
         return -1
@@ -242,27 +242,27 @@ function ROOM_CLASS:desk_op(user_rid, info)
 end
 
 --获取房间名称
-function ROOM_CLASS:get_room_name()
+function ROOM_TDCLS:get_room_name()
     return self.data["room_name"]
 end
 
 --获取房间类型
-function ROOM_CLASS:get_game_type()
+function ROOM_TDCLS:get_game_type()
     return self.data["game_type"]
 end
 
 -- 返回房间中的玩家信息
-function ROOM_CLASS:get_room_entity()
+function ROOM_TDCLS:get_room_entity()
     return self.room_entity
 end
 
 -- 返回房间中的玩家信息
-function ROOM_CLASS:get_data_by_rid(user_rid)
+function ROOM_TDCLS:get_data_by_rid(user_rid)
     return self.room_entity[user_rid]
 end
 
 -- 返回房间中的玩家信息
-function ROOM_CLASS:get_base_info_by_rid(user_rid)
+function ROOM_TDCLS:get_base_info_by_rid(user_rid)
     local data = self.room_entity[user_rid]
     if not data then
         return nil
@@ -271,7 +271,7 @@ function ROOM_CLASS:get_base_info_by_rid(user_rid)
 end
 
 --判断是否是vip场景
-function ROOM_CLASS:is_vip()
+function ROOM_TDCLS:is_vip()
     if self.data["is_vip"] == 1 then
         return true
     else
@@ -279,21 +279,21 @@ function ROOM_CLASS:is_vip()
     end
 end
 
-function ROOM_CLASS:get_level()
+function ROOM_TDCLS:get_level()
     return self.data["level"]
 end
 
-function ROOM_CLASS:get_desk_class()
-    return DESK_CLASS
+function ROOM_TDCLS:get_desk_class()
+    return DESK_TDCLS
 end
 
 -- 判断是否为房间对象
-function ROOM_CLASS:is_room()
+function ROOM_TDCLS:is_room()
     return true
 end
 
 --更新实体外观信息
-function ROOM_CLASS:update_entity(rid, pkg_info)
+function ROOM_TDCLS:update_entity(rid, pkg_info)
     if self.room_entity[rid] and
        self.room_entity[rid]["packet"] then
 
@@ -301,10 +301,10 @@ function ROOM_CLASS:update_entity(rid, pkg_info)
     end
 end
 
-function ROOM_CLASS:get_listen_channel()
+function ROOM_TDCLS:get_listen_channel()
     return string.format(REDIS_ROOM_MSG_CHANNEL_USER, self:get_room_name())
 end
 
-function ROOM_CLASS:get_respone_channel()
+function ROOM_TDCLS:get_respone_channel()
     return string.format(REDIS_RESPONE_ROOM_INFO, self:get_room_name())
 end

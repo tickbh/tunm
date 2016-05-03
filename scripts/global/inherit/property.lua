@@ -3,21 +3,21 @@
 -- 物件基类
 
 -- 创建类模板
-PROPERTY_CLASS = class();
-PROPERTY_CLASS.name = "PROPERTY_CLASS";
+PROPERTY_TDCLS = tdcls();
+PROPERTY_TDCLS.name = "PROPERTY_TDCLS";
 
 -- 构造函数
-function PROPERTY_CLASS:create(para)
+function PROPERTY_TDCLS:create(para)
 end
 
 -- 析构函数
-function PROPERTY_CLASS:destruct()
+function PROPERTY_TDCLS:destruct()
 
 end
 
 -- 定义公共接口，按照字母顺序排序
 -- 取得该物件所在的容器对象
-function PROPERTY_CLASS:get_container()
+function PROPERTY_TDCLS:get_container()
     assert(self:query("owner") == self:query_temp("container"));
 
     local owner_rid = self:query("owner");
@@ -27,7 +27,7 @@ function PROPERTY_CLASS:get_container()
 end
 
 -- 取得该物件所在的属主对象
-function PROPERTY_CLASS:get_owner()
+function PROPERTY_TDCLS:get_owner()
     assert(self:query("owner") == self:query_temp("container"));
 
     local owner_rid = self:query("owner");

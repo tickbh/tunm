@@ -7,11 +7,11 @@ DDZ_STEP_LORD = "lord"
 --玩游戏
 DDZ_STEP_PLAY = "play"
 
-DDZ_DESK_CLASS = class(DESK_CLASS)
-DDZ_DESK_CLASS.name = "DDZ_DESK_CLASS"
+DDZ_DESK_TDCLS = tdcls(DESK_TDCLS)
+DDZ_DESK_TDCLS.name = "DDZ_DESK_TDCLS"
 
 --构造函数
-function DDZ_DESK_CLASS:create()
+function DDZ_DESK_TDCLS:create()
     self.cur_step = "none"
     self.cur_op_idx = -1
     self.lord_idx = -1
@@ -19,8 +19,8 @@ function DDZ_DESK_CLASS:create()
     self.lord_list = {}
 end
 
-function DDZ_DESK_CLASS:time_update()
-    get_class_func(DESK_CLASS, "time_update")(self)
+function DDZ_DESK_TDCLS:time_update()
+    get_class_func(DESK_TDCLS, "time_update")(self)
     if self.cur_step == DDZ_STEP_DEAL then
         local pokers, down_poker = DDZ_D.get_new_game_poker()
         for i=1,3 do
@@ -48,7 +48,7 @@ function DDZ_DESK_CLASS:time_update()
     end
 end
 
-function DDZ_DESK_CLASS:cur_lord_choose(is_choose)
+function DDZ_DESK_TDCLS:cur_lord_choose(is_choose)
     local info = {idx = self.cur_op_idx, is_choose = is_choose}
     table.insert(self.lord_list, info)
     self:broadcast_message(MSG_ROOM_MESSAGE, "deal_info", info)
@@ -94,20 +94,20 @@ function DDZ_DESK_CLASS:cur_lord_choose(is_choose)
     end
 end
 
-function DDZ_DESK_CLASS:is_full_user()
+function DDZ_DESK_TDCLS:is_full_user()
     trace("is_full_user %o", self:get_user_count() >= 3)
     return self:get_user_count() >= 3
 end
 
-function DDZ_DESK_CLASS:get_play_num()
+function DDZ_DESK_TDCLS:get_play_num()
     return 3
 end
 
-function DDZ_DESK_CLASS:start_game()
-    get_class_func(DESK_CLASS, "entity_update")(self)
+function DDZ_DESK_TDCLS:start_game()
+    get_class_func(DESK_TDCLS, "entity_update")(self)
 
     self.cur_step = DDZ_STEP_DEAL
-    trace("DDZ_DESK_CLASS:start_game!@!!!")
+    trace("DDZ_DESK_TDCLS:start_game!@!!!")
 
 
 end

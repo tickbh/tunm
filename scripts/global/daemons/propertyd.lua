@@ -31,7 +31,7 @@ local function load_item_table()
         if not info["ob_type"] then
             info["ob_type"] = OB_TYPE_ITEM
         end
-        item_basic_ob = clone_object(ITEM_CLASS, info)
+        item_basic_ob = clone_object(ITEM_TDCLS, info)
 
         set_class_basic_object(class_id, item_basic_ob)
         name = info["name"]
@@ -61,7 +61,7 @@ local function load_equip_table()
         if not info["ob_type"] then
             info["ob_type"] = OB_TYPE_EQUIP
         end
-        equip_basic_ob = clone_object(EQUIP_CLASS, info)
+        equip_basic_ob = clone_object(EQUIP_TDCLS, info)
         equip_basic_ob:set("amount", 1)
 
         set_class_basic_object(class_id, equip_basic_ob)
@@ -113,9 +113,9 @@ function clone_object_from(class_id, property_info, from_db)
     local property_ob
     if ob_type == OB_TYPE_ITEM then
         -- 创建道具对象
-        property_ob = clone_object(ITEM_CLASS, property_info)
+        property_ob = clone_object(ITEM_TDCLS, property_info)
     elseif ob_type == OB_TYPE_EQUIP then
-        property_ob = clone_object(EQUIP_CLASS, property_info)
+        property_ob = clone_object(EQUIP_TDCLS, property_info)
         ori_property_info["amount"] = nil
         if not property_ob:query("lv") then
             property_ob:set("lv", 0)

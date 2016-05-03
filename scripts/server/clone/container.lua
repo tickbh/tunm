@@ -2,11 +2,11 @@
 -- 容器类
 
 -- 创建类模板
-CONTAINER_CLASS = class();
-CONTAINER_CLASS.name = "CONTAINER_CLASS";
+CONTAINER_TDCLS = tdcls();
+CONTAINER_TDCLS.name = "CONTAINER_TDCLS";
 
 -- 构造函数
-function CONTAINER_CLASS:create(para)
+function CONTAINER_TDCLS:create(para)
     -- 普通背包
     self.carry = {};
     setmetatable(self.carry, { __mode = "v" });
@@ -14,7 +14,7 @@ function CONTAINER_CLASS:create(para)
 end
 
 -- 析构函数
-function CONTAINER_CLASS:destruct()
+function CONTAINER_TDCLS:destruct()
     -- 析构玩家容器
     for _, ob in pairs(self.carry) do
         destruct_object(ob);
@@ -24,7 +24,7 @@ end
 -- 定义公共接口，按照字母顺序排序
 
 -- 合并道具
-function CONTAINER_CLASS:combine_to_pos(property, dst_pos)
+function CONTAINER_TDCLS:combine_to_pos(property, dst_pos)
     local pre_property = dst_pos;
     if not is_object(pre_property) then
 
@@ -61,7 +61,7 @@ function CONTAINER_CLASS:combine_to_pos(property, dst_pos)
     return true;
 end
 
-function CONTAINER_CLASS:drop(property)
+function CONTAINER_TDCLS:drop(property)
     --判断道具对象是否存在
     if not property or not is_object(property) then
        trace("drop的道具对象不存在\n");
@@ -92,12 +92,12 @@ function CONTAINER_CLASS:drop(property)
 end
 
 -- 取得所有下属物件
-function CONTAINER_CLASS:get_carry()
+function CONTAINER_TDCLS:get_carry()
     return (dup(self.carry));
 end
 
 -- 根据class_id取得所有class_id对象
-function CONTAINER_CLASS:get_carry_by_class_id(class_id)
+function CONTAINER_TDCLS:get_carry_by_class_id(class_id)
 
     local arr = {};
     local x, y;
@@ -114,7 +114,7 @@ function CONTAINER_CLASS:get_carry_by_class_id(class_id)
 end
 
 -- 取得某一页面的所有物件
-function CONTAINER_CLASS:get_page_carry(page)
+function CONTAINER_TDCLS:get_page_carry(page)
 
     local arr = {};
     local x, y;
@@ -130,7 +130,7 @@ function CONTAINER_CLASS:get_page_carry(page)
     return arr;
 end
 
-function CONTAINER_CLASS:get_range_page_carry(ps, pe, pages)
+function CONTAINER_TDCLS:get_range_page_carry(ps, pe, pages)
     local arr = {};
     local x, y;
     local read_pos = READ_POS;
@@ -150,7 +150,7 @@ function CONTAINER_CLASS:get_range_page_carry(ps, pe, pages)
 end
 
 -- 根据道具类型id获得所属页的所有物件
-function CONTAINER_CLASS:get_page_carry_by_class_id(class_id)
+function CONTAINER_TDCLS:get_page_carry_by_class_id(class_id)
 
     -- 根据道具类型ID获得道具所在的page
     local page = PROPERTY_D.get_property_info(class_id)["item_type"];
@@ -159,7 +159,7 @@ function CONTAINER_CLASS:get_page_carry_by_class_id(class_id)
 end
 
 -- 根据道具类型ID获得背包中数量
-function CONTAINER_CLASS:get_property_amount(class_id)
+function CONTAINER_TDCLS:get_property_amount(class_id)
 
     local amount = 0;
     for _, ob in pairs(self.carry) do
@@ -173,7 +173,7 @@ end
 
 
 -- 扣除指定rid 和 数量的道具
-function CONTAINER_CLASS:cost_property_by_rid(rid, amount, bonus_type)
+function CONTAINER_TDCLS:cost_property_by_rid(rid, amount, bonus_type)
     local ob = find_object_by_rid(rid)
     if not ob then
         return false
@@ -198,7 +198,7 @@ function CONTAINER_CLASS:cost_property_by_rid(rid, amount, bonus_type)
 end
 
 -- 扣除指定数量的道具
-function CONTAINER_CLASS:cost_property(class_id, amount, bonus_type)
+function CONTAINER_TDCLS:cost_property(class_id, amount, bonus_type)
     if not amount or amount <= 0 then
         return true
     end
@@ -224,7 +224,7 @@ function CONTAINER_CLASS:cost_property(class_id, amount, bonus_type)
 end
 
 -- 根据page , (pos begin->end) 获得物件集合
-function  CONTAINER_CLASS:get_page_range_carry(page, b, e)
+function  CONTAINER_TDCLS:get_page_range_carry(page, b, e)
     local arr = self:get_page_carry(page);
     if not arr then
         return;
@@ -244,18 +244,18 @@ function  CONTAINER_CLASS:get_page_range_carry(page, b, e)
 end
 
 -- 取得某物件的所在的位置
-function CONTAINER_CLASS:get_property_pos(property)
+function CONTAINER_TDCLS:get_property_pos(property)
     return (property:query("pos"));
 end
 
 -- 取得某一位置上的物件
-function CONTAINER_CLASS:get_pos_carry(pos)
-    --trace("__ CONTAINER_CLASS:get_pos_carry(pos=%o) ___ self.carry=%o \n ", pos, self.carry)
+function CONTAINER_TDCLS:get_pos_carry(pos)
+    --trace("__ CONTAINER_TDCLS:get_pos_carry(pos=%o) ___ self.carry=%o \n ", pos, self.carry)
     return self.carry[pos];
 end
 
 -- 取得空闲位置
-function CONTAINER_CLASS:get_free_pos(property, can_combine)
+function CONTAINER_TDCLS:get_free_pos(property, can_combine)
     local page = CONTAINER_D.get_page(property, self);
     local x, y;
     local size = self:get_container_size(page);
@@ -299,7 +299,7 @@ function CONTAINER_CLASS:get_free_pos(property, can_combine)
 end
 
 -- 根据指定的page找到该page空格子的数量
-function CONTAINER_CLASS:get_free_amount_by_page(page)
+function CONTAINER_TDCLS:get_free_amount_by_page(page)
     local size = self:get_container_size(page);
 
     if not size then
@@ -319,7 +319,7 @@ function CONTAINER_CLASS:get_free_amount_by_page(page)
 end
 
 -- 判断是否为可用的POS
-function CONTAINER_CLASS:is_available_pos(pos)
+function CONTAINER_TDCLS:is_available_pos(pos)
     local x,y = READ_POS(pos);
 
     local size = self:get_container_size(x);
@@ -332,7 +332,7 @@ end
 
 -- 根据class_id找到空闲位置的数量
 -- can_combine: 是否考虑可叠加
-function CONTAINER_CLASS:get_free_amount_by_class_id(class_id, can_combine)
+function CONTAINER_TDCLS:get_free_amount_by_class_id(class_id, can_combine)
 
     -- 取得item_info
     local item_info = PROPERTY_D.get_property_info(class_id);
@@ -375,7 +375,7 @@ function CONTAINER_CLASS:get_free_amount_by_class_id(class_id, can_combine)
 end
 
 -- 根据page和number判断空闲位置是否足够
-function CONTAINER_CLASS:check_free_amount_by_page(page, number)
+function CONTAINER_TDCLS:check_free_amount_by_page(page, number)
     -- 空闲数量
     local free_amount = 0;
     local pos;
@@ -400,7 +400,7 @@ function CONTAINER_CLASS:check_free_amount_by_page(page, number)
 end
 
 -- 根据class_id和number判断空闲位置是否足够
-function CONTAINER_CLASS:check_free_amount_by_class_id(class_id, number)
+function CONTAINER_TDCLS:check_free_amount_by_class_id(class_id, number)
 
     -- 空闲数量
     local free_amount = 0;
@@ -454,7 +454,7 @@ end
 --    {class_id=*, amount=*},
 --    ...
 -- }
-function CONTAINER_CLASS:check_free_amount_by_multi_class_id(item_list)
+function CONTAINER_TDCLS:check_free_amount_by_multi_class_id(item_list)
 
     -- 先按照背包页面分类,每个页面所需空格数量
     local page_amount = {};
@@ -478,7 +478,7 @@ function CONTAINER_CLASS:check_free_amount_by_multi_class_id(item_list)
 end
 
 -- 增加指定数量的道具、装备
-function CONTAINER_CLASS:add_property(class_id, amount, bonus_type)
+function CONTAINER_TDCLS:add_property(class_id, amount, bonus_type)
 
     if not amount then
         amount = 1;
@@ -512,7 +512,7 @@ function CONTAINER_CLASS:add_property(class_id, amount, bonus_type)
 end
 
 -- 根据指定的page找到该page空闲位置
-function CONTAINER_CLASS:get_free_pos_by_page(page)
+function CONTAINER_TDCLS:get_free_pos_by_page(page)
     local size = self:get_container_size(page);
 
     if not size then
@@ -532,7 +532,7 @@ function CONTAINER_CLASS:get_free_pos_by_page(page)
 end
 
 -- 取得某一页面指定范围的物件
-function CONTAINER_CLASS:get_page_carry_by_region(page, range, idx)
+function CONTAINER_TDCLS:get_page_carry_by_region(page, range, idx)
 
     local size = self:get_container_size(page);
     if not size then
@@ -547,7 +547,7 @@ function CONTAINER_CLASS:get_page_carry_by_region(page, range, idx)
 end
 
 -- 根据指定的page找到该page和指定区间的空闲位置
-function CONTAINER_CLASS:get_free_pos_by_region(page, range, idx)
+function CONTAINER_TDCLS:get_free_pos_by_region(page, range, idx)
     local size = self:get_container_size(page);
     if not size then
         return;
@@ -569,7 +569,7 @@ function CONTAINER_CLASS:get_free_pos_by_region(page, range, idx)
     return nil;
 end
 
-function CONTAINER_CLASS:init_property(property)
+function CONTAINER_TDCLS:init_property(property)
     assert(property["pos"] and property["class_id"] and property["rid"], "pos class_id rid must be exist")
     assert(self.carry[property["pos"]] == nil, "carry pos must nil")
     property = PROPERTY_D.clone_object_from(property["class_id"], property, true)
@@ -586,7 +586,7 @@ function CONTAINER_CLASS:init_property(property)
     return true;
 end
 
-function CONTAINER_CLASS:recieve_property(info, check_enough)
+function CONTAINER_TDCLS:recieve_property(info, check_enough)
 
     assert(info["class_id"] ~= nil, "class_id must no empty")
     local item_info = PROPERTY_D.get_item_or_equip_info(info["class_id"])
@@ -646,7 +646,7 @@ function CONTAINER_CLASS:recieve_property(info, check_enough)
 end
 
 -- 加载道具
-function CONTAINER_CLASS:load_property(property, dst_pos, not_auto_notify, not_auto_arrange)
+function CONTAINER_TDCLS:load_property(property, dst_pos, not_auto_notify, not_auto_arrange)
     if property:query_temp("container") == self.owner then
         -- 道具已在容器中，需要先从容器中移除
         self:unload_property(property, not_auto_notify);
@@ -675,12 +675,12 @@ function CONTAINER_CLASS:load_property(property, dst_pos, not_auto_notify, not_a
     return true;
 end
 
-function CONTAINER_CLASS:get_owner()
+function CONTAINER_TDCLS:get_owner()
     return find_object_by_rid(self.owner)
 end
 
 -- 卸载道具
-function CONTAINER_CLASS:unload_property(property, not_auto_notify)
+function CONTAINER_TDCLS:unload_property(property, not_auto_notify)
     local pos = property:query("pos");
     local property_rid = property:query("rid");
 
@@ -695,26 +695,26 @@ function CONTAINER_CLASS:unload_property(property, not_auto_notify)
 end
 
 -- 判断位置是否已被占用
-function CONTAINER_CLASS:is_pos_occuppied(pos)
+function CONTAINER_TDCLS:is_pos_occuppied(pos)
     return (is_object(self.carry[pos]));
 end
 
 -- 取得容器实际的容量,否则取定义的容量大小
-function CONTAINER_CLASS:get_container_size(page)
+function CONTAINER_TDCLS:get_container_size(page)
     local container_size = self:query("container_size") or {};
     local size = container_size[page] or MAX_PAGE_SIZE[page];
     return size;
 end
 
 -- 设置容器大小
-function CONTAINER_CLASS:set_container_size(page, size)
+function CONTAINER_TDCLS:set_container_size(page, size)
     local container_size = self:query("container_size") or {};
     container_size[page] = size;
     self:set("container_size", container_size);
 end
 
 -- 交换位置
-function CONTAINER_CLASS:switch_pos(src_pos, dst_pos)
+function CONTAINER_TDCLS:switch_pos(src_pos, dst_pos)
 
     local src_ob = self.carry[src_pos];
     local dst_ob = self.carry[dst_pos];
@@ -736,7 +736,7 @@ function CONTAINER_CLASS:switch_pos(src_pos, dst_pos)
 end
 
 -- 交换位置不带通知
-function CONTAINER_CLASS:switch_carry_pos_without_notify(src_pos, dst_pos)
+function CONTAINER_TDCLS:switch_carry_pos_without_notify(src_pos, dst_pos)
 
     local src_ob = self.carry[src_pos];
     local dst_ob = self.carry[dst_pos];
