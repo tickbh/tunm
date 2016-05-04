@@ -549,8 +549,7 @@ end
 
 -- 析构对象
 function destruct_object(ob)
-    local type = type
-    if type(ob.destructing) ~= "boolean" and ob.destructed ~= true then
+    if ob and type(ob.destructing) ~= "boolean" and ob.destructed ~= true then
         ob.destructing = true
         if ob.destruct ~= nil_func then
             ob.destruct()
