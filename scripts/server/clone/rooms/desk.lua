@@ -69,12 +69,16 @@ function DESK_TDCLS:user_enter(user_rid)
     if not idx then
         return -1
     end
-    self.users[user_rid] = { idx = idx}
+    self.users[user_rid] = { idx = idx }
     self.wheels[idx] = {rid = user_rid, is_ready = 0}
 
     self:broadcast_message(MSG_ROOM_MESSAGE, "success_enter_desk", {rid = user_rid, wheel_idx = idx, idx = self.idx, info = self.room:get_base_info_by_rid(user_rid)})
-    self:send_message(user_rid, MSG_ROOM_MESSAGE, "desk_info", {map_list = self.wheels})
+    self:send_desk_info(user_rid)
     return 0
+end
+
+function DESK_TDCLS:send_desk_info(user_rid)
+
 end
 
 function DESK_TDCLS:user_leave(user_rid)
@@ -82,8 +86,13 @@ function DESK_TDCLS:user_leave(user_rid)
     if not user_data then
         return -1
     end
-    self.wheels[user_data.idx] = {}
+
     self:broadcast_message(MSG_ROOM_MESSAGE, "success_leave_desk", {rid = user_rid, idx = idx})
+    --中途掉线，保存当前进度数据
+    if self.is_start_game then
+        return -1
+    end
+    self.wheels[user_data.idx] = {}
     return 0
 end
 

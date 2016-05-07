@@ -15,6 +15,7 @@ function DDZ_DESK_TDCLS:create()
     self.cur_step = "none"
     self.cur_op_idx = -1
     self.lord_idx = -1
+    self.retry_deal_times = 0
     --存储叫地主信息
     self.lord_list = {}
 end
@@ -31,10 +32,10 @@ function DDZ_DESK_TDCLS:time_update()
         self.down_poker = down_poker
         self.cur_op_idx = -1
         self.lord_list = {}
-        self.cur_step = DDZ_STEP_LORD
+        self:change_cur_step(DDZ_STEP_LORD)
     elseif self.cur_step == DDZ_STEP_LORD then
         if self.cur_op_idx == -1 then
-            self.cur_op_idx = math.random(1, 3)
+            self:change_cur_opidx(math.random(1, 3))
             self.wheels[self.cur_op_idx].last_op_time = os.time()
             self:broadcast_message(MSG_ROOM_MESSAGE, "start_deal", {idx = self.cur_op_idx})
         else
@@ -48,15 +49,26 @@ function DDZ_DESK_TDCLS:time_update()
     end
 end
 
+function DDZ_DESK_TDCLS:change_cur_step(new_step)
+    self.cur_step = new_step
+    self:broadcast_message(MSG_ROOM_MESSAGE, "step_change", {cur_step = self.cur_step})
+end
+
+function DDZ_DESK_TDCLS:change_cur_opidx(new_op_idx)
+    self.cur_op_idx = new_op_idx
+    self:broadcast_message(MSG_ROOM_MESSAGE, "op_idx", {cur_op_idx = self.cur_op_idx})
+end
+
 function DDZ_DESK_TDCLS:cur_lord_choose(is_choose)
     local info = {idx = self.cur_op_idx, is_choose = is_choose}
     table.insert(self.lord_list, info)
     self:broadcast_message(MSG_ROOM_MESSAGE, "deal_info", info)
     if #self.lord_list < 3 then
-        self.cur_op_idx = (self.cur_op_idx + 1) % 3
-        if self.cur_op_idx == 0 then
-            self.cur_op_idx = 3
+        local new_op_idx = (self.cur_op_idx + 1) % 3
+        if new_op_idx == 0 then
+            new_op_idx = 3
         end
+        self:change_cur_opidx(new_op_idx)
         self.wheels[self.cur_op_idx].last_op_time = os.time()
     else
         if #self.lord_list == 3 then
@@ -71,21 +83,20 @@ function DDZ_DESK_TDCLS:cur_lord_choose(is_choose)
                 end
             end
             if choose_num == 0 then
-                self.cur_step = DDZ_STEP_DEAL
-                self:broadcast_message(MSG_ROOM_MESSAGE, "restart_game", {})
+                self:try_restart_game()
             elseif choose_num == 1 then
-                self.cur_step = DDZ_STEP_PLAY
+                self:change_cur_step(DDZ_STEP_PLAY)
                 self.lord_idx = last_choose
                 self:broadcast_message(MSG_ROOM_MESSAGE, "start_play", {lord_idx = self.lord_idx})
             else
-                self.cur_op_idx = first_choose
+                self:change_cur_opidx(first_choose)
                 self.wheels[self.cur_op_idx].last_op_time = os.time()
             end
         else
             for i = #self.lord_list,1,-1 do
                 if self.lord_list[i].is_choose == 1 then
                     self.lord_idx = self.lord_list[i].idx
-                    self.cur_step = DDZ_STEP_PLAY
+                    self:change_cur_step(DDZ_STEP_PLAY)
                     self:broadcast_message(MSG_ROOM_MESSAGE, "start_play", {lord_idx = self.lord_idx})
                     break
                 end
@@ -103,11 +114,76 @@ function DDZ_DESK_TDCLS:get_play_num()
     return 3
 end
 
+function DDZ_DESK_TDCLS:clear_all_status()
+    for idx,info in ipairs(self.wheels) do
+        info.is_ready = 0
+        if info.rid and self.users[info.rid] then
+            if self.users[info.rid].offline_time then
+                self.users[info.rid] = nil
+                self.wheels[idx] = {}
+            end
+        end
+    end
+
+    self.retry_deal_times = 0
+end
+
+function DDZ_DESK_TDCLS:is_someone_offline()
+    for _,info in ipairs(self.wheels) do
+        if info.rid and self.users[info.rid] then
+            if self.users[info.rid].offline_time then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+--无人叫地主，重来，如有人断线，或者重试超过2次，则重新开始
+function DDZ_DESK_TDCLS:try_restart_game()
+    if self.retry_deal_times > 1 or self:is_someone_offline() then
+        self:clear_all_status()
+        return
+    end
+    self.retry_deal_times = self.retry_deal_times + 1
+
+    self:change_cur_step(DDZ_STEP_DEAL)
+    self:broadcast_message(MSG_ROOM_MESSAGE, "restart_game", {})
+end
+
 function DDZ_DESK_TDCLS:start_game()
-    get_class_func(DESK_TDCLS, "entity_update")(self)
-
-    self.cur_step = DDZ_STEP_DEAL
+    get_class_func(DESK_TDCLS, "start_game")(self)
+    self:change_cur_step(DDZ_STEP_DEAL)
     trace("DDZ_DESK_TDCLS:start_game!@!!!")
+end
 
+function DDZ_DESK_TDCLS:is_playing()
+    return self.cur_step ~= DDZ_STEP_NONE
+end
 
+function DDZ_DESK_TDCLS:send_desk_info(user_rid)
+    self:send_message(user_rid, MSG_ROOM_MESSAGE, "desk_info", {wheels = self.wheels, cur_step = self.cur_step, cur_op_idx = self.cur_op_idx, lord_idx = self.lord_idx})
+end
+
+function DDZ_DESK_TDCLS:user_enter(user_rid)
+    get_class_func(DESK_TDCLS, "user_enter")(self, user_rid)
+    return 0
+end
+
+function DDZ_DESK_TDCLS:user_leave(user_rid)
+    local user_data = self.users[user_rid]
+    if not user_data then
+        return -1
+    end
+
+    user_data.offline_time = os.time()
+
+    self:broadcast_message(MSG_ROOM_MESSAGE, "success_leave_desk", {rid = user_rid, idx = idx})
+    --中途掉线，保存当前进度数据
+    if self.cur_step ~= DDZ_STEP_NONE then
+        return -1
+    end
+    self.users[user_rid] = nil
+    self.wheels[user_data.idx] = {}
+    return 0
 end

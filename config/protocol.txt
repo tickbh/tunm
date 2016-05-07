@@ -60,7 +60,10 @@
         "wheel_idx"                    : { "index" :    54,    "pattern" : "u8" },
         "poker_list"                   : { "index" :    55,    "pattern" : "u8[]" },
         "is_choose"                    : { "index" :    56,    "pattern" : "u8" },
-        "lord_idx"                     : { "index" :    57,    "pattern" : "u8" },
+        "lord_idx"                     : { "index" :    57,    "pattern" : "i8" },
+        "wheels"                       : { "index" :    58,    "pattern" : "map[]" },
+        "cur_step"                     : { "index" :    59,    "pattern" : "str" },
+        "cur_op_idx"                   : { "index" :    60,    "pattern" : "i8" },
 
         "i8"                           : { "index" :    50000, "pattern" : "i8" },
         "u8"                           : { "index" :    50001, "pattern" : "u8" },
