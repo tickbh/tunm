@@ -117,6 +117,7 @@ end
 function DDZ_DESK_TDCLS:clear_all_status()
     for idx,info in ipairs(self.wheels) do
         info.is_ready = 0
+        info.poker_list = nil
         if info.rid and self.users[info.rid] then
             if self.users[info.rid].offline_time then
                 self.users[info.rid] = nil
@@ -124,7 +125,7 @@ function DDZ_DESK_TDCLS:clear_all_status()
             end
         end
     end
-
+    self:change_cur_step(DDZ_STEP_NONE)
     self.retry_deal_times = 0
 end
 
@@ -143,6 +144,7 @@ end
 function DDZ_DESK_TDCLS:try_restart_game()
     if self.retry_deal_times > 1 or self:is_someone_offline() then
         self:clear_all_status()
+        trace("重置次数超限或者有人掉线")
         return
     end
     self.retry_deal_times = self.retry_deal_times + 1
@@ -186,4 +188,30 @@ function DDZ_DESK_TDCLS:user_leave(user_rid)
     self.users[user_rid] = nil
     self.wheels[user_data.idx] = {}
     return 0
+end
+
+function DDZ_DESK_TDCLS:op_info(user_rid, info)
+    local is_oper = get_class_func(DESK_TDCLS, "op_info")(self, user_rid, info)
+    if is_oper then
+        return is_oper
+    end
+
+    local idx = self.users[user_rid].idx
+    if info.oper == "ready" then
+        if self:is_playing() or self.wheels[idx].is_ready == 1 then
+            return true
+        end
+        self.wheels[idx].is_ready = 1
+        trace("玩家%s在位置%d已准备", user_rid, idx)
+        self:broadcast_message(MSG_ROOM_MESSAGE, "success_user_ready", {rid = user_rid, idx = idx})
+        self:check_all_ready()
+        return true
+    elseif info.oper == "choose" then
+        if idx ~= self.cur_op_idx then
+            return true
+        end
+        self.cur_lord_choose(info.is_choose)
+        return true
+    end
+    return false
 end

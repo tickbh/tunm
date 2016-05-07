@@ -126,3 +126,7 @@ end
 function desk_ready()
     command_send_message(CMD_ROOM_MESSAGE, "desk_op", {oper = "ready"})
 end
+
+function desk_choose(is_choose)
+    command_send_message(CMD_ROOM_MESSAGE, "desk_op", {oper = "choose", is_choose = is_choose or 1})
+end

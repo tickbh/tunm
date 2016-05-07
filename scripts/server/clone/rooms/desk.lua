@@ -12,7 +12,6 @@ function DESK_TDCLS:create(room, idx)
     self.idx = idx
     --rid=wheel, 玩家所在的位置
     self.users = {}
-    self.is_start_game = false
     --玩家所坐的位置
     self.wheels = {{}, {}, {}}
 end
@@ -49,7 +48,7 @@ function DESK_TDCLS:check_user_wheel(user_rid)
             fix_empty_idx = idx
         end
     end
-    if self.is_start_game then
+    if self:is_playing() then
         return nil
     end
     return fix_empty_idx
@@ -65,7 +64,9 @@ function DESK_TDCLS:is_empty()
 end
 
 function DESK_TDCLS:user_enter(user_rid)
+    trace("DESK_TDCLS:user_enter user_rid = %o", user_rid)
     local idx = self:check_user_wheel(user_rid)
+    trace("check_user_wheel id = %o, wheels is %o", idx, self.wheels)
     if not idx then
         return -1
     end
@@ -89,7 +90,7 @@ function DESK_TDCLS:user_leave(user_rid)
 
     self:broadcast_message(MSG_ROOM_MESSAGE, "success_leave_desk", {rid = user_rid, idx = idx})
     --中途掉线，保存当前进度数据
-    if self.is_start_game then
+    if self:is_playing() then
         return -1
     end
     self.wheels[user_data.idx] = {}
@@ -130,13 +131,7 @@ function DESK_TDCLS:send_message(user_rid, msg, ...)
 end
 
 function DESK_TDCLS:op_info(user_rid, info)
-    local idx = self.users[user_rid].idx
-    if info.oper == "ready" then
-        self.wheels[idx].is_ready = 1
-        trace("玩家%s在位置%d已准备", user_rid, idx)
-        self:broadcast_message(MSG_ROOM_MESSAGE, "success_user_ready", {rid = user_rid, idx = idx})
-        self:check_all_ready()
-    end
+    return false
 end
 
 function DESK_TDCLS:check_all_ready()
@@ -152,7 +147,6 @@ end
 
 function DESK_TDCLS:start_game()
     trace("DESK_TDCLS:start_game!@!!!")
-    self.is_start_game = true
     self:broadcast_message(MSG_ROOM_MESSAGE, "success_start_game", {idx = self.idx})
 end
 
@@ -162,4 +156,8 @@ end
 
 function DESK_TDCLS:get_play_num()
     return 3
+end
+
+function DESK_TDCLS:is_playing()
+    return false
 end
