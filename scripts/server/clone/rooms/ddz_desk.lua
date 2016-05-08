@@ -210,7 +210,7 @@ function DDZ_DESK_TDCLS:op_info(user_rid, info)
         if idx ~= self.cur_op_idx then
             return true
         end
-        self.cur_lord_choose(info.is_choose)
+        self:cur_lord_choose(info.is_choose)
         return true
     end
     return false
