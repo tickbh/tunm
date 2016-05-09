@@ -7,6 +7,21 @@ DDZ_D = {}
 setmetatable(DDZ_D, {__index = _G})
 local _ENV = DDZ_D
 
+--扑克类型
+TYPE_ERROR                   = 0                                   --错误类型
+TYPE_SINGLE                  = 1                                   --单牌类型
+TYPE_DOUBLE                  = 2                                   --对牌类型
+TYPE_THREE                   = 3                                   --三条类型
+TYPE_SINGLE_LINE             = 4                                   --单连类型
+TYPE_DOUBLE_LINE             = 5                                   --对连类型
+TYPE_THREE_LINE              = 6                                   --三连类型
+TYPE_THREE_LINE_TAKE_ONE     = 7                                   --三带一单
+TYPE_THREE_LINE_TAKE_TWO     = 8                                   --三带一对
+TYPE_FOUR_LINE_TAKE_ONE      = 9                                   --四带两单
+TYPE_FOUR_LINE_TAKE_TWO      = 10                                  --四带两对
+TYPE_BOMB_CARD               = 11                                  --炸弹类型
+TYPE_MISSILE_CARD            = 12                                  --火箭类型
+
 good_poker_data = {
     0x4E,0x4F,
     0x01,0x02,
@@ -21,18 +36,13 @@ good_poker_data = {
 
 set_table_read_only(good_poker_data)
 
-local card_big = {[1] = 1, [2] = 1, [0xe] = 1, [0xf] = 1}
 local function sort_card(card_a, card_b)
-    local card_mod_a = card_a % 16
-    local card_mod_b = card_b % 16
-    if card_big[card_mod_a] ~= card_big[card_mod_b] then
-        return (card_big[card_mod_a] or 0) > (card_big[card_mod_b] or 0)
+    local card_logic_a = get_card_logic_value(card_a)
+    local card_logic_b = get_card_logic_value(card_b)
+    if card_logic_a == card_logic_b then
+        return card_a > card_b
     else
-        if card_mod_a ~= card_mod_b then
-            return card_mod_a > card_mod_b
-        else
-            return card_a > card_b
-        end
+        return card_logic_a > card_logic_b
     end
 end
 
@@ -53,6 +63,183 @@ function get_new_game_poker()
     table.sort(down_poker, sort_card)
     trace("user_pokers = %o, down_poker = %o", user_pokers, down_poker)
     return user_pokers, down_poker
+end
+
+--获取扑克花色
+function get_card_color(card)
+    return bit32.band(card, 0xF0)
+end
+
+--获取扑克值
+function get_card_value(card)
+    return bit32.band(card, 0x0F)
+end
+
+function get_card_logic_value(card)
+    local color = get_card_color(card)
+    local value = get_card_value(card)
+    assert(value > 0 and value < 16)
+    if color == 0x40 then
+        return value + 2
+    elseif value <= 2 then
+        return value + 13
+    else
+        return value
+    end
+end
+
+local index_name = {"single", "double", "three", "four"}
+function analyse_card_data(poker_list)
+    local ret = {single_count = 0, single_list = {}, double_count = 0, double_list = {}, three_count = 0, three_list = {}, four_count = 0, four_list = {}}
+    local idx = 1
+    while idx <= #poker_list do
+        local same_count = 1
+        local logic_value = get_card_logic_value(poker_list[idx])
+        if logic_value < 0 then
+            return false
+        end
+        --搜索同牌
+        for i=idx+1,#poker_list do
+            if get_card_logic_value(poker_list[i]) ~= logic_value then
+                break
+            end
+            same_count = same_count + 1
+        end
+        local name = index_name[same_count]
+        if not name then
+            return false
+        end
+        local coun_name = string.format("%s_count", name)
+        local list_name = string.format("%s_list", name)
+        ret[coun_name] = ret[coun_name] + 1
+        for i=1,same_count do
+            table.insert(ret[list_name], poker_list[idx + i - 1])
+        end
+        idx = idx + same_count
+    end
+    return true, ret
+end
+
+function get_card_type(poker_list)
+    local len = #poker_list
+    if len == 0 then
+        return TYPE_ERROR
+    elseif len == 1 then
+        return TYPE_SINGLE
+    elseif len == 2 then
+        if poker_list[0] == 0x4F and poker_list[1] == 0x4E then
+            return TYPE_MISSILE_CARD
+        elseif get_card_logic_value(poker_list[0]) == get_card_logic_value(poker_list[1]) then
+            return TYPE_DOUBLE
+        else
+            return TYPE_ERROR
+        end
+    end
+
+    local success, result = analyse_card_data(poker_list)
+    if not success then
+        return TYPE_ERROR
+    end
+
+    if result.four_count > 0 then
+        if result.four_count ~= 1 then
+            return TYPE_ERROR
+        end
+        if len == 4 then return TYPE_BOMB_CARD, result end
+        if len == 6 and result.single_count == 2 then return TYPE_FOUR_LINE_TAKE_ONE, result end
+        if len == 8 and result.double_count == 2 then return TYPE_FOUR_LINE_TAKE_TWO, result end
+        return TYPE_ERROR
+    end
+
+    if result.three_count > 0 then
+        if result.three_count == 1 and len == 3 then return TYPE_THREE end
+        if result.three_count > 1 then
+            local card_data = result.three_list[1]
+            local first_logic_value = get_card_logic_value(card_data)
+            if first_logic_value >= 15 then
+                return TYPE_ERROR
+            end
+            --连牌判断
+            for i=1,result.three_count do
+                local sub_card_data = result.three_list[1 + i * 3]
+                if first_logic_value ~= get_card_logic_value(sub_card_data) + i then
+                    return TYPE_ERROR
+                end
+            end
+        end
+
+        if result.three_count * 3 == len then return TYPE_THREE_LINE, result end
+        if result.three_count * 4 == len then return TYPE_THREE_LINE_TAKE_ONE, result end
+        if result.three_count * 5 == len and result.double_count == result.three_count then return TYPE_THREE_LINE_TAKE_TWO, result end
+
+        return TYPE_ERROR
+    end
+
+    if result.double_count >= 3 then
+        local card_data = result.double_list[1]
+        local first_logic_value = get_card_logic_value(card_data)
+        if first_logic_value >= 15 then
+            return TYPE_ERROR
+        end
+        --连牌判断
+        for i=1,result.double_count do
+            local sub_card_data = result.double_list[1 + i * 2]
+            if first_logic_value ~= get_card_logic_value(sub_card_data) + i then
+                return TYPE_ERROR
+            end
+        end
+
+        if result.double_count * 2 == len then return TYPE_DOUBLE_LINE, result end
+
+        return TYPE_ERROR
+    end
+
+    if result.single_count >= 5 then
+        local card_data = result.single_list[1]
+        local first_logic_value = get_card_logic_value(card_data)
+        if first_logic_value >= 15 then
+            return TYPE_ERROR
+        end
+        --连牌判断
+        for i=1,result.double_count do
+            local sub_card_data = result.get_card_logic_value[1 + i]
+            if first_logic_value ~= get_card_logic_value(sub_card_data) + i then
+                return TYPE_ERROR
+            end
+        end
+
+        return TYPE_SINGLE_LINE, result
+    end
+    return TYPE_ERROR
+end
+
+function compare_card(first_poker_list, next_poker_list)
+    local next_type, next_result = get_card_type(next_poker_list)
+    local first_type, first_result = get_card_type(first_poker_list)
+
+    if next_type == TYPE_ERROR then return false end
+    if next_type == TYPE_MISSILE_CARD then return true end
+    if first_type == TYPE_MISSILE_CARD then return false end
+
+    if first_type ~= TYPE_BOMB_CARD and next_type == TYPE_BOMB_CARD then return true end
+    if first_type == TYPE_BOMB_CARD and next_type ~= TYPE_BOMB_CARD then return false end
+
+    if first_type ~= next_type or #first_poker_list ~= #next_poker_list then return false end
+    if next_type == TYPE_SINGLE or next_type == TYPE_DOUBLE or next_type == TYPE_THREE
+        or next_type == TYPE_SINGLE_LINE or next_type == TYPE_DOUBLE_LINE or next_type == TYPE_THREE_LINE or next_type == TYPE_BOMB_CARD then
+        local first_logic_value = get_card_logic_value[first_poker_list[1]]
+        local next_logic_value = get_card_logic_value[next_poker_list[1]]
+        return next_logic_value > first_logic_value
+    elseif next_type == TYPE_THREE_LINE_TAKE_ONE or next_type == TYPE_THREE_LINE_TAKE_TWO then
+        local first_logic_value = get_card_logic_value[first_result.three_list[1]]
+        local next_logic_value = get_card_logic_value[next_result.three_list[1]]
+        return next_logic_value > first_logic_value
+    elseif next_type == CT_FOUR_LINE_TAKE_ONE or next_type == CT_FOUR_LINE_TAKE_TWO then
+        local first_logic_value = get_card_logic_value[first_result.four_list[1]]
+        local next_logic_value = get_card_logic_value[next_result.four_list[1]]
+        return next_logic_value > first_logic_value
+    end
+    return false
 end
 
 --Test Func

@@ -88,6 +88,7 @@ function DDZ_DESK_TDCLS:cur_lord_choose(is_choose)
                 self:change_cur_step(DDZ_STEP_PLAY)
                 self.lord_idx = last_choose
                 self:broadcast_message(MSG_ROOM_MESSAGE, "start_play", {lord_idx = self.lord_idx})
+                self:change_cur_opidx(self.lord_idx)
             else
                 self:change_cur_opidx(first_choose)
                 self.wheels[self.cur_op_idx].last_op_time = os.time()
@@ -98,6 +99,7 @@ function DDZ_DESK_TDCLS:cur_lord_choose(is_choose)
                     self.lord_idx = self.lord_list[i].idx
                     self:change_cur_step(DDZ_STEP_PLAY)
                     self:broadcast_message(MSG_ROOM_MESSAGE, "start_play", {lord_idx = self.lord_idx})
+                    self:change_cur_opidx(self.lord_idx)
                     break
                 end
             end
@@ -211,6 +213,9 @@ function DDZ_DESK_TDCLS:op_info(user_rid, info)
             return true
         end
         self:cur_lord_choose(info.is_choose)
+        return true
+    elseif info.oper == "deal_poker" then
+        trace("poker_list is %o", info.poker_list)
         return true
     end
     return false
