@@ -127,9 +127,9 @@ function get_card_type(poker_list)
     elseif len == 1 then
         return TYPE_SINGLE
     elseif len == 2 then
-        if poker_list[0] == 0x4F and poker_list[1] == 0x4E then
+        if poker_list[1] == 0x4F and poker_list[2] == 0x4E then
             return TYPE_MISSILE_CARD
-        elseif get_card_logic_value(poker_list[0]) == get_card_logic_value(poker_list[1]) then
+        elseif get_card_logic_value(poker_list[1]) == get_card_logic_value(poker_list[2]) then
             return TYPE_DOUBLE
         else
             return TYPE_ERROR
@@ -160,7 +160,7 @@ function get_card_type(poker_list)
                 return TYPE_ERROR
             end
             --连牌判断
-            for i=1,result.three_count do
+            for i=1,result.three_count -1 do
                 local sub_card_data = result.three_list[1 + i * 3]
                 if first_logic_value ~= get_card_logic_value(sub_card_data) + i then
                     return TYPE_ERROR
@@ -182,7 +182,7 @@ function get_card_type(poker_list)
             return TYPE_ERROR
         end
         --连牌判断
-        for i=1,result.double_count do
+        for i=1,result.double_count -1 do
             local sub_card_data = result.double_list[1 + i * 2]
             if first_logic_value ~= get_card_logic_value(sub_card_data) + i then
                 return TYPE_ERROR
@@ -201,8 +201,8 @@ function get_card_type(poker_list)
             return TYPE_ERROR
         end
         --连牌判断
-        for i=1,result.double_count do
-            local sub_card_data = result.get_card_logic_value[1 + i]
+        for i=1,result.single_count -1 do
+            local sub_card_data = result.single_list[1 + i]
             if first_logic_value ~= get_card_logic_value(sub_card_data) + i then
                 return TYPE_ERROR
             end
@@ -249,6 +249,82 @@ local function test_sort()
     assert_eq(card_ori, {0x4E, 0x02, 0x01, 0x0B, 0x08}, "array error")
 end
 
+local function check_poker_type(poker_list, poker_type)
+    table.sort(poker_list, sort_card)
+    assert(get_card_type(poker_list) == poker_type)
+end
+
+local function test_get_type()
+    --TYPE_SINGLE
+    check_poker_type({0x01}, TYPE_SINGLE)
+    check_poker_type({0x03}, TYPE_SINGLE)
+    check_poker_type({0x0D}, TYPE_SINGLE)
+    check_poker_type({0x4E}, TYPE_SINGLE)
+
+    --TYPE_DOUBLE
+    check_poker_type({0x01, 0x11}, TYPE_DOUBLE)
+    check_poker_type({0x06, 0x16}, TYPE_DOUBLE)
+    check_poker_type({0x08, 0x28}, TYPE_DOUBLE)
+    check_poker_type({0x29, 0x39}, TYPE_DOUBLE)
+
+    --TYPE_THREE
+    check_poker_type({0x01, 0x11, 0x21}, TYPE_THREE)
+    check_poker_type({0x06, 0x16, 0x26}, TYPE_THREE)
+    check_poker_type({0x08, 0x28, 0x38}, TYPE_THREE)
+    check_poker_type({0x19, 0x29, 0x39}, TYPE_THREE)
+
+    --TYPE_SINGLE_LINE
+    check_poker_type({0x03, 0x04, 0x05, 0x06, 0x07}, TYPE_SINGLE_LINE)
+    check_poker_type({0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C}, TYPE_SINGLE_LINE)
+    check_poker_type({0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x01}, TYPE_SINGLE_LINE)
+
+    --TYPE_DOUBLE_LINE
+    check_poker_type({0x03, 0x13, 0x04, 0x24, 0x05, 0x35}, TYPE_DOUBLE_LINE)
+    check_poker_type({0x05, 0x15, 0x06, 0x26, 0x07, 0x37}, TYPE_DOUBLE_LINE)
+    check_poker_type({0x05, 0x15, 0x06, 0x26, 0x07, 0x37, 0x08, 0x28, 0x09, 0x39}, TYPE_DOUBLE_LINE)
+
+    --TYPE_THREE_LINE
+    check_poker_type({0x03, 0x13, 0x23, 0x14, 0x24, 0x34}, TYPE_THREE_LINE)
+    check_poker_type({0x0D, 0x1D, 0x2D, 0x01, 0x11, 0x21}, TYPE_THREE_LINE)
+
+    --TYPE_THREE_LINE_TAKE_ONE
+    check_poker_type({0x03, 0x13, 0x23, 0x14, 0x24, 0x34, 0x4E, 0x4F}, TYPE_THREE_LINE_TAKE_ONE)
+    check_poker_type({0x0D, 0x1D, 0x2D, 0x01, 0x11, 0x21, 0x03, 0x13}, TYPE_THREE_LINE_TAKE_ONE)
+    check_poker_type({0x0D, 0x1D, 0x2D, 0x01, 0x11, 0x21, 0x03, 0x04}, TYPE_THREE_LINE_TAKE_ONE)
+    check_poker_type({0x0C, 0x1C, 0x2C, 0x0D, 0x1D, 0x2D, 0x01, 0x11, 0x21, 0x03, 0x04, 0x05}, TYPE_THREE_LINE_TAKE_ONE)
+
+    --TYPE_THREE_LINE_TAKE_TWO
+    check_poker_type({0x03, 0x13, 0x23, 0x14, 0x24, 0x34, 0x05, 0x15, 0x16, 0x26}, TYPE_THREE_LINE_TAKE_TWO)
+    check_poker_type({0x0D, 0x1D, 0x2D, 0x01, 0x11, 0x21, 0x03, 0x13, 0x06, 0x26}, TYPE_THREE_LINE_TAKE_TWO)
+    check_poker_type({0x0C, 0x1C, 0x2C, 0x0D, 0x1D, 0x2D, 0x01, 0x11, 0x21, 0x03, 0x13, 0x04, 0x14, 0x05, 0x15}, TYPE_THREE_LINE_TAKE_TWO)
+
+    --TYPE_FOUR_LINE_TAKE_ONE
+    check_poker_type({0x03, 0x13, 0x23, 0x33, 0x01, 0x02}, TYPE_FOUR_LINE_TAKE_ONE)
+
+    --TYPE_FOUR_LINE_TAKE_TWO
+    check_poker_type({0x03, 0x13, 0x23, 0x33, 0x01, 0x11, 0x02, 0x22}, TYPE_FOUR_LINE_TAKE_TWO)
+
+    --TYPE_BOMB_CARD
+    check_poker_type({0x03, 0x13, 0x23, 0x33}, TYPE_BOMB_CARD)
+    check_poker_type({0x04, 0x14, 0x24, 0x34}, TYPE_BOMB_CARD)
+
+    --TYPE_MISSILE_CARD
+    check_poker_type({0x4E, 0x4F}, TYPE_MISSILE_CARD)
+
+    --TYPE_ERROR
+    check_poker_type({0x03, 0x04, 0x05, 0x06}, TYPE_ERROR)
+    check_poker_type({0x0A, 0x0B, 0x0C, 0x0D, 0x01, 0x02}, TYPE_ERROR)
+    check_poker_type({0x05, 0x15, 0x06, 0x26}, TYPE_ERROR)
+    check_poker_type({0x05, 0x15, 0x06, 0x26, 0x07, 0x37, 0x08, 0x28, 0x09, 0x39, 0x0A}, TYPE_ERROR)
+    check_poker_type({0x0D, 0x1D, 0x2D, 0x01, 0x11, 0x21, 0x33}, TYPE_ERROR)
+    check_poker_type({0x0D, 0x1D, 0x2D, 0x01, 0x11, 0x21, 0x03, 0x04, 0x05}, TYPE_ERROR)
+    check_poker_type({0x03, 0x13, 0x23, 0x33, 0x01, 0x02, 0x01}, TYPE_ERROR)
+
+    assert(get_card_type({0x0C, 0x0D}) == TYPE_ERROR)
+
+end
+
 if ENABLE_TEST then
     test_sort()
+    test_get_type()
 end
