@@ -71,7 +71,9 @@ function DESK_TDCLS:user_enter(user_rid)
         return -1
     end
     self.users[user_rid] = { idx = idx }
-    self.wheels[idx] = {rid = user_rid, is_ready = 0}
+    self.wheels[idx] = self.wheels[idx] or {}
+    self.wheels[idx].rid = user_rid
+    self.wheels[idx].is_ready = 0
 
     self:broadcast_message(MSG_ROOM_MESSAGE, "success_enter_desk", {rid = user_rid, wheel_idx = idx, idx = self.idx, info = self.room:get_base_info_by_rid(user_rid)})
     self:send_desk_info(user_rid)

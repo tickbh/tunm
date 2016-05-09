@@ -98,26 +98,36 @@ end
 
 --玩家进入房间
 function ROOM_TDCLS:entity_enter(server_id, user_rid, info)
-    --将新实体加该场景
-    self.room_entity[user_rid] = {
-        user_rid = user_rid,
-        --对像连接的服务器id
-        server_id = server_id,
-        --对像的登出时间
-        last_logout_time = nil,
-        --玩家的上次操作时间，确定是否超时
-        last_op_time = os.time(),
-        --是否正在游戏中
-        is_enter_game = false,
-        --进入桌子时间
-        enter_desk_time = nil,
-        --进入桌子编号
-        enter_desk_idx = nil,
+    
+    local data = self.room_entity[user_rid]
+    if data then
+        data.server_id = server_id
+        data.last_op_time = os.time()
+    else
+        --将新实体加该场景
+        self.room_entity[user_rid] = {
+            user_rid = user_rid,
+            --对像连接的服务器id
+            server_id = server_id,
+            --对像的登出时间
+            last_logout_time = nil,
+            --玩家的上次操作时间，确定是否超时
+            last_op_time = os.time(),
+            --是否正在游戏中
+            is_enter_game = false,
+            --进入桌子时间
+            enter_desk_time = nil,
+            --进入桌子编号
+            enter_desk_idx = nil,
 
-        data = clone_object(DBASE_TDCLS, info)
-    }
+            data = clone_object(DBASE_TDCLS, info)
+        }
+    end
 
     self:send_rid_message(user_rid, {}, MSG_ROOM_MESSAGE, "success_enter_room", {rid = user_rid, room_name = self:get_room_name()})
+    if data and data.enter_desk_idx then
+        self:send_rid_message(user_rid, {}, MSG_ROOM_MESSAGE, "pre_desk", {rid = user_rid, enter_desk_idx = data.enter_desk_idx})
+    end
     trace("success entity_enter %o", self.room_entity[user_rid])
     return 0
 end
