@@ -16,6 +16,8 @@ function DDZ_DESK_TDCLS:create()
     self.cur_op_idx = -1
     self.lord_idx = -1
     self.retry_deal_times = 0
+
+    self.down_poker = {}
     --存储叫地主信息
     self.lord_list = {}
 
@@ -30,7 +32,7 @@ function DDZ_DESK_TDCLS:time_update()
         for i=1,3 do
             local wheel = self.wheels[i]
             wheel.poker_list = pokers[i]
-            self:send_message(wheel.rid, MSG_ROOM_MESSAGE, "poker_init", {poker_list = wheel.poker_list})
+            self:send_rid_message(wheel.rid, MSG_ROOM_MESSAGE, "poker_init", {poker_list = wheel.poker_list})
         end
         self.down_poker = down_poker
         self.cur_op_idx = -1
@@ -78,6 +80,22 @@ function DDZ_DESK_TDCLS:get_next_op_idx()
     return new_op_idx
 end
 
+function DDZ_DESK_TDCLS:finish_lord(lord_idx)
+    self:change_cur_step(DDZ_STEP_PLAY)
+    self.lord_idx = lord_idx
+    local wheel = self.wheels[self.lord_idx]
+    append_to_array(wheel.poker_list, self.down_poker)
+    DDZ_D.resort_poker(wheel.poker_list)
+    trace("finish_lord wheels is %o", self.wheels)
+    for i,v in ipairs(self.wheels) do
+        local desk_info = self:pack_desk_info(v.rid)
+        desk_info.lord_idx = self.lord_idx
+        trace("send_rid_message is = %o", {v.rid, MSG_ROOM_MESSAGE, "start_play", desk_info})
+        self:send_rid_message(v.rid, MSG_ROOM_MESSAGE, "start_play", desk_info)
+    end
+    self:change_cur_opidx(self.lord_idx)
+end
+
 function DDZ_DESK_TDCLS:cur_lord_choose(is_choose)
     local info = {idx = self.cur_op_idx, is_choose = is_choose}
     table.insert(self.lord_list, info)
@@ -99,10 +117,7 @@ function DDZ_DESK_TDCLS:cur_lord_choose(is_choose)
             if choose_num == 0 then
                 self:try_restart_game()
             elseif choose_num == 1 then
-                self:change_cur_step(DDZ_STEP_PLAY)
-                self.lord_idx = last_choose
-                self:broadcast_message(MSG_ROOM_MESSAGE, "start_play", {lord_idx = self.lord_idx})
-                self:change_cur_opidx(self.lord_idx)
+                self:finish_lord(last_choose)
             else
                 self:change_cur_opidx(first_choose)
                 self.wheels[self.cur_op_idx].last_op_time = os.time()
@@ -110,10 +125,7 @@ function DDZ_DESK_TDCLS:cur_lord_choose(is_choose)
         else
             for i = #self.lord_list,1,-1 do
                 if self.lord_list[i].is_choose == 1 then
-                    self.lord_idx = self.lord_list[i].idx
-                    self:change_cur_step(DDZ_STEP_PLAY)
-                    self:broadcast_message(MSG_ROOM_MESSAGE, "start_play", {lord_idx = self.lord_idx})
-                    self:change_cur_opidx(self.lord_idx)
+                    self:finish_lord(self.lord_list[i].idx)
                     break
                 end
             end
@@ -179,8 +191,37 @@ function DDZ_DESK_TDCLS:is_playing()
     return self.cur_step ~= DDZ_STEP_NONE
 end
 
+function DDZ_DESK_TDCLS:pack_desk_info(user_rid)
+    local result = {cur_step = self.cur_step, cur_op_idx = self.cur_op_idx, lord_idx = self.lord_idx}
+    local user_data = self.users[user_rid]
+    if not user_data then
+        return result
+    end
+    
+    local wheels = {}
+    for i,v in ipairs(self.wheels) do
+        if i == user_data.idx then
+            table.insert(wheels, v)
+        else
+            local value = { is_ready = v.is_ready, rid = v.rid, }
+            if v.is_light == 1 then
+                value.poker_list = v.poker_list
+            else
+                value.poker_num = #(v.poker_list or {})
+            end
+            table.insert(wheels, value)
+        end
+    end
+    result.wheels = wheels
+
+    if self.cur_step == DDZ_STEP_PLAY then
+        result.down_poker = self.down_poker
+    end
+    return result
+end
+
 function DDZ_DESK_TDCLS:send_desk_info(user_rid)
-    self:send_message(user_rid, MSG_ROOM_MESSAGE, "desk_info", {wheels = self.wheels, cur_step = self.cur_step, cur_op_idx = self.cur_op_idx, lord_idx = self.lord_idx})
+    self:send_rid_message(user_rid, MSG_ROOM_MESSAGE, "desk_info", self:pack_desk_info(user_rid))
 end
 
 function DDZ_DESK_TDCLS:user_enter(user_rid)

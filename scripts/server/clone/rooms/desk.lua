@@ -120,7 +120,7 @@ function DESK_TDCLS:broadcast_message(msg, ...)
 end
 
 -- 广播消息
-function DESK_TDCLS:send_message(user_rid, msg, ...)
+function DESK_TDCLS:send_rid_message(user_rid, msg, ...)
     local msg_buf = pack_message(msg, ...)
     if not msg_buf then
         trace("发送消息(%s:%o)打包消息失败。\n", msg, {...})

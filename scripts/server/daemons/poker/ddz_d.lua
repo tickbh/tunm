@@ -284,6 +284,11 @@ function sub_poker(poker_list, sub_poker_list)
     return true, new_poker_list
 end
 
+function resort_poker(poker_list)
+    table.sort(poker_list, sort_card)
+    return poker_list
+end
+
 --Test Func
 local function test_sort()
     local card_ori = {0x0B, 0x01, 0x08, 0x02, 0x4E}
