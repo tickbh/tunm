@@ -18,6 +18,9 @@ function DDZ_DESK_TDCLS:create()
     self.retry_deal_times = 0
     --存储叫地主信息
     self.lord_list = {}
+
+    --存储出牌信息，如果结束一回合，则清空
+    self.play_poker_list = {}
 end
 
 function DDZ_DESK_TDCLS:time_update()
@@ -36,7 +39,6 @@ function DDZ_DESK_TDCLS:time_update()
     elseif self.cur_step == DDZ_STEP_LORD then
         if self.cur_op_idx == -1 then
             self:change_cur_opidx(math.random(1, 3))
-            self.wheels[self.cur_op_idx].last_op_time = os.time()
             self:broadcast_message(MSG_ROOM_MESSAGE, "start_deal", {idx = self.cur_op_idx})
         else
             local op_time = self.wheels[self.cur_op_idx].last_op_time
@@ -45,18 +47,35 @@ function DDZ_DESK_TDCLS:time_update()
             end
         end
     elseif self.cur_step == DDZ_STEP_PLAY then
-
+        local op_time = self.wheels[self.cur_op_idx].last_op_time
+        if os.time() - op_time > 30 then
+            self:deal_poker()
+        end
     end
 end
 
 function DDZ_DESK_TDCLS:change_cur_step(new_step)
     self.cur_step = new_step
+    if self.cur_step == DDZ_STEP_NONE then
+        for _,v in pairs(self.wheels) do
+            v.is_ready = 0
+        end
+    end
     self:broadcast_message(MSG_ROOM_MESSAGE, "step_change", {cur_step = self.cur_step})
 end
 
 function DDZ_DESK_TDCLS:change_cur_opidx(new_op_idx)
     self.cur_op_idx = new_op_idx
+    self.wheels[self.cur_op_idx].last_op_time = os.time()
     self:broadcast_message(MSG_ROOM_MESSAGE, "op_idx", {cur_op_idx = self.cur_op_idx})
+end
+
+function DDZ_DESK_TDCLS:get_next_op_idx()
+    local new_op_idx = (self.cur_op_idx + 1) % 3
+    if new_op_idx == 0 then
+        new_op_idx = 3
+    end
+    return new_op_idx
 end
 
 function DDZ_DESK_TDCLS:cur_lord_choose(is_choose)
@@ -64,12 +83,7 @@ function DDZ_DESK_TDCLS:cur_lord_choose(is_choose)
     table.insert(self.lord_list, info)
     self:broadcast_message(MSG_ROOM_MESSAGE, "deal_info", info)
     if #self.lord_list < 3 then
-        local new_op_idx = (self.cur_op_idx + 1) % 3
-        if new_op_idx == 0 then
-            new_op_idx = 3
-        end
-        self:change_cur_opidx(new_op_idx)
-        self.wheels[self.cur_op_idx].last_op_time = os.time()
+        self:change_cur_opidx(self:get_next_op_idx())
     else
         if #self.lord_list == 3 then
             local choose_num = 0
@@ -192,6 +206,81 @@ function DDZ_DESK_TDCLS:user_leave(user_rid)
     return 0
 end
 
+function DDZ_DESK_TDCLS:get_last_poker_list()
+    for i=#self.play_poker_list,1,-1 do
+        local data = self.play_poker_list[i]
+        if data.is_play == 1 then
+            return data.poker_list
+        end
+    end
+    return nil
+end
+
+function DDZ_DESK_TDCLS:check_round_end()
+    local len = #self.play_poker_list
+    if len < 3 then
+        return false
+    end
+    if self.play_poker_list[len].is_play == 0 and self.play_poker_list[len - 1].is_play == 0 then
+        return true, self.play_poker_list[len - 2].idx
+    end
+    return false
+end
+
+function DDZ_DESK_TDCLS:deal_poker(poker_list)
+    local op_info = self.wheels[self.cur_op_idx]
+    trace("DDZ_DESK_TDCLS:deal_poker!!!!! op_info is %o", op_info)
+    local last_poker_list = self:get_last_poker_list()
+    --做为出牌方，无牌时则系统默认超时处理，取最小的一张牌
+    if not last_poker_list and not poker_list then
+        poker_list = {op_info.poker_list[#op_info.poker_list]}
+    end
+
+    if not last_poker_list and #poker_list == 0 then
+        return false, "第一个出牌，必须出牌"
+    end
+
+    if not poker_list or #poker_list == 0 then
+        table.insert(self.play_poker_list, {idx = self.cur_op_idx, is_play = 0})
+        --非出牌方，则默认不出牌，换下一家
+        self:broadcast_message(MSG_ROOM_MESSAGE, "deal_poker", {idx = self.cur_op_idx, is_play = 0, poker_list = {}})
+        local is_end, win_idx = self:check_round_end()
+        if is_end then
+            self.play_poker_list = {}
+            self:change_cur_opidx(win_idx)
+        else
+            self:change_cur_opidx(self:get_next_op_idx())
+        end
+        return
+    end
+
+    local success, new_poker_list = DDZ_D.sub_poker(op_info.poker_list, poker_list)
+    trace("poker_list is = %o", poker_list)
+    trace("new_poker_list is = %o", new_poker_list)
+    if not success then
+        return false, "您未包含有当前的牌组"
+    end
+
+    if last_poker_list and not DDZ_D.compare_card(last_poker_list, poker_list) then
+        return false, "所选牌必须要大过上家"
+    end
+
+
+    table.insert(self.play_poker_list, {idx = self.cur_op_idx, is_play = 1, poker_list = poker_list })
+
+    op_info.poker_list = new_poker_list
+    if #op_info.poker_list == 0 then
+        --TODO win
+        trace("op_info 赢得了比赛 %o", op_info)
+        self:change_cur_step(DDZ_STEP_NONE)
+        return
+    end
+
+    self:broadcast_message(MSG_ROOM_MESSAGE, "deal_poker", {idx = self.cur_op_idx, is_play = 1, poker_list = poker_list})
+    self:change_cur_opidx(self:get_next_op_idx())
+    return true
+end
+
 function DDZ_DESK_TDCLS:op_info(user_rid, info)
     local is_oper = get_class_func(DESK_TDCLS, "op_info")(self, user_rid, info)
     if is_oper then
@@ -216,6 +305,13 @@ function DDZ_DESK_TDCLS:op_info(user_rid, info)
         return true
     elseif info.oper == "deal_poker" then
         trace("poker_list is %o", info.poker_list)
+        if self.cur_step ~= DDZ_STEP_PLAY then
+            return
+        end
+        if idx ~= self.cur_op_idx then
+            return
+        end
+        self:deal_poker(info.poker_list)
         return true
     end
     return false

@@ -65,6 +65,7 @@
         "cur_step"                     : { "index" :    59,    "pattern" : "str" },
         "cur_op_idx"                   : { "index" :    60,    "pattern" : "i8" },
         "enter_desk_idx"               : { "index" :    61,    "pattern" : "i32" },
+        "is_play"                      : { "index" :    62,    "pattern" : "u8" },
 
         "i8"                           : { "index" :    50000, "pattern" : "i8" },
         "u8"                           : { "index" :    50001, "pattern" : "u8" },

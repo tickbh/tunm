@@ -242,6 +242,48 @@ function compare_card(first_poker_list, next_poker_list)
     return false
 end
 
+function is_contain(poker_list, sub_poker_list)
+    local find_idx = 1
+    for _,poker in ipairs(sub_poker_list) do
+        local is_find = false
+        for i=find_idx,#poker_list do
+            if poker_list[i] == poker then
+                find_idx = i + 1
+                is_find = true
+                break
+            end
+        end
+        if not is_find then
+            return false
+        end
+    end
+    return true
+end
+
+function sub_poker(poker_list, sub_poker_list)
+    if not is_contain(poker_list, sub_poker_list) then
+        return false
+    end
+    local new_poker_list = {}
+    local find_idx = 1
+    for _, poker in ipairs(poker_list) do
+        local is_find = false
+        for i=find_idx,#sub_poker_list do
+            if sub_poker_list[i] == poker then
+                find_idx = i + 1
+                is_find = true
+                break
+            end
+
+        end
+        if not is_find then
+            table.insert(new_poker_list, poker)
+        end
+    end
+
+    return true, new_poker_list
+end
+
 --Test Func
 local function test_sort()
     local card_ori = {0x0B, 0x01, 0x08, 0x02, 0x4E}
@@ -319,6 +361,26 @@ local function test_get_type()
     check_poker_type({0x0D, 0x1D, 0x2D, 0x01, 0x11, 0x21, 0x33}, TYPE_ERROR)
     check_poker_type({0x0D, 0x1D, 0x2D, 0x01, 0x11, 0x21, 0x03, 0x04, 0x05}, TYPE_ERROR)
     check_poker_type({0x03, 0x13, 0x23, 0x33, 0x01, 0x02, 0x01}, TYPE_ERROR)
+
+    local function check_contain(poker_list, sub_poker_list)
+        table.sort(poker_list, sort_card)
+        table.sort(sub_poker_list, sort_card)
+        assert(is_contain(poker_list, sub_poker_list) == true)
+    end
+    check_contain({0x03, 0x14, 0x16}, {0x03, 0x16})
+
+    local function check_sub(poker_list, sub_poker_list, result_poker_list)
+        table.sort(poker_list, sort_card)
+        table.sort(sub_poker_list, sort_card)
+        table.sort(result_poker_list, sort_card)
+
+        local success, new_poker_list = sub_poker(poker_list, sub_poker_list)
+        assert(success, "must is sub poker")
+        assert_eq(new_poker_list, result_poker_list)
+    end
+
+    check_sub({0x03, 0x14, 0x16}, {0x03, 0x16}, {0x14})
+    check_sub({0x03, 0x14, 0x16, 0x13}, {0x03, 0x13}, {0x14, 0x16})
 
     assert(get_card_type({0x0C, 0x0D}) == TYPE_ERROR)
 
