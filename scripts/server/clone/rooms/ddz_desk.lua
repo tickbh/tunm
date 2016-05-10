@@ -270,6 +270,8 @@ function DDZ_DESK_TDCLS:deal_poker(poker_list)
 
     op_info.poker_list = new_poker_list
     if #op_info.poker_list == 0 then
+
+        self:broadcast_message(MSG_ROOM_MESSAGE, "team_win", {idx = self.cur_op_idx})
         --TODO win
         trace("op_info 赢得了比赛 %o", op_info)
         self:change_cur_step(DDZ_STEP_NONE)
@@ -311,7 +313,10 @@ function DDZ_DESK_TDCLS:op_info(user_rid, info)
         if idx ~= self.cur_op_idx then
             return
         end
-        self:deal_poker(info.poker_list)
+        local success, err_msg = self:deal_poker(info.poker_list)
+        if not success then
+            self:send_rid_message(user_rid, MSG_ROOM_MESSAGE, "error_op", {ret = -1, err_msg = err_msg})
+        end
         return true
     end
     return false
