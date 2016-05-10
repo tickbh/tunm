@@ -227,16 +227,16 @@ function compare_card(first_poker_list, next_poker_list)
     if first_type ~= next_type or #first_poker_list ~= #next_poker_list then return false end
     if next_type == TYPE_SINGLE or next_type == TYPE_DOUBLE or next_type == TYPE_THREE
         or next_type == TYPE_SINGLE_LINE or next_type == TYPE_DOUBLE_LINE or next_type == TYPE_THREE_LINE or next_type == TYPE_BOMB_CARD then
-        local first_logic_value = get_card_logic_value[first_poker_list[1]]
-        local next_logic_value = get_card_logic_value[next_poker_list[1]]
+        local first_logic_value = get_card_logic_value(first_poker_list[1])
+        local next_logic_value = get_card_logic_value(next_poker_list[1])
         return next_logic_value > first_logic_value
     elseif next_type == TYPE_THREE_LINE_TAKE_ONE or next_type == TYPE_THREE_LINE_TAKE_TWO then
-        local first_logic_value = get_card_logic_value[first_result.three_list[1]]
-        local next_logic_value = get_card_logic_value[next_result.three_list[1]]
+        local first_logic_value = get_card_logic_value(first_result.three_list[1])
+        local next_logic_value = get_card_logic_value(next_result.three_list[1])
         return next_logic_value > first_logic_value
     elseif next_type == CT_FOUR_LINE_TAKE_ONE or next_type == CT_FOUR_LINE_TAKE_TWO then
-        local first_logic_value = get_card_logic_value[first_result.four_list[1]]
-        local next_logic_value = get_card_logic_value[next_result.four_list[1]]
+        local first_logic_value = get_card_logic_value(first_result.four_list[1])
+        local next_logic_value = get_card_logic_value(next_result.four_list[1])
         return next_logic_value > first_logic_value
     end
     return false
@@ -386,6 +386,16 @@ local function test_get_type()
 
     check_sub({0x03, 0x14, 0x16}, {0x03, 0x16}, {0x14})
     check_sub({0x03, 0x14, 0x16, 0x13}, {0x03, 0x13}, {0x14, 0x16})
+
+    local function check_compare_card(first_poker_list, next_poker_list)
+        table.sort(first_poker_list, sort_card)
+        table.sort(next_poker_list, sort_card)
+
+        assert(compare_card(first_poker_list, next_poker_list) == true)
+    end
+
+    check_compare_card({0x03}, {0x04})
+    check_compare_card({0x03, 0x13}, {0x04, 0x14})
 
     assert(get_card_type({0x0C, 0x0D}) == TYPE_ERROR)
 

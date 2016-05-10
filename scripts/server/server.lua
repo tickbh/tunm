@@ -10,6 +10,7 @@ function update(name)
     collectgarbage("collect")
 end
 
+math.randomseed(os.time())
 update("global/base/util")
 update("global/base/load_folder")
 

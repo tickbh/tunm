@@ -89,12 +89,14 @@ function DESK_TDCLS:user_leave(user_rid)
     if not user_data then
         return -1
     end
+    user_data.last_logout_time = os.time()
 
     self:broadcast_message(MSG_ROOM_MESSAGE, "success_leave_desk", {rid = user_rid, idx = idx})
     --中途掉线，保存当前进度数据
     if self:is_playing() then
         return -1
     end
+    self.users[user_rid] = nil
     self.wheels[user_data.idx] = {}
     return 0
 end

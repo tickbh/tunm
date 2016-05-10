@@ -50,7 +50,7 @@ function DDZ_DESK_TDCLS:time_update()
         end
     elseif self.cur_step == DDZ_STEP_PLAY then
         local op_time = self.wheels[self.cur_op_idx].last_op_time
-        if os.time() - op_time > 30 then
+        if os.time() - op_time > 6 then
             self:deal_poker()
         end
     end
@@ -62,6 +62,12 @@ function DDZ_DESK_TDCLS:change_cur_step(new_step)
         for _,v in pairs(self.wheels) do
             v.is_ready = 0
         end
+        
+        self.cur_op_idx = -1
+        self.lord_idx = -1
+        self.play_poker_list = {}
+        self.down_poker = {}
+        self.lord_list = {}
     end
     self:broadcast_message(MSG_ROOM_MESSAGE, "step_change", {cur_step = self.cur_step})
 end
@@ -69,7 +75,7 @@ end
 function DDZ_DESK_TDCLS:change_cur_opidx(new_op_idx)
     self.cur_op_idx = new_op_idx
     self.wheels[self.cur_op_idx].last_op_time = os.time()
-    self:broadcast_message(MSG_ROOM_MESSAGE, "op_idx", {cur_op_idx = self.cur_op_idx})
+    self:broadcast_message(MSG_ROOM_MESSAGE, "op_idx", {cur_op_idx = self.cur_op_idx, poker_list = self:get_last_poker_list()})
 end
 
 function DDZ_DESK_TDCLS:get_next_op_idx()
@@ -226,6 +232,11 @@ end
 
 function DDZ_DESK_TDCLS:user_enter(user_rid)
     get_class_func(DESK_TDCLS, "user_enter")(self, user_rid)
+    local user_data = self.users[user_rid]
+    if not user_data then
+        return -1
+    end
+    user_data.last_logout_time = nil
     return 0
 end
 
@@ -235,7 +246,7 @@ function DDZ_DESK_TDCLS:user_leave(user_rid)
         return -1
     end
 
-    user_data.offline_time = os.time()
+    user_data.last_logout_time = os.time()
 
     self:broadcast_message(MSG_ROOM_MESSAGE, "success_leave_desk", {rid = user_rid, idx = idx})
     --中途掉线，保存当前进度数据
@@ -245,6 +256,20 @@ function DDZ_DESK_TDCLS:user_leave(user_rid)
     self.users[user_rid] = nil
     self.wheels[user_data.idx] = {}
     return 0
+end
+
+function DDZ_DESK_TDCLS:win_by_idx(idx)
+    self:broadcast_message(MSG_ROOM_MESSAGE, "team_win", {idx = idx})
+    --TODO win
+    trace("op_info 赢得了比赛 %o", op_info)
+    self:change_cur_step(DDZ_STEP_NONE)
+    self.retry_deal_times = 0
+    for _,wheel in ipairs(self.wheels) do
+        local user_data = self.users[wheel.rid]
+        if user_data and user_data.last_logout_time then
+            self:user_leave(wheel.rid)
+        end
+    end
 end
 
 function DDZ_DESK_TDCLS:get_last_poker_list()
@@ -311,11 +336,7 @@ function DDZ_DESK_TDCLS:deal_poker(poker_list)
 
     op_info.poker_list = new_poker_list
     if #op_info.poker_list == 0 then
-
-        self:broadcast_message(MSG_ROOM_MESSAGE, "team_win", {idx = self.cur_op_idx})
-        --TODO win
-        trace("op_info 赢得了比赛 %o", op_info)
-        self:change_cur_step(DDZ_STEP_NONE)
+        self:win_by_idx(self.cur_op_idx)
         return
     end
 
