@@ -190,7 +190,7 @@ function DDZ_DESK_TDCLS:start_game()
     trace("DDZ_DESK_TDCLS:start_game!@!!!")
 end
 
-function DDZ_DESK_TDCLS:is_playing()
+function DDZ_DESK_TDCLS:is_playing(user_rid)
     return self.cur_step ~= DDZ_STEP_NONE
 end
 

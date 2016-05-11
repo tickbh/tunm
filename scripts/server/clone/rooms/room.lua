@@ -56,8 +56,8 @@ end
 
 function ROOM_TDCLS:entity_update(entity)
     --正在游戏中的不做析构处理，等游戏先结束
-    if not entity.is_enter_game then
-        if entity.last_logout_time and os.time() - entity.last_logout_time > 10 then
+    if entity.last_logout_time and os.time() - entity.last_logout_time > 10 then
+        if not self:is_user_playing(entity.user_rid) then
             self:entity_destruct(entity.user_rid)
         end
     end
@@ -113,8 +113,6 @@ function ROOM_TDCLS:entity_enter(server_id, user_rid, info)
             last_logout_time = nil,
             --玩家的上次操作时间，确定是否超时
             last_op_time = os.time(),
-            --是否正在游戏中
-            is_enter_game = false,
             --进入桌子时间
             enter_desk_time = nil,
             --进入桌子编号
@@ -131,9 +129,23 @@ function ROOM_TDCLS:entity_enter(server_id, user_rid, info)
     return 0
 end
 
+function ROOM_TDCLS:is_user_playing(user_rid)
+    local entity = self.room_entity[user_rid]
+    if not entity then
+        return false
+    end
+    if not entity.enter_desk_idx then
+        return false
+    end
+    local desk = self.desk_entity[entity.enter_desk_idx]
+    if not desk then
+        return false
+    end
+    return desk:is_playing(user_rid)
+end
+
 --玩家离开房间
 function ROOM_TDCLS:entity_leave(user_rid)
-
     if not self.room_entity[user_rid] then
         LOG.err("Error:对象%s离开房间%s时找不到自己\n", user_rid, self:get_room_name())
     end
@@ -141,15 +153,13 @@ function ROOM_TDCLS:entity_leave(user_rid)
     --设置实体的登出时间，如果实体还在游戏中则等待处理，如果实体不在游戏中，则下一秒则析构掉玩家对像
     local entity = self.room_entity[user_rid]
     entity.last_logout_time = os.time()
-    if entity.enter_desk_idx then
-        local desk = self.desk_entity[entity.enter_desk_idx]
-        if not desk:is_playing() then
-            desk:user_leave(user_rid)
-            entity.enter_desk_idx = nil
-            entity.is_enter_game = nil
-            trace("玩家不在游戏状态，掉线时离开桌子")
-        end
+
+    if not self:is_user_playing(user_rid) then
+        self:entity_destruct(user_rid)
+        trace("玩家不在游戏状态，掉线时离开桌子")
+        return
     end
+
     return 0
 end
 
@@ -209,7 +219,6 @@ function ROOM_TDCLS:enter_desk(user_rid, idx, enter_method)
 
     desk:user_enter(user_rid)
     data.enter_desk_idx = idx
-    data.is_enter_game = true
     return 0
 end
 

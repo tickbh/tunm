@@ -157,7 +157,3 @@ end
 function DESK_TDCLS:get_play_num()
     return 3
 end
-
-function DESK_TDCLS:is_playing()
-    return false
-end
