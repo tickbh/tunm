@@ -64,9 +64,7 @@ function DESK_TDCLS:is_empty()
 end
 
 function DESK_TDCLS:user_enter(user_rid)
-    trace("DESK_TDCLS:user_enter user_rid = %o", user_rid)
     local idx = self:check_user_wheel(user_rid)
-    trace("check_user_wheel id = %o, wheels is %o", idx, self.wheels)
     if not idx then
         return -1
     end
@@ -139,7 +137,6 @@ function DESK_TDCLS:op_info(user_rid, info)
 end
 
 function DESK_TDCLS:check_all_ready()
-    trace("self.wheels = %o", self.wheels)
     for _,data in ipairs(self.wheels) do
         if data.is_ready ~= 1 then
             return false
@@ -150,7 +147,6 @@ function DESK_TDCLS:check_all_ready()
 end
 
 function DESK_TDCLS:start_game()
-    trace("DESK_TDCLS:start_game!@!!!")
     self:broadcast_message(MSG_ROOM_MESSAGE, "success_start_game", {idx = self.idx})
 end
 

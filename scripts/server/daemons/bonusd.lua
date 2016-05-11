@@ -14,7 +14,6 @@ local MAX_INTERVAL = 600
 --定义内部函数
 --执行奖励属性操作
 local function attrib_bonus(attribs, bonus_type)
-    trace("attrib_bonus attribs is %o", attribs)
     local attrib_list = {}
     local money = {}
 

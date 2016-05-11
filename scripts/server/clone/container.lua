@@ -259,7 +259,6 @@ function CONTAINER_TDCLS:get_free_pos(property, can_combine)
     local page = CONTAINER_D.get_page(property, self);
     local x, y;
     local size = self:get_container_size(page);
-    trace("get_free_pos page is %o, size is %o\n", page, size)
     if not size then
         return;
     end
@@ -337,7 +336,6 @@ function CONTAINER_TDCLS:get_free_amount_by_class_id(class_id, can_combine)
     -- 取得item_info
     local item_info = PROPERTY_D.get_property_info(class_id);
     if not item_info then
-        trace("get_free_amount_by_class_id, class_id %o is invalid!\n", class_id);
         return 0;
     end
 
@@ -745,14 +743,12 @@ function CONTAINER_TDCLS:switch_carry_pos_without_notify(src_pos, dst_pos)
     self.carry[dst_pos] = nil;
 
     if src_ob and src_ob:is_equip() == true then
-        trace("__ switch_carry_pos_without_notify(src_pos=%o, dst_pos=%o) src_ob=%o \n", src_pos, dst_pos, src_ob:query() )
         --src_ob:set("pos", dst_pos);
         self.carry[dst_pos] = src_ob;
         --src_ob:notify_fields_updated("pos");
     end
 
     if dst_ob and dst_ob:is_equip() == true then
-        trace("__ switch_carry_pos_without_notify(src_pos=%o, dst_pos=%o) dst_ob=%o \n",  src_pos, dst_pos, dst_ob:query() )
         --dst_ob:set("pos", src_pos);
         self.carry[src_pos] = dst_ob;
         --dst_ob:notify_fields_updated("pos");

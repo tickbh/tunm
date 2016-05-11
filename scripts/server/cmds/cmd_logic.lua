@@ -84,7 +84,6 @@ function cmd_enter_room(user, info)
     end
 
     local function enter_room_callback(args, ext)
-        trace("enter_room_callback!!!")
         if not is_object(user) then
             return
         end
@@ -120,7 +119,6 @@ function cmd_leave_room(user, info)
 end
 
 function respone_room_message(user, oper, info)
-    trace("respone_room_message %o", {user, oper, info})
     if oper == "reconnect_user" then
         user:send_message(MSG_ROOM_MESSAGE, "pre_room", info)
     end

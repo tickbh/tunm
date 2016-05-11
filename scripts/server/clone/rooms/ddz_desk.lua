@@ -50,7 +50,7 @@ function DDZ_DESK_TDCLS:time_update()
         end
     elseif self.cur_step == DDZ_STEP_PLAY then
         local op_time = self.wheels[self.cur_op_idx].last_op_time
-        if os.time() - op_time > 6 then
+        if os.time() - op_time > 30 then
             self:deal_poker()
         end
     end
@@ -92,11 +92,9 @@ function DDZ_DESK_TDCLS:finish_lord(lord_idx)
     local wheel = self.wheels[self.lord_idx]
     append_to_array(wheel.poker_list, self.down_poker)
     DDZ_D.resort_poker(wheel.poker_list)
-    trace("finish_lord wheels is %o", self.wheels)
     for i,v in ipairs(self.wheels) do
         local desk_info = self:pack_desk_info(v.rid)
         desk_info.lord_idx = self.lord_idx
-        trace("send_rid_message is = %o", {v.rid, MSG_ROOM_MESSAGE, "start_play", desk_info})
         self:send_rid_message(v.rid, MSG_ROOM_MESSAGE, "start_play", desk_info)
     end
     self:change_cur_opidx(self.lord_idx)
@@ -140,7 +138,6 @@ function DDZ_DESK_TDCLS:cur_lord_choose(is_choose)
 end
 
 function DDZ_DESK_TDCLS:is_full_user()
-    trace("is_full_user %o", self:get_user_count() >= 3)
     return self:get_user_count() >= 3
 end
 
@@ -261,7 +258,6 @@ end
 function DDZ_DESK_TDCLS:win_by_idx(idx)
     self:broadcast_message(MSG_ROOM_MESSAGE, "team_win", {idx = idx})
     --TODO win
-    trace("op_info 赢得了比赛 %o", op_info)
     self:change_cur_step(DDZ_STEP_NONE)
     self.retry_deal_times = 0
     for _,wheel in ipairs(self.wheels) do
@@ -295,7 +291,6 @@ end
 
 function DDZ_DESK_TDCLS:deal_poker(poker_list)
     local op_info = self.wheels[self.cur_op_idx]
-    trace("DDZ_DESK_TDCLS:deal_poker!!!!! op_info is %o", op_info)
     local last_poker_list = self:get_last_poker_list()
     --做为出牌方，无牌时则系统默认超时处理，取最小的一张牌
     if not last_poker_list and not poker_list then
@@ -321,8 +316,6 @@ function DDZ_DESK_TDCLS:deal_poker(poker_list)
     end
 
     local success, new_poker_list = DDZ_D.sub_poker(op_info.poker_list, poker_list)
-    trace("poker_list is = %o", poker_list)
-    trace("new_poker_list is = %o", new_poker_list)
     if not success then
         return false, "您未包含有当前的牌组"
     end
@@ -368,7 +361,6 @@ function DDZ_DESK_TDCLS:op_info(user_rid, info)
         self:cur_lord_choose(info.is_choose)
         return true
     elseif info.oper == "deal_poker" then
-        trace("poker_list is %o", info.poker_list)
         if self.cur_step ~= DDZ_STEP_PLAY then
             return
         end

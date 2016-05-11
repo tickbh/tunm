@@ -199,7 +199,6 @@ function add_subscribe_channel(channel)
 end
 
 function start_psubscribe()
-    trace("redis_subs_channel = %o", redis_subs_channel)
     subs_command("PUNSUBSCRIBE", {})
     subs_command("PSUBSCRIBE", redis_subs_channel)
 end

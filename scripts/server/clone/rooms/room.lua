@@ -128,7 +128,6 @@ function ROOM_TDCLS:entity_enter(server_id, user_rid, info)
     if data and data.enter_desk_idx then
         self:send_rid_message(user_rid, {}, MSG_ROOM_MESSAGE, "pre_desk", {rid = user_rid, enter_desk_idx = data.enter_desk_idx})
     end
-    trace("success entity_enter %o", self.room_entity[user_rid])
     return 0
 end
 
@@ -142,7 +141,6 @@ function ROOM_TDCLS:entity_leave(user_rid, info)
     --设置实体的登出时间，如果实体还在游戏中则等待处理，如果实体不在游戏中，则下一秒则析构掉玩家对像
     local entity = self.room_entity[user_rid]
     entity.last_logout_time = os.time()
-    trace("entity = %o", entity)
     if entity.enter_desk_idx then
         local desk = self.desk_entity[entity.enter_desk_idx]
         if not desk:is_playing() then
@@ -157,7 +155,6 @@ end
 
 --玩家离开房间
 function ROOM_TDCLS:entity_destruct(user_rid)
-    trace("ROOM_TDCLS:entity_destruct user_rid = %o", user_rid)
     if not self.room_entity[user_rid] then
         LOG.err("Error:对象%s析构时找不到自己\n", user_rid)
     end
@@ -179,13 +176,11 @@ function ROOM_TDCLS:get_can_enter_desk()
 end
 
 function ROOM_TDCLS:enter_desk(user_rid, idx, enter_method)
-    trace("ROOM_TDCLS:enter_desk user_rid = %o", user_rid)
     local data = self.room_entity[user_rid]
     if not data then
         LOG.err("Error:%s进入桌子时找不到自己\n", user_rid)
         return -1
     end
-    trace("idx = %o, data.enter_desk_idx = %o", idx, data.enter_desk_idx)
     if idx and idx == data.enter_desk_idx then
         data.enter_desk_idx = nil
     elseif idx == nil then
@@ -215,7 +210,6 @@ function ROOM_TDCLS:enter_desk(user_rid, idx, enter_method)
     desk:user_enter(user_rid)
     data.enter_desk_idx = idx
     data.is_enter_game = true
-    trace("enter_desk = %o", data)
     return 0
 end
 

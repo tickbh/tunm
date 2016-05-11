@@ -1,41 +1,41 @@
 --roomd.lua
 --Created by wugd
---è´Ÿè´£æˆ¿é—´ç›¸å…³çš„åŠŸèƒ½æ¨¡å—
+--¸ºÔğ·¿¼äÏà¹ØµÄ¹¦ÄÜÄ£¿é
 
---åˆ›å»ºæ¨¡å—å£°æ˜
+--´´½¨Ä£¿éÉùÃ÷
 ROOM_D = {}
 setmetatable(ROOM_D, {__index = _G})
 local _ENV = ROOM_D
 
---åœºæ™¯åˆ—è¡¨
+--³¡¾°ÁĞ±í
 local room_list  = {}
 local room_table = {}
 local freq_table = {}
 
 local all_room_details = {}
 
---å®šä¹‰å†…éƒ¨æ¥å£ï¼ŒæŒ‰ç…§å­—æ¯é¡ºåºæ’åº
+--¶¨ÒåÄÚ²¿½Ó¿Ú£¬°´ÕÕ×ÖÄ¸Ë³ĞòÅÅĞò
 local function clear_doing_enter_room(entity)
     if entity:is_user() then
         entity:delete_temp("doing_enter_room")
     end
 end
 
---å®šä¹‰å…¬å…±æ¥å£ï¼ŒæŒ‰ç…§å­—æ¯é¡ºåºæ’åº
+--¶¨Òå¹«¹²½Ó¿Ú£¬°´ÕÕ×ÖÄ¸Ë³ĞòÅÅĞò
 
--- å¹¿æ’­æ¶ˆæ¯
+-- ¹ã²¥ÏûÏ¢
 function broadcast_message(room_name, msg, ...)
-    -- å–å¾—è¯¥æˆ¿é—´ç¼–å·å¯¹åº”çš„æˆ¿é—´å¯¹è±¡
+    -- È¡µÃ¸Ã·¿¼ä±àºÅ¶ÔÓ¦µÄ·¿¼ä¶ÔÏó
     local room = room_list[room_name]
     if not room then
         return
     end
 
-    -- å¹¿æ’­æ¶ˆæ¯
+    -- ¹ã²¥ÏûÏ¢
     room:broadcast_message(msg, ...)
 end
 
---åˆ›å»ºå…¨éƒ¨åœºæ™¯
+--´´½¨È«²¿³¡¾°
 function create_allroom(filename)
     room_table = IMPORT_D.readcsv_to_tables(filename)
     for k, v in pairs(room_table) do
@@ -43,17 +43,17 @@ function create_allroom(filename)
     end
 end
 
--- è·å–csvè¡¨ä¿¡æ¯
+-- »ñÈ¡csv±íĞÅÏ¢
 function get_room_table()
     return room_table
 end
 
---åˆ›å»ºä¸€ä¸ªåœºæ™¯
+--´´½¨Ò»¸ö³¡¾°
 function create_room(roomdata)
     local room_tdcls = _G[roomdata.room_tdcls]
-    assert(room_tdcls ~= nil, "åœºæ™¯é…ç½®å¿…é¡»å­˜åœ¨")
+    assert(room_tdcls ~= nil, "³¡¾°ÅäÖÃ±ØĞë´æÔÚ")
     local room = clone_object(room_tdcls, roomdata)
-    assert(room_list[room:get_room_name()] == nil, "é‡å¤é…ç½®æˆ¿é—´")
+    assert(room_list[room:get_room_name()] == nil, "ÖØ¸´ÅäÖÃ·¿¼ä")
     room_list[room:get_room_name()] = room
     REDIS_D.add_subscribe_channel(room:get_listen_channel())
     REDIS_D.add_subscribe_channel(room:get_respone_channel())
@@ -64,7 +64,7 @@ function enter_room(entity, room_name)
     
 end
 
---è·å–æˆ¿é—´å¯¹è±¡
+--»ñÈ¡·¿¼ä¶ÔÏó
 function get_room_list()
     return room_list
 end
@@ -73,7 +73,7 @@ function get_room(room_name)
     return room_list[room_name]
 end
 
---ç¦»å¼€ä¸€ä¸ªåœºæ™¯
+--Àë¿ªÒ»¸ö³¡¾°
 function leave_room(entity, room_name)
     local room = room_list[room_name]
 
@@ -81,11 +81,11 @@ function leave_room(entity, room_name)
         room:entity_leave(entity)
     end
 
-    -- åˆ é™¤ç©å®¶çš„ä½ç½®ä¿¡æ¯
+    -- É¾³ıÍæ¼ÒµÄÎ»ÖÃĞÅÏ¢
     entity:delete_temp("room")
 end
 
--- æ ¹æ®ridè·å–room_name
+-- ¸ù¾İrid»ñÈ¡room_name
 function get_room_name_by_rid(rid)
     local rid_ob = find_object_by_rid(rid)
     if not is_object(rid_ob) then
@@ -94,7 +94,7 @@ function get_room_name_by_rid(rid)
     return (rid_ob:query_temp("room"))
 end
 
--- è·å–æŸä¸ªæˆ¿é—´ç©å®¶åˆ—è¡¨
+-- »ñÈ¡Ä³¸ö·¿¼äÍæ¼ÒÁĞ±í
 function get_room_entity_list(room_name)
     local peo_list = {}
     local room = room_list[room_name]
@@ -170,10 +170,9 @@ function redis_room_detail(detail)
 end
 
 function cmd_room_message(room_name, user_rid, cookie, oper, info)
-    trace("cmd_room_message %o", {room_name, user_rid, cookie, oper, info})
     local room = room_list[room_name]
     if not room then
-        trace("æˆ¿é—´:%oä¸å­˜åœ¨", room_name)
+        trace("·¿¼ä:%o²»´æÔÚ", room_name)
         return
     end
     local data = room:get_data_by_rid(user_rid)
@@ -211,12 +210,12 @@ end
 function redis_dispatch_message(room_name, user_rid, cookie, msg_buf)
     local room = room_list[room_name]
     if not is_object(room) then
-        LOG.err("æˆ¿é—´'%s'ä¿¡æ¯ä¸å­˜åœ¨", room_name)
+        LOG.err("·¿¼ä'%s'ĞÅÏ¢²»´æÔÚ", room_name)
         return
     end
     local name, net_msg = pack_raw_message(msg_buf)
     if not net_msg then
-        LOG.err("å‘é€ç»™æˆ¿é—´:'%s',ç”¨æˆ·:'%s',æ¶ˆæ¯å¤±è´¥", room_name, user_rid)
+        LOG.err("·¢ËÍ¸ø·¿¼ä:'%s',ÓÃ»§:'%s',ÏûÏ¢Ê§°Ü", room_name, user_rid)
         return
     end
 
@@ -233,7 +232,6 @@ function room_detail_update(detail)
 end
 
 local function logic_cmd_room_message(user, buffer)
-    trace("receiver logic_cmd_room_message name = %o buffer = %o", user:query_temp("room_name"), buffer)
     local room_name = user:query_temp("room_name")
     if sizeof(room_name) == 0 then
         return
@@ -243,7 +241,6 @@ local function logic_cmd_room_message(user, buffer)
 end
 
 local function publish_room_detail()
-    trace("publish_room_detail!!!")
     local result = {}
     for room_name,room in pairs(room_list) do
         local room_entity = room:get_room_entity()
@@ -265,7 +262,7 @@ local function user_login(user_rid, server_id)
 end
 
 local function user_logout(user_rid)
-    trace("ç©å®¶ç™»å‡º %o", user_rid)
+    trace("Íæ¼ÒµÇ³ö %o", user_rid)
     for _, room in pairs(room_list) do
         local data = room:get_data_by_rid(user_rid)
         trace("data = %o", data)
@@ -282,7 +279,7 @@ local function time_update()
     end
 end
 
--- æ¨¡å—çš„å…¥å£æ‰§è¡Œ
+-- Ä£¿éµÄÈë¿ÚÖ´ĞĞ
 function create()
     if ENABLE_ROOM then
         create_allroom("data/txt/room.txt")
