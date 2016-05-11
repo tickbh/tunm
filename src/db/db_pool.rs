@@ -105,7 +105,7 @@ impl PoolTrait for DbMysql {
             info = pool.db_info.get(&"mysql".to_string());
         }
         let info = unwrap_or!(info, return None);
-        let mut opts: Opts = Opts::from(&**info);
+        let mut opts: Opts = DbMysql::from_url_basic(&**info).unwrap();
         opts.db_name = Some(db_name.clone());
         let pool = unwrap_or!(mysql::Conn::new(opts).ok(), return None);
         Some(DbMysql::new(pool))

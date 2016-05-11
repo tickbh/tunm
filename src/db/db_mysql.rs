@@ -5,9 +5,10 @@ use {NetResult, NetMsg, NetConfig, ErrorKind};
 
 use td_rp::{self, Value, encode_proto};
 
+use url;
 use time::{self, Timespec};
 use mysql;
-use mysql::{Conn, Result as MyResult, QueryResult};
+use mysql::{Conn, Result as MyResult, QueryResult, Opts};
 
 
 static DB_RESULT_PROTO: &'static str = "msg_db_result";
@@ -55,6 +56,44 @@ impl DbMysql {
             self.is_connect = true;
         }
         Ok(())
+    }
+
+
+    pub fn from_url_basic(url: &str) -> Option<Opts> {
+        let url = url::Url::parse(url).unwrap();
+        if url.scheme() != "mysql" {
+            return None
+        }
+        let user = if url.username().len() == 0 {
+            None
+        } else {
+            Some(url.username().to_string())
+        };
+        let pass = match url.password() {
+            Some(p) => Some(p.to_string()),
+            None  => None,
+        };
+
+        url.password().unwrap_or("").to_string();
+        let ip_or_hostname = match url.host_str() {
+            Some(host_str) => Some(host_str.to_string()),
+            None => Some("127.0.0.1".to_string()),
+        };
+        let tcp_port = url.port().unwrap_or(3306);
+        let db_name = if url.path().len() <= 1 {
+            None
+        } else {
+            Some(url.path()[1..].to_string())
+        };
+        let opts = Opts {
+            user: user,
+            pass: pass,
+            ip_or_hostname: ip_or_hostname,
+            tcp_port: tcp_port,
+            db_name: db_name,
+            ..Opts::default()
+        };
+        Some(opts)
     }
 
 }

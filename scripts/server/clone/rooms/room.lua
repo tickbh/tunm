@@ -155,6 +155,13 @@ function ROOM_TDCLS:entity_leave(user_rid)
     entity.last_logout_time = os.time()
 
     if not self:is_user_playing(user_rid) then
+        if entity.enter_desk_idx then
+            local desk = self.desk_entity[entity.enter_desk_idx]
+            if not desk:is_playing() then
+                desk:user_leave(user_rid)
+            end
+        end
+
         self:entity_destruct(user_rid)
         trace("玩家不在游戏状态，掉线时离开桌子")
         return

@@ -24,6 +24,7 @@ td_proto_rust = "0.1.2"
 td_rredis = "0.1.0"
 td_rthreadpool = "0.1.1"
 sys-info = "0.4.1"
+url = "1.1.0"
 mysql = { version = "2.2.1", default-features = false }
 
 
