@@ -245,9 +245,9 @@ function DDZ_DESK_TDCLS:user_leave(user_rid)
 
     user_data.last_logout_time = os.time()
 
-    self:broadcast_message(MSG_ROOM_MESSAGE, "success_leave_desk", {rid = user_rid, idx = idx})
+    self:broadcast_message(MSG_ROOM_MESSAGE, "success_leave_desk", {rid = user_rid, wheel_idx = user_data.idx})
     --中途掉线，保存当前进度数据
-    if self.cur_step ~= DDZ_STEP_NONE then
+    if self:is_playing() then
         return -1
     end
     self.users[user_rid] = nil
@@ -264,6 +264,8 @@ function DDZ_DESK_TDCLS:win_by_idx(idx)
         local user_data = self.users[wheel.rid]
         if user_data and user_data.last_logout_time then
             self:user_leave(wheel.rid)
+            --掉线的则为桌号通知房间已掉线
+            self.room:entity_leave(wheel.rid)
         end
     end
 end

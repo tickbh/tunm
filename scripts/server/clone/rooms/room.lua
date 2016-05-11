@@ -132,7 +132,7 @@ function ROOM_TDCLS:entity_enter(server_id, user_rid, info)
 end
 
 --玩家离开房间
-function ROOM_TDCLS:entity_leave(user_rid, info)
+function ROOM_TDCLS:entity_leave(user_rid)
 
     if not self.room_entity[user_rid] then
         LOG.err("Error:对象%s离开房间%s时找不到自己\n", user_rid, self:get_room_name())

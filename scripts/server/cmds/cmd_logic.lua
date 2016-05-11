@@ -123,3 +123,16 @@ function respone_room_message(user, oper, info)
         user:send_message(MSG_ROOM_MESSAGE, "pre_room", info)
     end
 end
+
+function cmd_room_oper(user, oper, info)
+    if oper == "enter_room" then
+        cmd_enter_room(user, info)
+    elseif oper == "leave_room" then
+        cmd_leave_room(user, info)
+    elseif oper == "detail_room" then
+        local detail = table_value_to_array(ROOM_D.get_room_detail())
+        user:send_message(MSG_ROOM_OPER, oper, {map_list = detail})
+    else
+    end
+end
+

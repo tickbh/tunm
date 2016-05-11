@@ -165,8 +165,13 @@ end
 function redis_room_detail(detail)
     for name,value in pairs(detail) do
         value["time"] = os.time()
+        value["room_name"] = name
         all_room_details[name] = value
     end
+end
+
+function get_room_detail()
+    return all_room_details
 end
 
 function cmd_room_message(room_name, user_rid, cookie, oper, info)
