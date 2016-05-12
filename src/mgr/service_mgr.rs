@@ -34,7 +34,9 @@ impl ServiceMgr {
                                -> i32 {
         if flag.contains(FLAG_READ) {
             Self::read_callback(ev, fd, flag, data);
-        } else if flag.contains(FLAG_WRITE) {
+        } 
+
+        if flag.contains(FLAG_WRITE) {
             Self::write_callback(ev, fd, flag, data);
         }
         0
@@ -65,7 +67,8 @@ impl ServiceMgr {
         0
     }
 
-    fn write_callback(_ev: &mut EventLoop, _fd: u32, _: EventFlags, _: *mut ()) -> i32 {
+    fn write_callback(ev: &mut EventLoop, fd: u32, flag: EventFlags, data: *mut ()) -> i32 {
+        EventMgr::write_callback(ev, fd, flag, data);
         0
     }
 
@@ -75,7 +78,7 @@ impl ServiceMgr {
         let local_addr = listener.local_addr().unwrap();
         let event = SocketEvent::new(stream.as_fd(), format!("{}", addr), local_addr.port());
         EventMgr::instance().new_socket_event(event);
-        net2::TcpStreamExt::set_nonblocking(&stream, false).ok().unwrap();
+        net2::TcpStreamExt::set_nonblocking(&stream, true).ok().unwrap();
         ev.add_event(EventEntry::new(stream.as_fd() as u32,
                                      FLAG_READ | FLAG_PERSIST,
                                      Some(ServiceMgr::read_write_callback),

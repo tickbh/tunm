@@ -147,7 +147,7 @@ fn new_connect(ip: String, port: u16, _timeout: i32, cookie: u32) -> i32 {
             let mut event = SocketEvent::new(stream.as_fd(), peer_ip, 0);
             event.set_cookie(cookie);
             EventMgr::instance().new_socket_event(event);
-            net2::TcpStreamExt::set_nonblocking(&stream, false).ok().unwrap();
+            net2::TcpStreamExt::set_nonblocking(&stream, true).ok().unwrap();
             EventMgr::instance()
                 .get_event_loop()
                 .add_event(EventEntry::new(stream.as_fd() as u32,

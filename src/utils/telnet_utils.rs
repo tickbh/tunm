@@ -377,7 +377,7 @@ impl TelnetUtils {
         println!("accept_callback {:?}", fd);
         let listener = TcpListener::from_fd(fd as i32);
         let (mut stream, _) = unwrap_or!(listener.accept().ok(), return 0);
-        net2::TcpStreamExt::set_nonblocking(&stream, false).ok().unwrap();
+        net2::TcpStreamExt::set_nonblocking(&stream, true).ok().unwrap();
         ev.add_event(EventEntry::new(stream.as_fd() as u32,
                                      FLAG_READ | FLAG_PERSIST,
                                      Some(Self::read_callback),
