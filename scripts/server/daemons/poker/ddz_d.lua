@@ -121,6 +121,9 @@ function analyse_card_data(poker_list)
 end
 
 function get_card_type(poker_list)
+    if not poker_list then
+        return TYPE_ERROR
+    end
     local len = #poker_list
     if len == 0 then
         return TYPE_ERROR
@@ -469,7 +472,7 @@ local function calc_tip_poker(poker_list, pre_poker_list)
 
     local function check_three_line()
         local pre_single_line_num = #pre_result.three_list
-        local single_line_start = pre_result.three_list[#pre_result.three_list]
+        local single_line_start = get_card_logic_value(pre_result.three_list[#pre_result.three_list])
         for i=#poker_list,1,-1 do
             local cur_logic_value = get_card_logic_value(poker_list[i])
             if cur_logic_value > single_line_start and cur_logic_value < 15 then
@@ -539,7 +542,7 @@ local function calc_tip_poker(poker_list, pre_poker_list)
         return out_list
     elseif card_type == TYPE_SINGLE_LINE then
         local pre_single_line_num = #pre_poker_list
-        local single_line_start = pre_poker_list[#pre_poker_list]
+        local single_line_start = get_card_logic_value(pre_poker_list[#pre_poker_list])
         for i=#poker_list,1,-1 do
             local cur_logic_value = get_card_logic_value(poker_list[i])
             if cur_logic_value > single_line_start and cur_logic_value < 15 then
@@ -563,7 +566,7 @@ local function calc_tip_poker(poker_list, pre_poker_list)
         return out_list
     elseif card_type == TYPE_DOUBLE_LINE then
         local pre_single_line_num = #pre_poker_list
-        local single_line_start = pre_poker_list[#pre_poker_list]
+        local single_line_start = get_card_logic_value(pre_poker_list[#pre_poker_list])
         for i=#poker_list,1,-1 do
             local cur_logic_value = get_card_logic_value(poker_list[i])
             if cur_logic_value > single_line_start and cur_logic_value < 15 then
@@ -852,6 +855,7 @@ local function test_get_type()
 
     -- calc TYPE_SINGLE_LINE tip
     check_calc_tip_poker({0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x15, 0x25}, {0x03, 0x04, 0x05, 0x06, 0x07}, {0x04, 0x05, 0x06, 0x07, 0x08})
+    check_calc_tip_poker({0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x15, 0x25}, {0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09}, {0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A})
     check_calc_tip_poker({0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0A, 0x02}, {0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x01}, {})
     check_calc_tip_poker({0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x01, 0x02}, {0x09, 0x0A, 0x0B, 0x0C, 0x0D}, {0x0A, 0x0B, 0x0C, 0x0D, 0x01})
     check_calc_tip_poker({0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0A, 0x02, 0x4E, 0x4F}, {0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x01}, {0x4E, 0x4F})

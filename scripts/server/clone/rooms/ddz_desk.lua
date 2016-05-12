@@ -310,6 +310,7 @@ function DDZ_DESK_TDCLS:deal_poker(poker_list)
         local is_end, win_idx = self:check_round_end()
         if is_end then
             self.play_poker_list = {}
+            self:broadcast_message(MSG_ROOM_MESSAGE, "next_round", {idx = win_idx})
             self:change_cur_opidx(win_idx)
         else
             self:change_cur_opidx(self:get_next_op_idx())
