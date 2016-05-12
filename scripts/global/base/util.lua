@@ -348,6 +348,36 @@ function table_get_key_value(t, keys)
     return result
 end
 
+function array_to_table(t)
+    local result = {}
+    for _,key in ipairs(t) do
+        result[key] = true
+    end
+    return result
+end
+
+function is_sub_array(array, sub_array)
+    local src_table = array_to_table(array)
+    for _,v in ipairs(sub_array) do
+        if not src_table[v] then
+            return false
+        end
+    end
+    return true
+end
+
+--一旦发现未识别节点则返回失败
+function sub_array(array, sub_array)
+    local src_table = array_to_table(array)
+    for _,v in ipairs(sub_array) do
+        if not src_table[v] then
+            return false
+        end
+        src_table[v] = nil
+    end
+    return true, table_key_to_array(src_table)
+end
+
 -- 保存成 string
 function save_string(t)
     if (type(t) == "number") then

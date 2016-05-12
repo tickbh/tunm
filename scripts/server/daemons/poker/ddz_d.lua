@@ -142,13 +142,80 @@ function get_card_type(poker_list)
     end
 
     if result.four_count > 0 then
-        if result.four_count ~= 1 then
+        if result.four_count == 1 then
+            if len == 4 then return TYPE_BOMB_CARD, result end
+            if len == 6 and result.single_count == 2 then return TYPE_FOUR_LINE_TAKE_ONE, result end
+            if len == 8 and result.double_count == 2 then return TYPE_FOUR_LINE_TAKE_TWO, result end
+        end
+
+        --不在以四张出牌，可能3张连带1根，或者3连带两对
+        if #poker_list % 4 ~= 0 and #poker_list % 5 ~= 0 then
             return TYPE_ERROR
         end
-        if len == 4 then return TYPE_BOMB_CARD, result end
-        if len == 6 and result.single_count == 2 then return TYPE_FOUR_LINE_TAKE_ONE, result end
-        if len == 8 and result.double_count == 2 then return TYPE_FOUR_LINE_TAKE_TWO, result end
-        return TYPE_ERROR
+
+        local function split_with_three(idx)
+            result.three_count = result.three_count + 1
+            table.insert(result.three_list, result.four_list[idx * 4])
+            table.insert(result.three_list, result.four_list[idx * 4 - 1])
+            table.insert(result.three_list, result.four_list[idx * 4 - 2])
+            result.single_count = result.single_count + 1
+            table.insert(result.single_list, result.four_list[idx * 4 - 3])
+            table.sort(result.three_list, sort_card)
+            table.sort(result.single_list, sort_card)
+        end
+
+        local function split_with_two(idx)
+            result.double_count = result.double_count + 1
+            table.insert(result.double_list, result.four_list[idx * 4])
+            table.insert(result.double_list, result.four_list[idx * 4 - 1])
+            result.double_count = result.double_count + 1
+            table.insert(result.double_list, result.four_list[idx * 4 - 2])
+            table.insert(result.double_list, result.four_list[idx * 4 - 3])
+            table.sort(result.double_list, sort_card)
+        end
+
+        local function split_with_one(idx)
+            result.single_count = result.single_count + 1
+            table.insert(result.single_list, result.four_list[idx * 4])
+            table.insert(result.single_list, result.four_list[idx * 4 - 1])
+            table.insert(result.single_list, result.four_list[idx * 4 - 2])
+            table.insert(result.single_list, result.four_list[idx * 4 - 3])
+            table.sort(result.single_list, sort_card)
+        end
+
+        --两个炸弹以上，只有两种情况，5连带带5根，或者是3连带带6根
+        if #poker_list == 20 then
+            if result.three_count + result.four_count < 5 then
+                return TYPE_ERROR
+            end
+            if result.three_count + result.four_count == 5 then
+                for i=1,result.four_count do
+                    split_with_three(i)
+                end
+                result.four_count = 0
+                result.four_list = {}
+            else
+                return TYPE_ERROR
+            end
+        else
+            if #poker_list % 5 == 0 then
+                for i=1,result.four_count do
+                    split_with_two(i)
+                end
+                result.four_count = 0
+                result.four_list = {}
+            else
+                for i=1,result.four_count do
+                    if result.three_count == #poker_list / 4 then
+                        split_with_one(i)
+                    else
+                        split_with_three(i)
+                    end
+                end
+                result.four_count = 0
+                result.four_list = {}
+            end
+        end
     end
 
     if result.three_count > 0 then
@@ -242,45 +309,58 @@ function compare_card(first_poker_list, next_poker_list)
     return false
 end
 
+-- function is_contain(poker_list, sub_poker_list)
+--     local find_idx = 1
+--     for _,poker in ipairs(sub_poker_list) do
+--         local is_find = false
+--         for i=find_idx,#poker_list do
+--             if poker_list[i] == poker then
+--                 find_idx = i + 1
+--                 is_find = true
+--                 break
+--             end
+--         end
+--         if not is_find then
+--             return false
+--         end
+--     end
+--     return true
+-- end
+
+-- function sub_poker(poker_list, sub_poker_list)
+--     if not is_contain(poker_list, sub_poker_list) then
+--         return false
+--     end
+--     local new_poker_list = {}
+--     local find_idx = 1
+--     for _, poker in ipairs(poker_list) do
+--         local is_find = false
+--         for i=find_idx,#sub_poker_list do
+--             if sub_poker_list[i] == poker then
+--                 find_idx = i + 1
+--                 is_find = true
+--                 break
+--             end
+
+--         end
+--         if not is_find then
+--             table.insert(new_poker_list, poker)
+--         end
+--     end
+
+--     return true, new_poker_list
+-- end
+
 function is_contain(poker_list, sub_poker_list)
-    local find_idx = 1
-    for _,poker in ipairs(sub_poker_list) do
-        local is_find = false
-        for i=find_idx,#poker_list do
-            if poker_list[i] == poker then
-                find_idx = i + 1
-                is_find = true
-                break
-            end
-        end
-        if not is_find then
-            return false
-        end
-    end
-    return true
+    return is_sub_array(poker_list, sub_poker_list)
 end
 
 function sub_poker(poker_list, sub_poker_list)
-    if not is_contain(poker_list, sub_poker_list) then
+    local success, new_poker_list = sub_array(poker_list, sub_poker_list)
+    if not success then
         return false
     end
-    local new_poker_list = {}
-    local find_idx = 1
-    for _, poker in ipairs(poker_list) do
-        local is_find = false
-        for i=find_idx,#sub_poker_list do
-            if sub_poker_list[i] == poker then
-                find_idx = i + 1
-                is_find = true
-                break
-            end
-
-        end
-        if not is_find then
-            table.insert(new_poker_list, poker)
-        end
-    end
-
+    table.sort(new_poker_list, sort_card)
     return true, new_poker_list
 end
 
@@ -288,6 +368,331 @@ function resort_poker(poker_list)
     table.sort(poker_list, sort_card)
     return poker_list
 end
+
+function get_double_count(poker_list, need_num)
+    local success, has_result = analyse_card_data(poker_list)
+    local result_list = {}
+    if success then
+        for i=has_result.double_count,1,-1 do
+            table.insert(result_list, has_result.double_list[i * 2])
+            table.insert(result_list, has_result.double_list[i * 2 -1])
+            if #result_list == need_num * 2 then
+                return result_list
+            end
+        end
+        for i=has_result.three_count,1,-1 do
+            table.insert(result_list, has_result.three_list[i * 3])
+            table.insert(result_list, has_result.three_list[i * 3 -1])
+            if #result_list == need_num * 2 then
+                return result_list
+            end
+        end
+        for i=has_result.four_count,1,-1 do
+            table.insert(result_list, has_result.four_list[i * 4])
+            table.insert(result_list, has_result.four_list[i * 4 - 1])
+            if #result_list == need_num * 2 then
+                return result_list
+            end
+            table.insert(result_list, has_result.four_list[i * 4 - 2])
+            table.insert(result_list, has_result.four_list[i * 4 - 3])
+            if #result_list == need_num * 2 then
+                return result_list
+            end
+        end
+    end
+    return {}
+end
+
+
+--计算可大过上家的牌，为提示功能使用
+local function calc_tip_poker(poker_list, pre_poker_list)
+    local out_list = {}
+    if #poker_list == 0 then
+        return out_list
+    end
+    local card_type, pre_result = get_card_type(pre_poker_list)
+    if card_type == TYPE_ERROR then
+        local last_poker = poker_list[#poker_list]
+        table.insert(out_list, last_poker)
+        --搜索最小的牌，尽可能的组牌
+        for i=#poker_list - 1,1,-1 do
+            if last_poker == 0x4E and poker_list[i] == 0x4F then
+                table.insert(out_list, poker_list[i])
+            elseif get_card_logic_value(last_poker) == get_card_logic_value(poker_list[i]) then
+                table.insert(out_list, poker_list[i])
+            else
+                break
+            end
+        end
+        return out_list
+    end
+    if card_type == TYPE_MISSILE_CARD then
+        return out_list
+    end
+    local success, result = analyse_card_data(poker_list)
+    if not success then
+        return out_list
+    end
+
+    local function check_bomb_list(pre_bomb_value)
+        pre_bomb_value = pre_bomb_value or 0
+        for i=#result.four_list, 1, -1 do
+            if get_card_logic_value(result.four_list[i]) > pre_bomb_value then
+                table.insert(out_list, result.four_list[i])
+            end
+            if #out_list == 4 then
+                return true
+            end
+        end
+
+        --检测王炸
+        if poker_list[1] == 0x4F and poker_list[2] == 0x4E then
+            table.insert(out_list, poker_list[1])
+            table.insert(out_list, poker_list[2])
+            return true
+        end
+
+        return false
+    end
+
+    local function check_list_accord(list, pre_logic_value, need_num)
+        for i=#list, 1, -1 do
+            if get_card_logic_value(list[i]) > pre_logic_value then
+                table.insert(out_list, list[i])
+            end
+            if #out_list == need_num then
+                return true
+            end
+        end
+        return false
+    end
+
+    local function check_three_line()
+        local pre_single_line_num = #pre_result.three_list
+        local single_line_start = pre_result.three_list[#pre_result.three_list]
+        for i=#poker_list,1,-1 do
+            local cur_logic_value = get_card_logic_value(poker_list[i])
+            if cur_logic_value > single_line_start and cur_logic_value < 15 then
+                if #out_list == 0 then
+                    table.insert(out_list, poker_list[i])
+                else
+                    local step = cur_logic_value - get_card_logic_value(out_list[#out_list])
+                    if step > 1 then
+                        out_list = {}
+                    else
+                        --已添加三张牌整倍数
+                        if #out_list % 3 == 0 then
+                            if step == 1 then
+                                table.insert(out_list, poker_list[i])
+                            end
+                        else
+                            if step > 0 then
+                                out_list = {}
+                            else
+                                table.insert(out_list, poker_list[i])
+                                if #out_list == pre_single_line_num then
+                                    return true
+                                end
+                            end
+
+                        end
+
+                    end
+                end
+            end
+        end
+        return false
+    end
+
+    if card_type == TYPE_SINGLE then
+        local pre_logic_value = get_card_logic_value(pre_poker_list[1])
+        for i=#poker_list,1,-1 do
+            if get_card_logic_value(poker_list[i]) > pre_logic_value then
+                table.insert(out_list, poker_list[i])
+                return out_list
+            end
+        end
+        check_bomb_list()
+        return out_list
+    elseif card_type ==  TYPE_DOUBLE then
+        local pre_logic_value = get_card_logic_value(pre_poker_list[1])
+        if check_list_accord(result.double_list, pre_logic_value, 2) then
+            return out_list
+        end
+        if check_list_accord(result.three_list, pre_logic_value, 2) then
+            return out_list
+        end
+        if check_list_accord(result.four_list, pre_logic_value, 2) then
+            return out_list
+        end
+        check_bomb_list()
+        return out_list
+    elseif card_type ==  TYPE_THREE then
+        local pre_logic_value = get_card_logic_value(pre_poker_list[1])
+        if check_list_accord(result.three_list, pre_logic_value, 3) then
+            return out_list
+        end
+        if check_list_accord(result.four_list, pre_logic_value, 3) then
+            return out_list
+        end
+        check_bomb_list()
+        return out_list
+    elseif card_type == TYPE_SINGLE_LINE then
+        local pre_single_line_num = #pre_poker_list
+        local single_line_start = pre_poker_list[#pre_poker_list]
+        for i=#poker_list,1,-1 do
+            local cur_logic_value = get_card_logic_value(poker_list[i])
+            if cur_logic_value > single_line_start and cur_logic_value < 15 then
+                if #out_list == 0 then
+                    table.insert(out_list, poker_list[i])
+                else
+                    local step = cur_logic_value - get_card_logic_value(out_list[#out_list])
+                    if step > 1 then
+                        out_list = {}
+                    elseif step == 1 then
+                        table.insert(out_list, poker_list[i])
+                        if #out_list == pre_single_line_num then
+                            return out_list
+                        end
+                    end
+                end
+            end
+        end
+        out_list = {}
+        check_bomb_list()
+        return out_list
+    elseif card_type == TYPE_DOUBLE_LINE then
+        local pre_single_line_num = #pre_poker_list
+        local single_line_start = pre_poker_list[#pre_poker_list]
+        for i=#poker_list,1,-1 do
+            local cur_logic_value = get_card_logic_value(poker_list[i])
+            if cur_logic_value > single_line_start and cur_logic_value < 15 then
+                if #out_list == 0 then
+                    table.insert(out_list, poker_list[i])
+                else
+                    local step = cur_logic_value - get_card_logic_value(out_list[#out_list])
+                    if step > 1 then
+                        out_list = {}
+                    else
+                        --已添加双张牌
+                        if #out_list % 2 == 0 then
+                            if step == 1 then
+                                table.insert(out_list, poker_list[i])
+                            end
+                        else
+                            if step > 0 then
+                                out_list = {}
+                            else
+                                table.insert(out_list, poker_list[i])
+                                if #out_list == pre_single_line_num then
+                                    return out_list
+                                end
+                            end
+
+                        end
+
+                    end
+                end
+            end
+        end
+        out_list = {}
+        check_bomb_list()
+        return out_list
+    elseif card_type == TYPE_THREE_LINE then
+        if check_three_line() then
+            return out_list
+        end
+        out_list = {}
+        check_bomb_list()
+        return out_list
+    elseif card_type == TYPE_THREE_LINE_TAKE_ONE then
+        local need_three_num = #pre_poker_list / 4
+        if #result.three_list >= need_three_num and #poker_list >= #pre_poker_list then
+            if check_three_line() then
+                local success, has_poker_list = sub_poker(poker_list, out_list)
+                for i=#has_poker_list,1,-1 do
+                    table.insert(out_list, has_poker_list[i])
+                    if #out_list == #pre_poker_list then
+                        return out_list
+                    end
+                end
+            end
+        end
+        out_list = {}
+        check_bomb_list()
+        return out_list
+    elseif card_type == TYPE_THREE_LINE_TAKE_TWO then
+        local need_three_num = #pre_poker_list / 5
+        if #result.three_list >= need_three_num and #poker_list >= #pre_poker_list then
+            if check_three_line() then
+                local success, has_poker_list = sub_poker(poker_list, out_list)
+                local double_list = get_double_count(has_poker_list, need_three_num)
+                if #double_list > 0 then
+                    append_to_array(out_list, double_list)
+                    return out_list
+                end
+            end
+        end
+        out_list = {}
+        check_bomb_list()
+        return out_list
+    elseif card_type == TYPE_FOUR_LINE_TAKE_ONE then
+        local pre_four_value = get_card_logic_value(pre_result.four_list[1])
+        for i=#result.four_list, 1, -1 do
+            if get_card_logic_value(result.four_list[i]) > pre_four_value then
+                table.insert(out_list, result.four_list[i])
+            end
+            if #out_list == 4 then
+                break
+            end
+        end
+        if #out_list == 4 then
+            local success, has_poker_list = sub_poker(poker_list, out_list)
+            if #has_poker_list > 1 then
+                table.insert(out_list, has_poker_list[#has_poker_list])
+                table.insert(out_list, has_poker_list[#has_poker_list - 1])
+                return out_list
+            end
+        end
+        out_list = {}
+        check_bomb_list()
+        return out_list
+    elseif card_type == TYPE_FOUR_LINE_TAKE_TWO then
+        local pre_four_value = get_card_logic_value(pre_result.four_list[1])
+        for i=#result.four_list, 1, -1 do
+            if get_card_logic_value(result.four_list[i]) > pre_four_value then
+                table.insert(out_list, result.four_list[i])
+            end
+            if #out_list == 4 then
+                break
+            end
+        end
+        if #out_list == 4 then
+            local success, has_poker_list = sub_poker(poker_list, out_list)
+            local double_list = get_double_count(has_poker_list, 2)
+            if #double_list > 0 then
+                append_to_array(out_list, double_list)
+                return out_list
+            end
+        end
+        out_list = {}
+        check_bomb_list()
+        return out_list
+    elseif card_type == TYPE_BOMB_CARD then
+        check_bomb_list(get_card_logic_value(pre_result.four_list[1]))
+        return out_list
+    end
+
+    return out_list
+
+end
+
+function sort_calc_tip_poker(poker_list, pre_poker_list)
+    local out_list = calc_tip_poker(poker_list, pre_poker_list)
+    table.sort(out_list, sort_card)
+    return out_list
+end
+
 
 --Test Func
 local function test_sort()
@@ -298,7 +703,8 @@ end
 
 local function check_poker_type(poker_list, poker_type)
     table.sort(poker_list, sort_card)
-    assert(get_card_type(poker_list) == poker_type)
+    local real_type = get_card_type(poker_list)
+    assert(real_type == poker_type)
 end
 
 local function test_get_type()
@@ -339,14 +745,18 @@ local function test_get_type()
     check_poker_type({0x0D, 0x1D, 0x2D, 0x01, 0x11, 0x21, 0x03, 0x13}, TYPE_THREE_LINE_TAKE_ONE)
     check_poker_type({0x0D, 0x1D, 0x2D, 0x01, 0x11, 0x21, 0x03, 0x04}, TYPE_THREE_LINE_TAKE_ONE)
     check_poker_type({0x0C, 0x1C, 0x2C, 0x0D, 0x1D, 0x2D, 0x01, 0x11, 0x21, 0x03, 0x04, 0x05}, TYPE_THREE_LINE_TAKE_ONE)
+    check_poker_type({0x03, 0x13, 0x23, 0x04, 0x14, 0x24, 0x33, 0x05}, TYPE_THREE_LINE_TAKE_ONE)
 
     --TYPE_THREE_LINE_TAKE_TWO
     check_poker_type({0x03, 0x13, 0x23, 0x14, 0x24, 0x34, 0x05, 0x15, 0x16, 0x26}, TYPE_THREE_LINE_TAKE_TWO)
     check_poker_type({0x0D, 0x1D, 0x2D, 0x01, 0x11, 0x21, 0x03, 0x13, 0x06, 0x26}, TYPE_THREE_LINE_TAKE_TWO)
     check_poker_type({0x0C, 0x1C, 0x2C, 0x0D, 0x1D, 0x2D, 0x01, 0x11, 0x21, 0x03, 0x13, 0x04, 0x14, 0x05, 0x15}, TYPE_THREE_LINE_TAKE_TWO)
+    check_poker_type({0x03, 0x13, 0x23, 0x14, 0x24, 0x34, 0x05, 0x15, 0x25, 0x35}, TYPE_THREE_LINE_TAKE_TWO)
 
     --TYPE_FOUR_LINE_TAKE_ONE
     check_poker_type({0x03, 0x13, 0x23, 0x33, 0x01, 0x02}, TYPE_FOUR_LINE_TAKE_ONE)
+    check_poker_type({0x04, 0x14, 0x24, 0x34, 0x03, 0x05}, TYPE_FOUR_LINE_TAKE_ONE)
+
 
     --TYPE_FOUR_LINE_TAKE_TWO
     check_poker_type({0x03, 0x13, 0x23, 0x33, 0x01, 0x11, 0x02, 0x22}, TYPE_FOUR_LINE_TAKE_TWO)
@@ -366,6 +776,9 @@ local function test_get_type()
     check_poker_type({0x0D, 0x1D, 0x2D, 0x01, 0x11, 0x21, 0x33}, TYPE_ERROR)
     check_poker_type({0x0D, 0x1D, 0x2D, 0x01, 0x11, 0x21, 0x03, 0x04, 0x05}, TYPE_ERROR)
     check_poker_type({0x03, 0x13, 0x23, 0x33, 0x01, 0x02, 0x01}, TYPE_ERROR)
+
+
+    
 
     local function check_contain(poker_list, sub_poker_list)
         table.sort(poker_list, sort_card)
@@ -397,7 +810,90 @@ local function test_get_type()
     check_compare_card({0x03}, {0x04})
     check_compare_card({0x03, 0x13}, {0x04, 0x14})
 
-    assert(get_card_type({0x0C, 0x0D}) == TYPE_ERROR)
+
+    local function check_calc_tip_poker(poker_list, pre_poker_list, result_list)
+        table.sort(poker_list, sort_card)
+        table.sort(pre_poker_list, sort_card)
+        table.sort(result_list, sort_card)
+        
+        local out_list = sort_calc_tip_poker(poker_list, pre_poker_list)
+        assert_eq(out_list, result_list, "check_calc_tip_poker error")
+    end
+
+
+
+    -- calc none tip
+    check_calc_tip_poker({0x03, 0x04, 0x05}, {}, {0x03})
+    check_calc_tip_poker({0x03, 0x13, 0x04, 0x05}, {}, {0x03, 0x13})
+
+    -- calc TYPE_SINGLE tip
+    check_calc_tip_poker({0x03, 0x04, 0x05}, {0x03}, {0x04})
+    check_calc_tip_poker({0x03, 0x04, 0x05}, {0x06}, {})
+    check_calc_tip_poker({0x03, 0x13, 0x23, 0x33, 0x04, 0x05}, {0x06}, {0x03, 0x13, 0x23, 0x33})
+    check_calc_tip_poker({0x03, 0x13, 0x23, 0x33, 0x04, 0x05, 0x06, 0x16, 0x26, 0x36}, {0x4F}, {0x03, 0x13, 0x23, 0x33})
+
+    -- calc TYPE_DOUBLE tip
+    check_calc_tip_poker({0x03, 0x04, 0x05, 0x15}, {0x03, 0x13}, {0x05, 0x15})
+    --拆四条
+    check_calc_tip_poker({0x03, 0x04, 0x05, 0x08, 0x18, 0x28, 0x38}, {0x06, 0x16}, {0x08, 0x18})
+    --拆三条
+    check_calc_tip_poker({0x03, 0x04, 0x05, 0x08, 0x18, 0x28}, {0x06, 0x16}, {0x08, 0x18})
+    --优先二条
+    check_calc_tip_poker({0x03, 0x04, 0x05, 0x08, 0x18, 0x28, 0x09, 0x19}, {0x06, 0x16}, {0x09, 0x19})
+    check_calc_tip_poker({0x03, 0x04, 0x05}, {0x06, 0x16}, {})
+    check_calc_tip_poker({0x03, 0x13, 0x23, 0x33, 0x04, 0x05}, {0x06, 0x16}, {0x03, 0x13, 0x23, 0x33})
+
+    -- calc TYPE_THREE tip
+    check_calc_tip_poker({0x03, 0x04, 0x05, 0x15, 0x25}, {0x03, 0x13, 0x23}, {0x05, 0x15, 0x25})
+    --拆四条
+    check_calc_tip_poker({0x03, 0x04, 0x05, 0x08, 0x18, 0x28, 0x38}, {0x06, 0x16, 0x26}, {0x08, 0x18, 0x28})
+    check_calc_tip_poker({0x03, 0x04, 0x05, 0x08, 0x18, 0x28, 0x38, 0x09, 0x19, 0x29}, {0x06, 0x16, 0x26}, {0x09, 0x19, 0x29})
+    check_calc_tip_poker({0x03, 0x13, 0x23, 0x33, 0x04, 0x05}, {0x06, 0x16, 0x26}, {0x03, 0x13, 0x23, 0x33})
+
+    -- calc TYPE_SINGLE_LINE tip
+    check_calc_tip_poker({0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x15, 0x25}, {0x03, 0x04, 0x05, 0x06, 0x07}, {0x04, 0x05, 0x06, 0x07, 0x08})
+    check_calc_tip_poker({0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0A, 0x02}, {0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x01}, {})
+    check_calc_tip_poker({0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x01, 0x02}, {0x09, 0x0A, 0x0B, 0x0C, 0x0D}, {0x0A, 0x0B, 0x0C, 0x0D, 0x01})
+    check_calc_tip_poker({0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0A, 0x02, 0x4E, 0x4F}, {0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x01}, {0x4E, 0x4F})
+
+    -- calc TYPE_DOUBLE_LINE tip
+    check_calc_tip_poker({0x03, 0x13, 0x04, 0x14, 0x05, 0x15, 0x06, 0x16}, {0x03, 0x13, 0x04, 0x14, 0x05, 0x15}, {0x04, 0x14, 0x05, 0x15, 0x06, 0x16})
+    check_calc_tip_poker({0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0A, 0x02}, {0x03, 0x13, 0x04, 0x14, 0x05, 0x15}, {})
+    check_calc_tip_poker({0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0A, 0x02, 0x4E, 0x4F}, {0x03, 0x13, 0x04, 0x14, 0x05, 0x15}, {0x4E, 0x4F})
+
+    -- calc TYPE_THREE_LINE tip
+    check_calc_tip_poker({0x03, 0x13, 0x04, 0x14, 0x24, 0x15, 0x25, 0x35}, {0x03, 0x13, 0x23, 0x04, 0x14, 0x24}, {0x04, 0x14, 0x24, 0x15, 0x25, 0x35})
+    check_calc_tip_poker({0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0A, 0x02}, {0x03, 0x13, 0x23, 0x04, 0x14, 0x24}, {})
+    check_calc_tip_poker({0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0A, 0x02, 0x4E, 0x4F}, {0x03, 0x13, 0x23, 0x04, 0x14, 0x24}, {0x4E, 0x4F})
+
+
+    -- calc TYPE_THREE_LINE_TAKE_ONE tip
+    check_calc_tip_poker({0x03, 0x13, 0x04, 0x14, 0x24, 0x15, 0x25, 0x35}, {0x03, 0x13, 0x23, 0x04, 0x14, 0x24, 0x06, 0x05}, {0x03, 0x13, 0x04, 0x14, 0x24, 0x15, 0x25, 0x35})
+    check_calc_tip_poker({0x03, 0x13, 0x04, 0x14, 0x24, 0x15, 0x25, 0x35}, {0x03, 0x13, 0x23, 0x04, 0x14, 0x24, 0x33, 0x05}, {0x03, 0x13, 0x04, 0x14, 0x24, 0x15, 0x25, 0x35})
+    check_calc_tip_poker({0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0A, 0x02}, {0x03, 0x13, 0x23, 0x04, 0x14, 0x24, 0x06, 0x05}, {})
+    check_calc_tip_poker({0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0A, 0x02, 0x4E, 0x4F}, {0x03, 0x13, 0x23, 0x04, 0x14, 0x24, 0x06, 0x05}, {0x4E, 0x4F})
+
+
+    -- calc TYPE_THREE_LINE_TAKE_TWO tip
+    check_calc_tip_poker({0x03, 0x13, 0x06, 0x16, 0x04, 0x14, 0x24, 0x15, 0x25, 0x35}, {0x03, 0x13, 0x23, 0x04, 0x14, 0x24, 0x06, 0x16, 0x05, 0x15}, {0x03, 0x13, 0x06, 0x16, 0x04, 0x14, 0x24, 0x15, 0x25, 0x35})
+    check_calc_tip_poker({0x03, 0x13, 0x06, 0x16, 0x04, 0x14, 0x24, 0x15, 0x25, 0x35}, {0x03, 0x13, 0x23, 0x04, 0x14, 0x24, 0x05, 0x15, 0x25, 0x35}, {0x03, 0x13, 0x06, 0x16, 0x04, 0x14, 0x24, 0x15, 0x25, 0x35})
+    check_calc_tip_poker({0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0A, 0x02}, {0x03, 0x13, 0x23, 0x04, 0x14, 0x24, 0x06, 0x16, 0x05, 0x15}, {})
+    check_calc_tip_poker({0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0A, 0x02, 0x4E, 0x4F}, {0x03, 0x13, 0x23, 0x04, 0x14, 0x24, 0x06, 0x16, 0x05, 0x15}, {0x4E, 0x4F})
+
+
+
+    -- calc TYPE_FOUR_LINE_TAKE_ONE tip
+    check_calc_tip_poker({0x06, 0x16, 0x26, 0x36, 0x13, 0x15}, {0x04, 0x14, 0x24, 0x34, 0x03, 0x05}, {0x06, 0x16, 0x26, 0x36, 0x13, 0x15})
+    check_calc_tip_poker({0x03, 0x13, 0x23, 0x33, 0x17, 0x15}, {0x04, 0x14, 0x24, 0x34, 0x03, 0x05}, {0x03, 0x13, 0x23, 0x33})
+
+
+    -- calc TYPE_FOUR_LINE_TAKE_TWO tip
+    check_calc_tip_poker({0x06, 0x16, 0x26, 0x36, 0x23, 0x33, 0x25, 0x35}, {0x04, 0x14, 0x24, 0x34, 0x03, 0x13, 0x05, 0x15}, {0x06, 0x16, 0x26, 0x36, 0x23, 0x33, 0x25, 0x35})
+    check_calc_tip_poker({0x03, 0x13, 0x23, 0x33, 0x17, 0x15}, {0x04, 0x14, 0x24, 0x34, 0x03, 0x13, 0x05, 0x15}, {0x03, 0x13, 0x23, 0x33})
+
+    -- calc TYPE_BOMB_CARD tip
+    check_calc_tip_poker({0x04, 0x14, 0x24, 0x34}, {0x03, 0x13, 0x23, 0x33}, {0x04, 0x14, 0x24, 0x34})
+    check_calc_tip_poker({0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0A, 0x02, 0x4E, 0x4F}, {0x03, 0x13, 0x23, 0x33}, {0x4E, 0x4F})
 
 end
 
