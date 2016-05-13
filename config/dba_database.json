@@ -27,6 +27,7 @@
                 {   "field" : "create_time",               "type" : "int(32)",         "nullable" : 1,         "default" : "" ,         "comment" : "创建时间"                                 },
                 {   "field" : "stone",                     "type" : "int(32)",         "nullable" : 1,         "default" : "0",         "comment" : "钻石"                                  },
                 {   "field" : "gold",                      "type" : "int(32)",         "nullable" : 1,         "default" : "0",         "comment" : "金币"                                  },
+                {   "field" : "sex",                       "type" : "int(8)",          "nullable" : 1,         "default" : "0",         "comment" : "0 男 1 女 其它未知"                                  },
                 {   "field" : "last_logout_time",          "type" : "int(32)",         "nullable" : 1,         "default" : "",         "comment" : "最后登出时间"                                   },
                 {   "field" : "last_login_time",           "type" : "int(32)",         "nullable" : 1,         "default" : "",         "comment" : "最后登陆时间"                                  },
                 {   "field" : "all_login_time",            "type" : "int(32)",         "nullable" : 1,         "default" : "0",         "comment" : "累计登陆时间"                                  },

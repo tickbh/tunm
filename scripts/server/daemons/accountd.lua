@@ -172,6 +172,7 @@ function request_create_user(account, info)
         sp          = 50,
         gold        = 0,
         stone       = 0,
+        sex         = math.random(0, 1),
         create_time = os.time(),
         account_rid = account:query("rid"), 
         vip= 0,

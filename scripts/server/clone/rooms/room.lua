@@ -287,7 +287,6 @@ function ROOM_TDCLS:get_base_info_by_rid(user_rid)
     if not data then
         return nil
     end
-    trace("data.data:query() = %o", data.info)
     return data.info
 end
 

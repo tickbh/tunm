@@ -77,6 +77,9 @@
         "score"                        : { "index" :    71,    "pattern" : "i32" },
         "give_times"                   : { "index" :    72,    "pattern" : "i32" },
         "last_give_time"               : { "index" :    73,    "pattern" : "u32" },
+        "sex"                          : { "index" :    74,    "pattern" : "u8" },
+        "details"                      : { "index" :    75,    "pattern" : "map[]" },
+        
 
         "i8"                           : { "index" :    50000, "pattern" : "i8" },
         "u8"                           : { "index" :    50001, "pattern" : "u8" },

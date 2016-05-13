@@ -202,6 +202,7 @@ function DDZ_DESK_TDCLS:pack_desk_info(user_rid)
     end
     
     local wheels = {}
+    local details = {}
     for i,v in ipairs(self.wheels) do
         if i == user_data.idx then
             table.insert(wheels, v)
@@ -214,8 +215,10 @@ function DDZ_DESK_TDCLS:pack_desk_info(user_rid)
             end
             table.insert(wheels, value)
         end
+        table.insert(details, self.room:get_base_info_by_rid(v.rid) or {})
     end
     result.wheels = wheels
+    result.details = details
 
     if self.cur_step == DDZ_STEP_PLAY then
         result.down_poker = self.down_poker
