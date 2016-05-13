@@ -95,6 +95,9 @@ function cmd_enter_room(user, info)
 
     --get room type, user base info, room game data
     local base_info = dup(user:query())
+    if room.game_type == "ddz" then
+        base_info.ddz_info = user:get_ddz_dbase():query()
+    end
     base_info["server_id"] = tonumber(SERVER_ID)
     INTERNAL_COMM_D.send_room_message(info.room_name, get_ob_rid(user), {enter_room_callback, {user = user, info = info}}, CMD_ROOM_MESSAGE, "enter_room", base_info)
 end

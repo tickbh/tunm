@@ -66,6 +66,19 @@
             ]
         },
         {
+            "name":"ddz_info",
+            "fields" : [
+                {   "field" : "owner",                     "type" : "varchar(12)",     "nullable" : 0,         "default" : "",       "comment" : "人物的RID", "key" : "PRI"          },
+                {   "field" : "pea_amount",                "type" : "int(32)",         "nullable" : 1,         "default" : "0",      "comment" : "豆豆的数量"                        },
+                {   "field" : "score",                     "type" : "int(32)",         "nullable" : 1,         "default" : "0",      "comment" : "玩家积分"                          },
+                {   "field" : "win_amount",                "type" : "int(32)",         "nullable" : 1,         "default" : "0",      "comment" : "胜场次数"                          },
+                {   "field" : "lose_amount",               "type" : "int(32)",         "nullable" : 1,         "default" : "0",      "comment" : "败场次数"                          },
+                {   "field" : "escape_amount",             "type" : "int(32)",         "nullable" : 1,         "default" : "0",      "comment" : "不在线次数"                        },               
+                {   "field" : "give_times",                "type" : "int(32)",         "nullable" : 1,         "default" : "0",      "comment" : "赠送豆豆次数"                      },
+                {   "field" : "last_give_time",            "type" : "int(32)",         "nullable" : 1,         "default" : "0",      "comment" : "最后一次赠送豆豆的时间"            }
+            ]
+        },
+        {
             "name" : "log",
             "fields" : [
                 {   "field" : "time",                     "type" : "int(12)",         "nullable" : 1,         "default" : "",      "comment" : "时间"                               },

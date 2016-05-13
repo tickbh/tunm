@@ -33,6 +33,7 @@ function USER_TDCLS:destruct()
     end
 
     destruct_object(self:get_container())
+    destruct_object(self:get_ddz_dbase())
 
     self:delete_logout_timer()
 end
@@ -101,6 +102,7 @@ function USER_TDCLS:enter_world()
         user = self:query(), 
         item_list = self:get_dump_item(),
         equip_list = self:get_dump_equip(),
+        ddz_info = self:get_ddz_dbase():query(),
     }
    
     self:send_message(MSG_ENTER_GAME, data)
@@ -192,6 +194,13 @@ function USER_TDCLS:save_sub_content(callback, arg)
         end
     end
 
+    self:save_obj_content(self:get_ddz_dbase(), callback, arg)
+end
+
+function USER_TDCLS:save_obj_content(ob, callback, arg)
+    if is_object(ob) then
+        ob:set_change_to_db(callback, arg)
+    end
 end
 
 -- 弹出提示文字
@@ -274,27 +283,35 @@ function USER_TDCLS:get_container()
     return self:query_temp("container")
 end
 
+function USER_TDCLS:set_ddz_dbase( ddz_info )
+    self:set_temp("ddz_info", clone_object(DDZ_INFO_TDCLS, get_ob_rid(self), ddz_info))
+end
+
+function USER_TDCLS:get_ddz_dbase()
+    return self:query_temp("ddz_info")
+end
+
 function USER_TDCLS:get_dump_item()    
     local result = {}
-    for _, data in pairs(self:get_item_info()) do
+    for _, data in pairs(self:get_item_dbase()) do
         table.insert(result, data:query())
     end
     return result
 end
 
-function USER_TDCLS:get_item_info()
+function USER_TDCLS:get_item_dbase()
     return self:get_container():get_page_carry(PAGE_ITEM)
 end
 
-
 function USER_TDCLS:get_dump_equip()
     local result = {}
-    for _, data in pairs(self:get_equip_info()) do
+    for _, data in pairs(self:get_equip_dbase()) do
         table.insert(result, data:query())
     end
     return result
 end
 
-function USER_TDCLS:get_equip_info()
+function USER_TDCLS:get_equip_dbase()
     return self:get_container():get_page_carry(PAGE_EQUIP)
 end
+

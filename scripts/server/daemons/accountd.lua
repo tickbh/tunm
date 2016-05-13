@@ -198,6 +198,7 @@ local function read_user_callback(info, args)
     local user = remove_get(info, "user")
     local item = remove_get(info, "item")
     local equip = remove_get(info, "equip")
+    local ddz_info = remove_get(info, "ddz_info")
     for key, value in pairs(user or {}) do
         info[key] = value
     end
@@ -216,6 +217,7 @@ local function read_user_callback(info, args)
     for _,v in pairs(equip) do
         user_ob:get_container():init_property(v)
     end
+    user_ob:set_ddz_dbase(ddz_info)
     account:set_login_user(user_ob)
 end
 

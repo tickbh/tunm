@@ -152,7 +152,7 @@ function get_property_info(class_id)
 end
 
 -- 取得指定 class_id 的物件信息
-function get_item_info(class_id)
+function get_item_dbase(class_id)
     if not class_id then
         return item_table
     else

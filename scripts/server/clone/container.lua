@@ -487,7 +487,7 @@ function CONTAINER_TDCLS:add_property(class_id, amount, bonus_type)
     end
 
     local combine = 1;
-    if PROPERTY_D.get_item_info(class_id) then
+    if PROPERTY_D.get_item_dbase(class_id) then
         combine = CALC_ITEM_MAX_AMOUNT(class_id);
     end
 

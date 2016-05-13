@@ -98,11 +98,12 @@ end
 
 --玩家进入房间
 function ROOM_TDCLS:entity_enter(server_id, user_rid, info)
-    
+    trace("ROOM_TDCLS:entity_enter = %o", info)
     local data = self.room_entity[user_rid]
     if data then
         data.server_id = server_id
         data.last_op_time = os.time()
+        data.info = info
     else
         --将新实体加该场景
         self.room_entity[user_rid] = {
@@ -118,8 +119,9 @@ function ROOM_TDCLS:entity_enter(server_id, user_rid, info)
             --进入桌子编号
             enter_desk_idx = nil,
 
-            data = clone_object(DBASE_TDCLS, info)
+            info = info,
         }
+
     end
 
     self:send_rid_message(user_rid, {}, MSG_ROOM_MESSAGE, "success_enter_room", {rid = user_rid, room_name = self:get_room_name()})
@@ -177,8 +179,6 @@ function ROOM_TDCLS:entity_destruct(user_rid)
     end
 
     --将该实体从场景中删除，并发送离开场景消息
-    local entity = remove_get(self.room_entity, user_rid)
-    destruct_object(entity.data)
     return 0
 end
 
@@ -287,7 +287,8 @@ function ROOM_TDCLS:get_base_info_by_rid(user_rid)
     if not data then
         return nil
     end
-    return data.data:query()
+    trace("data.data:query() = %o", data.info)
+    return data.info
 end
 
 --判断是否是vip场景
