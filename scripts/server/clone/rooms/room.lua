@@ -179,6 +179,7 @@ function ROOM_TDCLS:entity_destruct(user_rid)
     end
 
     --将该实体从场景中删除，并发送离开场景消息
+    local entity = remove_get(self.room_entity, user_rid)
     return 0
 end
 
