@@ -124,6 +124,20 @@ end
 function respone_room_message(user, oper, info)
     if oper == "reconnect_user" then
         user:send_message(MSG_ROOM_MESSAGE, "pre_room", info)
+    elseif oper == "calc_score" then
+        if info.game_type == "ddz" then
+            local ddz_dbase = user:get_ddz_dbase()
+            if info.is_win == 1 then
+                ddz_dbase:add("score", 6)
+                ddz_dbase:add("win_amount", 1)
+            else
+                ddz_dbase:add("score", -3)
+                ddz_dbase:add("lose_amount", 1)
+            end
+            if info.is_escape == 1 then
+                ddz_dbase:add("escape_amount", 1)
+            end
+        end
     end
 end
 

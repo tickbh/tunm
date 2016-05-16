@@ -61,7 +61,6 @@ function get_new_game_poker()
         table.sort(user_pokers[i], sort_card)
     end
     table.sort(down_poker, sort_card)
-    trace("user_pokers = %o, down_poker = %o", user_pokers, down_poker)
     return user_pokers, down_poker
 end
 

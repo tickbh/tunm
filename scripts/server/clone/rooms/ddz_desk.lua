@@ -263,13 +263,21 @@ function DDZ_DESK_TDCLS:win_by_idx(idx)
     --TODO win
     self:change_cur_step(DDZ_STEP_NONE)
     self.retry_deal_times = 0
-    for _,wheel in ipairs(self.wheels) do
+    for i,wheel in ipairs(self.wheels) do
         local user_data = self.users[wheel.rid]
-        if user_data and user_data.last_logout_time then
-            self:user_leave(wheel.rid)
-            --掉线的则为桌号通知房间已掉线
-            self.room:entity_leave(wheel.rid)
+        if user_data then
+            self:send_rid_message(wheel.rid, RESPONE_ROOM_MESSAGE, "calc_score", {
+                is_win = (i == idx and 1 or 0), 
+                game_type = self.room:get_game_type(), 
+                is_escape = (is_int(user_data.last_logout_time) and 1 or 0)
+            })
+            if user_data.last_logout_time then
+                self:user_leave(wheel.rid)
+                --掉线的则为桌号通知房间已掉线
+                self.room:entity_leave(wheel.rid)
+            end
         end
+
     end
 end
 
