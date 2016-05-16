@@ -695,12 +695,65 @@ function sort_calc_tip_poker(poker_list, pre_poker_list)
     return out_list
 end
 
+function calc_pea_change(pea_amount_list, idx, lord_idx, multi_num, is_win)
+    local base_pea = multi_num * 10
+    local is_lord = idx == lord_idx
+    local one_cost = 220
+    local sum = 0
+    local lord_pea = pea_amount_list[lord_idx]
+    if is_win == 1 then
+        if is_lord then
+            local per_max_add = lord_pea / 2
+            for i=1,3 do
+                if i ~= lord_idx then
+                    sum = sum + calc_table_min({base_pea, per_max_add, math.max(pea_amount_list[i] - one_cost, 0)})
+                end
+            end
+        else
+            local per_max_add = (lord_pea - one_cost) / 2
+            sum = sum + calc_table_min({base_pea, per_max_add, math.max(pea_amount_list[idx], 0)})
+        end
+    else
+        if is_lord then
+            for i=1,3 do
+                if i ~= lord_idx then
+                    sum = sum - calc_table_min({base_pea, (lord_pea - one_cost) / 2, math.max(pea_amount_list[i], 0)})
+                end
+            end
+        else
+            sum = - calc_table_min({base_pea, lord_pea / 2, math.max(pea_amount_list[idx] - one_cost, 0)})
+        end
+    end
+    sum = sum - one_cost
+    return sum
+
+end
+
 
 --Test Func
 local function test_sort()
     local card_ori = {0x0B, 0x01, 0x08, 0x02, 0x4E}
     table.sort(card_ori, sort_card)
     assert_eq(card_ori, {0x4E, 0x02, 0x01, 0x0B, 0x08}, "array error")
+end
+
+local function test_pea_change()
+    local function check_pea_change(pea_amount_list, idx, lord_idx, multi_num, is_win, result)
+        local ret = calc_pea_change(pea_amount_list, idx, lord_idx, multi_num, is_win)
+        assert(ret == result)    
+    end
+    
+    check_pea_change({1000, 1000, 1000}, 1, 1, 15, 1, 80)
+    check_pea_change({1000, 1000, 1000}, 1, 1, 150, 1, 780)
+
+    check_pea_change({1000, 1000, 1000}, 1, 2, 15, 1, -70)
+    check_pea_change({1000, 1000, 1000}, 1, 2, 150, 1, 170)
+
+    check_pea_change({1000, 1000, 1000}, 1, 1, 15, 0, -520)
+    check_pea_change({1000, 1000, 1000}, 1, 1, 150, 0, -1000)
+
+    check_pea_change({1000, 1000, 1000}, 1, 2, 15, 0, -370)
+    check_pea_change({1000, 1000, 1000}, 1, 2, 150, 0, -720)
 end
 
 local function check_poker_type(poker_list, poker_type)
@@ -903,4 +956,5 @@ end
 if ENABLE_TEST then
     test_sort()
     test_get_type()
+    test_pea_change()
 end

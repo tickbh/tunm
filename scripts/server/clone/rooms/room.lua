@@ -98,7 +98,6 @@ end
 
 --玩家进入房间
 function ROOM_TDCLS:entity_enter(server_id, user_rid, info)
-    trace("ROOM_TDCLS:entity_enter = %o", info)
     local data = self.room_entity[user_rid]
     if data then
         data.server_id = server_id

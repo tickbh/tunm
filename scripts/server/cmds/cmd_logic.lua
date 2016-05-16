@@ -127,16 +127,8 @@ function respone_room_message(user, oper, info)
     elseif oper == "calc_score" then
         if info.game_type == "ddz" then
             local ddz_dbase = user:get_ddz_dbase()
-            if info.is_win == 1 then
-                ddz_dbase:add("score", 6)
-                ddz_dbase:add("win_amount", 1)
-            else
-                ddz_dbase:add("score", -3)
-                ddz_dbase:add("lose_amount", 1)
-            end
-            if info.is_escape == 1 then
-                ddz_dbase:add("escape_amount", 1)
-            end
+            ddz_dbase:calc_score(info)
+            INTERNAL_COMM_D.send_room_message(info.room_name, get_ob_rid(user), {}, CMD_ROOM_MESSAGE, "detail_info", {ddz_info = ddz_dbase:query()})
         end
     end
 end

@@ -200,6 +200,12 @@ function cmd_room_message(room_name, user_rid, cookie, oper, info)
         else
             ret = room:desk_op(user_rid, info)
         end
+    elseif oper == "detail_info" then
+        if not data then
+            ret = -1
+        else
+            merge(data, info)
+        end
     end
 
     if data then

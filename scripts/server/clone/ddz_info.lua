@@ -52,6 +52,26 @@ function DDZ_INFO_TDCLS:try_give_pea()
     return false
 end
 
+function DDZ_INFO_TDCLS:calc_score(info)
+    if info.is_win == 1 then
+        self:add("score", 6)
+        self:add("win_amount", 1)
+    else
+        self:add("score", -3)
+        self:add("lose_amount", 1)
+    end
+    if info.is_escape == 1 then
+        self:add("escape_amount", 1)
+    end
+
+    local change_pea = DDZ_D.calc_pea_change(info.pea_amount_list, info.idx, info.lord_idx, info.multi_num, info.is_win)
+    self:add("pea_amount", change_pea)
+    if self:query("pea_amount") < 0 then
+        self:set("pea_amount", 0)
+    end
+    self:try_give_pea()
+end
+
 -- 取得保存数据库的信息
 function DDZ_INFO_TDCLS:save_to_mapping()
       -- 道具数据发生变化的字段

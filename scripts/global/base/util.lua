@@ -30,6 +30,26 @@ function table_maxn(value)
     return result
 end
 
+function calc_table_max(value)
+    local result = 0
+    for _,v in pairs(value) do
+        if type(v) == "number" and v > result then
+            result = v
+        end
+    end
+    return result
+end
+
+function calc_table_min(value)
+    local result = 99999999
+    for _,v in pairs(value) do
+        if type(v) == "number" and v < result then
+            result = v
+        end
+    end
+    return result
+end
+
 if not table.maxn then
     table.maxn = table_maxn
 end

@@ -15,6 +15,7 @@ function DDZ_DESK_TDCLS:create()
     self.cur_step = "none"
     self.cur_op_idx = -1
     self.lord_idx = -1
+    self.multi_num = 15
     self.retry_deal_times = 0
 
     self.down_poker = {}
@@ -65,6 +66,7 @@ function DDZ_DESK_TDCLS:change_cur_step(new_step)
         
         self.cur_op_idx = -1
         self.lord_idx = -1
+        self.multi_num = 15
         self.play_poker_list = {}
         self.down_poker = {}
         self.lord_list = {}
@@ -92,6 +94,9 @@ function DDZ_DESK_TDCLS:finish_lord(lord_idx)
     local wheel = self.wheels[self.lord_idx]
     append_to_array(wheel.poker_list, self.down_poker)
     DDZ_D.resort_poker(wheel.poker_list)
+    if true then
+        --wheel.poker_list = {0x01}
+    end
     for i,v in ipairs(self.wheels) do
         local desk_info = self:pack_desk_info(v.rid)
         desk_info.lord_idx = self.lord_idx
@@ -102,6 +107,9 @@ end
 
 function DDZ_DESK_TDCLS:cur_lord_choose(is_choose)
     local info = {idx = self.cur_op_idx, is_choose = is_choose}
+    if is_choose == 1 then
+        self:do_double_multi_num()
+    end
     table.insert(self.lord_list, info)
     self:broadcast_message(MSG_ROOM_MESSAGE, "deal_info", info)
     if #self.lord_list < 3 then
@@ -195,7 +203,7 @@ function DDZ_DESK_TDCLS:is_playing(user_rid)
 end
 
 function DDZ_DESK_TDCLS:pack_desk_info(user_rid)
-    local result = {cur_step = self.cur_step, cur_op_idx = self.cur_op_idx, lord_idx = self.lord_idx}
+    local result = {cur_step = self.cur_step, cur_op_idx = self.cur_op_idx, lord_idx = self.lord_idx, multi_num = self.multi_num}
     local user_data = self.users[user_rid]
     if not user_data then
         return result
@@ -258,18 +266,32 @@ function DDZ_DESK_TDCLS:user_leave(user_rid)
     return 0
 end
 
+function DDZ_DESK_TDCLS:get_all_pea_amount()
+    local pea_amount_list = {}
+    for i=1,3 do
+        local wheel = self.wheels[i]
+        local info = self.room:get_base_info_by_rid(wheel.rid)
+        info.ddz_info = info.ddz_info or {}
+        table.insert(pea_amount_list, info.ddz_info.pea_amount or 0)
+    end
+    return pea_amount_list
+end
+
 function DDZ_DESK_TDCLS:win_by_idx(idx)
+    local pea_amount_list = self:get_all_pea_amount()
     self:broadcast_message(MSG_ROOM_MESSAGE, "team_win", {idx = idx})
-    --TODO win
-    self:change_cur_step(DDZ_STEP_NONE)
-    self.retry_deal_times = 0
     for i,wheel in ipairs(self.wheels) do
         local user_data = self.users[wheel.rid]
         if user_data then
             self:send_rid_message(wheel.rid, RESPONE_ROOM_MESSAGE, "calc_score", {
-                is_win = (i == idx and 1 or 0), 
+                is_win = (i == idx and 1 or 0),
+                idx = i,
+                lord_idx = self.lord_idx,
+                room_name = self.room:get_room_name(),
                 game_type = self.room:get_game_type(), 
-                is_escape = (is_int(user_data.last_logout_time) and 1 or 0)
+                is_escape = (is_int(user_data.last_logout_time) and 1 or 0),
+                multi_num = self.multi_num,
+                pea_amount_list = pea_amount_list,
             })
             if user_data.last_logout_time then
                 self:user_leave(wheel.rid)
@@ -277,8 +299,8 @@ function DDZ_DESK_TDCLS:win_by_idx(idx)
                 self.room:entity_leave(wheel.rid)
             end
         end
-
     end
+    self:change_cur_step(DDZ_STEP_NONE)
 end
 
 function DDZ_DESK_TDCLS:get_last_poker_list()
@@ -300,6 +322,18 @@ function DDZ_DESK_TDCLS:check_round_end()
         return true, self.play_poker_list[len - 2].idx
     end
     return false
+end
+
+function DDZ_DESK_TDCLS:do_double_multi_num()
+    self.multi_num = self.multi_num * 2
+    self:broadcast_message(MSG_ROOM_MESSAGE, "multi_num_change", {multi_num = self.multi_num})
+end
+
+function DDZ_DESK_TDCLS:try_double_multi_num(poker_list)
+    local card_type = DDZ_D.get_card_type(poker_list)
+    if card_type == DDZ_D.TYPE_BOMB_CARD or card_type == DDZ_D.TYPE_MISSILE_CARD then
+        self:do_double_multi_num()
+    end
 end
 
 function DDZ_DESK_TDCLS:deal_poker(poker_list)
@@ -338,6 +372,7 @@ function DDZ_DESK_TDCLS:deal_poker(poker_list)
         return false, "所选牌必须要大过上家"
     end
 
+    self:try_double_multi_num(poker_list)
 
     table.insert(self.play_poker_list, {idx = self.cur_op_idx, is_play = 1, poker_list = poker_list })
 
