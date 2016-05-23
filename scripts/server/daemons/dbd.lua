@@ -59,11 +59,11 @@ function get_auto_increment_desc()
 end
 
 function get_db_type()
-    if true then
-        return "mysql"
-    end
-    if db_type then
-        return db_type
+    -- if true then
+    --     return "mysql"
+    -- end
+    if DB_TYPE then
+        return DB_TYPE
     end
 
     db_type = get_config_value("DB_TYPE")

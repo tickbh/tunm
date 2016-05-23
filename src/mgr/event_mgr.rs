@@ -259,7 +259,7 @@ impl EventMgr {
         let sock_ev = unwrap_or!(self.connect_ids.remove(&fd), return);
         self.event_loop.del_event(sock_ev.get_socket_fd() as u32, EventFlags::all());
         self.event_loop
-            .add_timer(EventEntry::new_timer(200000,
+            .add_timer(EventEntry::new_timer(200_000,
                                              false,
                                              Some(EventMgr::kick_callback),
                                              Some(Box::into_raw(Box::new(sock_ev)) as *mut ())));
