@@ -141,14 +141,14 @@ end
 
 -- 是否处于服务器负载
 function is_server_load_limit()
-
+    -- TODO fix Mac cpu avg 
     -- 判断gs负载情况
     local cpu = SYSTEM_D.get_cpu_ratio_avg() or 0
     if cpu < cpu_useage_limit then
         return false
     end
 
-    return true
+    return false
 end
 
 -- 从登录队列中取出登录请求
