@@ -1,11 +1,15 @@
 use NetResult;
 use NetMsg;
 
+/// DbTrait is the interface for db, if you would support new db, impl it
 pub trait DbTrait
     where Self: Sized
 {
+    /// data will store in NetMsg, if return i32 not 0, it may occur sql error
     fn select(&mut self, sql_cmd: &str, msg: &mut NetMsg) -> NetResult<i32>;
+    /// execute sql, but not store data, if return i32 not 0, it may occur sql error
     fn execute(&mut self, sql_cmd: &str) -> NetResult<i32>;
+    /// data will store in NetMsg, if return i32 not 0, it may occur sql error, you can call get_last_insert_id get insert id
     fn insert(&mut self, sql_cmd: &str, msg: &mut NetMsg) -> NetResult<i32>;
     fn begin_transaction(&mut self) -> NetResult<i32>;
     fn commit_transaction(&mut self) -> NetResult<i32>;

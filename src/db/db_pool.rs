@@ -9,6 +9,7 @@ static mut el: *mut DbPool = 0 as *mut _;
 
 const MAX_KEEP_CONN: f64 = 3600f64;
 
+/// it store the db connection,  and the base db info
 pub struct DbPool {
     pub db_mysql: HashMap<String, Vec<DbMysql>>,
     pub db_info: HashMap<String, String>,
@@ -16,8 +17,11 @@ pub struct DbPool {
 }
 
 pub trait PoolTrait: Sized {
+    /// get the db connection from pool, it not exist it will call init_db_trait init connection
     fn get_db_trait(pool: &mut DbPool, db_name: &String) -> Option<Self>;
+    /// finish use the connection, it will push into pool
     fn release_db_trait(pool: &mut DbPool, db_name: &String, db: Self);
+    /// init db connection 
     fn init_db_trait(pool: &mut DbPool, db_name: &String) -> Option<Self>;
 }
 
@@ -44,6 +48,7 @@ impl DbPool {
         true
     }
 
+    /// try remove the long time unuse connection
     pub fn check_connect_timeout(&mut self) {
         let _guard = self.mutex.lock().unwrap();
         let cur_time = time::precise_time_s();

@@ -7,7 +7,7 @@ use td_rredis::{Value, RedisError, RedisResult, Cmd, Msg};
 
 static STATUS_SUFFIX: &'static str = "::STATUS";
 static ERROR_SUFFIX: &'static str = "::ERROR";
-
+/// the wrapper for push to lua
 pub struct RedisWrapperValue(pub Value);
 pub struct RedisWrapperError(pub RedisError);
 pub struct RedisWrapperResult(pub RedisResult<Value>);

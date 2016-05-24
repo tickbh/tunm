@@ -8,7 +8,7 @@ use td_rredis::{RedisResult, Value};
 use super::{LuaWrapperTableValue, RedisWrapperResult};
 
 static mut el: *mut LuaEngine = 0 as *mut _;
-
+/// the type of lua call type
 enum LuaElem {
     /// fd, msg
     Message(i32, NetMsg),
@@ -26,12 +26,14 @@ enum LuaElem {
     ArgsFunc(String, Vec<String>),
 }
 
+/// the enterface to call lua, it store the lua state and exec list
 pub struct LuaEngine {
     exec_list: Vec<LuaElem>,
     lua: Lua,
     mutex: Arc<ReentrantMutex<i32>>,
 }
 
+/// custom lua load func
 extern "C" fn load_func(lua: *mut td_rlua::lua_State) -> libc::c_int {
     let path: String = unwrap_or!(td_rlua::LuaRead::lua_read(lua), return 0);
     let full_path = unwrap_or!(FileUtils::instance().full_path_for_name(&*path), path);

@@ -7,6 +7,7 @@ use td_revent::FromFd;
 use std::sync::{Arc, Mutex};
 use ThreadUtils;
 static REDIS_SUB_POOL_NAME: &'static str = "redis_sub";
+/// redis pool store redis info and redis connection and a subscribe redis connection
 pub struct RedisPool {
     pub db_redis: Vec<Cluster>,
     pub url_list: Vec<String>,

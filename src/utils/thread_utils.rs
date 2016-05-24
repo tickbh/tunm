@@ -1,6 +1,6 @@
 use ThreadPool;
 use std::collections::HashMap;
-
+/// the thread pool info
 pub struct ThreadUtils {
     pools: HashMap<String, ThreadPool>,
 }

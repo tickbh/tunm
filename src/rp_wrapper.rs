@@ -3,8 +3,7 @@ use libc;
 
 use td_rp::Value;
 use td_rlua::{self, LuaPush, lua_State};
-
-
+/// the wrapper for push to lua
 pub struct LuaWrapperValue(pub Value);
 
 impl LuaPush for LuaWrapperValue {
