@@ -70,7 +70,7 @@ function create_new_account(login_info)
 
     -- 检查信息是否合法
     if not is_string(device_id) then
-        trace("创建新角色信息不合法。\n")
+        trace("创建新角色信息不合法。")
         return
     end
 

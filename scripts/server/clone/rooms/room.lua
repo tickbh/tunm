@@ -75,7 +75,7 @@ function ROOM_TDCLS:broadcast_message(msg, ...)
     local send_raw_message = get_class_func(USER_TDCLS, "send_raw_message")
 
     if not msg_buf then
-        trace("广播消息(%d)打包消息失败。\n", msg)
+        trace("广播消息(%d)打包消息失败。", msg)
         return
     end
 
@@ -148,7 +148,7 @@ end
 --玩家离开房间
 function ROOM_TDCLS:entity_leave(user_rid)
     if not self.room_entity[user_rid] then
-        LOG.err("Error:对象%s离开房间%s时找不到自己\n", user_rid, self:get_room_name())
+        LOG.err("Error:对象%s离开房间%s时找不到自己", user_rid, self:get_room_name())
     end
 
     --设置实体的登出时间，如果实体还在游戏中则等待处理，如果实体不在游戏中，则下一秒则析构掉玩家对像
@@ -174,7 +174,7 @@ end
 --玩家离开房间
 function ROOM_TDCLS:entity_destruct(user_rid)
     if not self.room_entity[user_rid] then
-        LOG.err("Error:对象%s析构时找不到自己\n", user_rid)
+        LOG.err("Error:对象%s析构时找不到自己", user_rid)
     end
 
     --将该实体从场景中删除，并发送离开场景消息
@@ -195,7 +195,7 @@ end
 function ROOM_TDCLS:enter_desk(user_rid, idx, enter_method)
     local data = self.room_entity[user_rid]
     if not data then
-        LOG.err("Error:%s进入桌子时找不到自己\n", user_rid)
+        LOG.err("Error:%s进入桌子时找不到自己", user_rid)
         return -1
     end
     if idx and idx == data.enter_desk_idx then
@@ -210,7 +210,7 @@ function ROOM_TDCLS:enter_desk(user_rid, idx, enter_method)
     end
 
     if data.enter_desk_idx then
-        LOG.err("Error:%s已在%d桌，无法进入\n", user_rid, data.enter_desk_idx)
+        LOG.err("Error:%s已在%d桌，无法进入", user_rid, data.enter_desk_idx)
         return -1
     end
     if not idx then
@@ -220,7 +220,7 @@ function ROOM_TDCLS:enter_desk(user_rid, idx, enter_method)
 
     local desk = self.desk_entity[idx]
     if not desk then
-        LOG.err("Error:%o桌号不存在\n", idx)
+        LOG.err("Error:%o桌号不存在", idx)
         return -1
     end
 
@@ -232,7 +232,7 @@ end
 function ROOM_TDCLS:send_rid_message(user_rid, record, msg, ...)
     local msg_buf = pack_message(msg, ...)
     if not msg_buf then
-        trace("广播消息(%s)打包消息失败。\n", msg)
+        trace("广播消息(%s)打包消息失败。", msg)
         return
     end
     self:send_rid_raw_message(user_rid, record, msg_buf)

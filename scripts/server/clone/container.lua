@@ -37,7 +37,7 @@ function CONTAINER_TDCLS:combine_to_pos(property, dst_pos)
 
     -- 判断是否可以合并
     if not pre_property:can_combine(property) then
-        trace("原道具(%s/%d)无法与道具(%s/%d)进行合并。\n", pre_property:query("rid"),
+        trace("原道具(%s/%d)无法与道具(%s/%d)进行合并。", pre_property:query("rid"),
               pre_property:query("class_id"), property:query("rid"), property:query("class_id"));
         return false;
     end
@@ -45,7 +45,7 @@ function CONTAINER_TDCLS:combine_to_pos(property, dst_pos)
     -- 判断合并数量是否溢出
     if pre_property:query("amount") + property:query("amount") >
         CALC_ITEM_MAX_AMOUNT(property) then
-        trace("原道具(%s/%d)与道具(%s/%d)进行合并后数量超过最大叠加数。\n", pre_property:query("rid"),
+        trace("原道具(%s/%d)与道具(%s/%d)进行合并后数量超过最大叠加数。", pre_property:query("rid"),
               pre_property:query("class_id"), property:query("rid"), property:query("class_id"));
         return false;
     end
@@ -64,7 +64,7 @@ end
 function CONTAINER_TDCLS:drop(property)
     --判断道具对象是否存在
     if not property or not is_object(property) then
-       trace("drop的道具对象不存在\n");
+       trace("drop的道具对象不存在");
        return;
     end
 
@@ -250,7 +250,6 @@ end
 
 -- 取得某一位置上的物件
 function CONTAINER_TDCLS:get_pos_carry(pos)
-    --trace("__ CONTAINER_TDCLS:get_pos_carry(pos=%o) ___ self.carry=%o \n ", pos, self.carry)
     return self.carry[pos];
 end
 

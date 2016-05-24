@@ -96,7 +96,7 @@ function USER_TDCLS:enter_world()
     -- 发送开始游戏的消息
     self:set_temp("entered_world", true)
     raise_issue(EVENT_USER_LOGIN, self)
-    trace("玩家(%o  %s/%s)进入游戏世界。\n", self:query("name"), get_ob_rid(self), self:query("account_rid"))
+    trace("玩家(%o  %s/%s)进入游戏世界。", self:query("name"), get_ob_rid(self), self:query("account_rid"))
    
     local data = {
         user = self:query(), 
@@ -127,7 +127,7 @@ end
 function USER_TDCLS:leave_world()
     self:delete_hearbeat()
     raise_issue(EVENT_USER_LOGOUT, self)
-    trace("玩家(%s/%s)离开游戏世界。\n", get_ob_rid(self), self:query("account_rid"))
+    trace("玩家(%s/%s)离开游戏世界。", get_ob_rid(self), self:query("account_rid"))
     self:delete_temp("entered_world")
 
     local value = {rid=get_ob_rid(self), online=0}

@@ -19,7 +19,7 @@ function ITEM_TDCLS:create(value)
     else
         local max_count = CALC_ITEM_MAX_AMOUNT(self)
         if value["amount"] > max_count then
-            trace("创建道具(%s/%d)的数量(%d)超过最大可叠加数(%d)，请检查。\n",
+            trace("创建道具(%s/%d)的数量(%d)超过最大可叠加数(%d)，请检查。",
                   self:query("rid"), self:query("class_id"), value["amount"], max_count)
         end
     end
@@ -45,7 +45,6 @@ end
 
 -- 道具增加数量
 function ITEM_TDCLS:add_amount(count)
-    trace("ITEM_TDCLS:add_amount amount is %o", count)
     if count <= 0 then
         return
     end
@@ -54,7 +53,7 @@ function ITEM_TDCLS:add_amount(count)
     amount = amount + count
 
     if amount > CALC_ITEM_MAX_AMOUNT(self) then
-        trace("增加道具数量(%d)超过该物品的最大可叠加数。\n", amount)
+        trace("增加道具数量(%d)超过该物品的最大可叠加数。", amount)
         return
     end
 

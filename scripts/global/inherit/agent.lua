@@ -157,7 +157,6 @@ end
 
 -- 发送消息
 function AGENT_TDCLS:send_message(msg, ...)
-    -- trace("###################1 msg : %s ###################\n%o\n", msg, { ... });
     local port_no = self.port_no;
     if port_no == -1 then
         return;
@@ -174,13 +173,13 @@ function AGENT_TDCLS:send_message(msg, ...)
         local flag = get_send_debug_flag();
         if (type(flag) == "number" and flag == 1) or
            (type(flag) == "table" and self:is_user() and flag[self:get_rid()]) then
-            trace("################### cmd : %s ###################\n%o\n",
+            trace("################### cmd : %s ###################\n%o",
                   msg, { ... });
         end
     elseif self:is_user() then
         -- 表示发送缓存区已满，若是玩家直接关闭该连接
         if ret == 2 then
-            trace("玩家 socket 发送缓存区已满，断开该连接。\n");
+            trace("玩家 socket 发送缓存区已满，断开该连接。");
             set_timer(10, self.connection_lost, self);
             write_log(string.format("Error: socket 发送缓存区已满，断开该连接。玩家(%s),send_message(%s)\n",
                                      self:query("rid"), tostring(msg) ));
@@ -205,14 +204,14 @@ function AGENT_TDCLS:send_raw_message(msg_buf)
         local flag = get_send_debug_flag();
         if (type(flag) == "number" and flag == 1) or
            (type(flag) == "table" and self:is_user() and flag[self:get_rid()]) then
-            trace("################### msg : %d ###################\n", net_msg:getPackId());
+            trace("################### msg : %d ###################", net_msg:getPackId());
         end
     elseif ret == 2 then
         -- 表示发送缓存区已满，若不是玩家，则需要缓存，若是玩家直接关闭该连接
         if self:is_user() then
-            trace("玩家 socket 发送缓存区已满，断开该连接。\n");
+            trace("玩家 socket 发送缓存区已满，断开该连接。");
             set_timer(10, self.connection_lost, self);
-            write_log(string.format("Error: socket 发送缓存区已满，断开该连接。玩家(%s),send_raw_message\n", self:query("rid")));
+            write_log(string.format("Error: 玩家(%s) send_raw_message 发送缓存区已满，断开该连接。", self:query("rid")));
         end
     end
     del_message(net_msg)
@@ -220,9 +219,7 @@ end
 
 -- 设置该 agent 是否通过验证
 function AGENT_TDCLS:set_authed(flag)
-    --trace("_________AGENT_TDCLS:set_authed(flag)____%o", flag)
     self.authed = flag;
-
     if flag then
         -- 该 agent 通过验证，则需要删除析构的定时器
         if is_int(self.timer_id) and self.timer_id > 0 then

@@ -127,12 +127,12 @@ function login(agent, login_info)
     local device_id = login_info["device_id"]
 
     if not device_id then
-        trace("玩家(%s ,设备%o)登录没有传入设备ID.\n", account, device_id)
+        trace("玩家(%s ,设备%o)登录没有传入设备ID.", account, device_id)
         return
     end
 
     if not server_id then
-        trace("玩家(%s ,设备%o)登录没有传入服务器ID.\n", account, device_id)
+        trace("玩家(%s ,设备%o)登录没有传入服务器ID.", account, device_id)
         return
     end
 

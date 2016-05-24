@@ -63,7 +63,7 @@ end
 
 -- 连接断开的回调
 function cmd_connection_lost(port_no)
-    trace("断开连接(%d)\n", port_no)
+    trace("断开连接(%d)", port_no)
     -- 取得该端口对应的 agent
     local agent = find_agent_by_port(port_no)
     if agent == nil then
@@ -96,7 +96,7 @@ end
 
 -- 收到新连接
 function cmd_new_connection(cookie, fd, client_ip, server_port)
-    trace("收到新连接(%d)。端口(%d), 客户端地址(%s), new connect info\n", fd, server_port, client_ip)
+    trace("收到新连接(%d)。端口(%d), 客户端地址(%s), new connect info", fd, server_port, client_ip)
     local f = new_connection_callback[cookie]
     if type(f) == "function" then
         -- 若该连接有回调，则调用之
@@ -228,12 +228,12 @@ function oper_message(agent, message, msg_buf)
     local flag = get_debug_flag()
     if (type(flag) == "number" and flag == 1) or
            (type(flag) == "table" and self:is_user() and flag[self:get_rid()]) then
-        trace("------------- msg : %s -------------\n%o\n", message, args)
+        trace("------------- msg : %s -------------\n%o", message, args)
     end
     
     local message_handler = _G[message]
     if not message_handler then
-        trace("global_dispatch_command message_handler : %o 未定义消息处理函数!\n", message)
+        trace("global_dispatch_command message_handler : %o 未定义消息处理函数!", message)
         return
     end
 
@@ -267,7 +267,7 @@ function global_dispatch_command(port_no, message, buffer)
 
     local mm_type = get_message_manage_type(message, agent:get_server_type())
     if mm_type == MESSAGE_DISCARD then
-        trace("------------- discard port_no is %o, cmd : %s -------------\n", port_no, message)
+        trace("------------- discard port_no is %o, cmd : %s -------------", port_no, message)
         del_message(buffer)
         return 
     end

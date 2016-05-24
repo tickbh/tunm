@@ -201,8 +201,7 @@ function check_leak_obj_refs(raiser, check_weak)
     -- 获得泄漏的对象表
     local leak_object_list = get_leak_obj_list()
     if sizeof(leak_object_list) == 0 then
-        print("无内存泄漏\n")
-        write_log("无内存泄漏\n")
+        trace("无内存泄漏\n")
         return
     end
 
@@ -218,10 +217,10 @@ function check_leak_obj_refs(raiser, check_weak)
 
             if not raiser then
                 -- 打印出泄漏信息
-                print("%o", result)
+                trace("%o", result)
             else
                 -- 写日志
-                local str_result = string.format("Error: %s\n", save_string(result))
+                local str_result = string.format("Error: %s", save_string(result))
                 write_log(str_result)
             end
         end

@@ -42,11 +42,11 @@ end
 -- 设置定时器
 function set_timer(timeout, callback, arg, is_repeat)
 
-    assert(timeout > 0, "超时时间必须>0\n");
+    assert(timeout > 0, "超时时间必须>0");
     -- 创建一个新的 timer
     local id = timer_event_set(timeout, is_repeat or false);
     if not id then
-        assert(false, "设置定时器失败。\n");
+        assert(false, "设置定时器失败。");
     end
 
     local cache_arg;

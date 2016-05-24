@@ -29,7 +29,7 @@ TIME_LOGIN = 500
 
 -- 调试函数，看本模块的局部变量值
 function watch()
-    print("账号前缀:%o\n", start_time)
+    print("账号前缀:%o", start_time)
 end
 
 -- 获取当前进程所占内存
@@ -49,7 +49,7 @@ function check_system()
     local online_number = online_number()
 
     -- 打印信息
-    trace("\nprocess memory : %o MB\nlogin  number  : %o\nonline number  : %o\n",
+    trace("\nprocess memory : %o MB\nlogin  number  : %o\nonline number  : %o",
            memory, login_number, online_number)
 
     -- 判断系统资源占用是否过多
@@ -121,7 +121,7 @@ function heartbeat_handler(player)
                     -- 调用子模块的统一接口
                     child_module.operation(player)
                 else
-                    print("找不到压力测试子模块(%o) 或者 该子模块未定义'operation'接口!\n", test_module)
+                    trace("找不到压力测试子模块(%o) 或者 该子模块未定义'operation'接口!", test_module)
                     test_modules[test_module] = nil
                 end
 
@@ -129,7 +129,7 @@ function heartbeat_handler(player)
                 accumulate[test_module] = 0
             end
         else
-            print("要求测试的压力子模块(%o)并未定义!\n", test_module)
+            trace("要求测试的压力子模块(%o)并未定义!", test_module)
             test_modules[test_module] = nil
         end
     end
@@ -271,7 +271,7 @@ end
 -- 登陆成功 事件处理
 function func_login_ok(player)
 
-    trace("%o登陆成功！\n", player)
+    trace("%o登陆成功！", player)
 
     local extra_data   = player:query_temp("extra_data") or {}
     local test_modules = extra_data.test_modules

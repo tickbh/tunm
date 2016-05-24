@@ -10,7 +10,7 @@
 function load_folder(path, arrange, ...)
     local table_file = get_floder_files(path, ...)
     if sizeof(table_file) == 0 then
-        trace("找不到目录(%s)下的文件\n", path);
+        trace("找不到目录(%s)下的文件", path);
         return;
     end
 

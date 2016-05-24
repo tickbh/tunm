@@ -42,7 +42,7 @@ end
 
 -- 默认回调函数
 local function default_callback(sql_cmd, ret, result_list)
-    trace("default_callback sql_cmd(%o) failed. error : '%o'\n", sql_cmd, ret)
+    trace("default_callback sql_cmd(%o) failed. error : '%o'", sql_cmd, ret)
 end
 
 -- 定义公共接口，按照字母顺序排序
@@ -293,7 +293,6 @@ end
 -- 更新数据库操作
 function insert_db(table_name, sql_cmd, callback, callback_arg)
     local db_name = DATA_D.get_db_name(table_name)
-    -- trace("insert_db sql is %o \n", sql_cmd)
     local cookie = 0
     if callback then
         cookie = new_cookie()
@@ -310,7 +309,6 @@ function insert_db(table_name, sql_cmd, callback, callback_arg)
     if get_db_type() == "mysql" then
         n_dbtype = 1
     end
-    --trace("dbname is %o, sql_cmd = %o\n", db_name, sql_cmd)
     -- 执行数据库操作
     db_insert(db_name, n_dbtype, sql_cmd, cookie)
 end

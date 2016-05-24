@@ -80,7 +80,7 @@ local function attrib_bonus(attribs, bonus_type)
                 attrib_list[ctr_rid][ob_rid][field] = attrib_list[ctr_rid][ob_rid][field] + value
             end
         else
-            trace("ERROR: container ob is not a user in BONUS_D.attrib_bonus\n")
+            trace("ERROR: container ob is not a user in BONUS_D.attrib_bonus")
         end
     end
 
@@ -156,7 +156,7 @@ local function property_bonus(propertys, bonus_type)
                 end
             end
         else
-            trace("ERROR: ob is not a user_type in BUNOS_D.property_bonus\n")
+            trace("ERROR: ob is not a user_type in BUNOS_D.property_bonus")
         end
     end
 

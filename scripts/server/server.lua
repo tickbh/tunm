@@ -46,8 +46,11 @@ local function main()
     load_folder("server/msgs")
 
     --test_env()
-    send_debug_on(0)
-    debug_on(0)
+    if not _DEBUG or _DUBUG == "false" then
+        send_debug_on(0)
+        debug_on(0)
+    end
+
     post_init()
     start_command_input()
     print("------------------welcome to rust lua game server------------------")

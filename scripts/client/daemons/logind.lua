@@ -11,7 +11,7 @@ local private_key = "wugdGame"
 
 local function connect_callback(agent, arg)
     if not is_object(agent) then
-        trace("连接服务器失败.\n")
+        trace("连接服务器失败.")
         return
     end
 
@@ -61,8 +61,7 @@ function login(account, password, extra_data)
                 })
     if ret ~= 1 then
         -- 连接失败
-        --play_font_tips(string.format("连接服务器(%o:%o)失败。\n", ip, port),3)
-        trace("连接服务器(%o:%o)失败。\n", ip, port)
+        trace("连接服务器(%o:%o)失败。", ip, port)
         return false
     end
 

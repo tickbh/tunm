@@ -89,7 +89,7 @@ local function readcsv (file)
     end
 
     if failed then
-        print(R.."加载文件(%o)时找不到该文件。\n"..W, file)
+        print(R.."加载文件(%o)时找不到该文件。"..W, file)
     end
     return csv
 end
