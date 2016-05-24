@@ -12,20 +12,25 @@ DDZ_DESK_TDCLS.name = "DDZ_DESK_TDCLS"
 
 --构造函数
 function DDZ_DESK_TDCLS:create()
+    --当前阶段
     self.cur_step = "none"
+    --当前操作者
     self.cur_op_idx = -1
+    --地主拥有者
     self.lord_idx = -1
+    --当前局倍数
     self.multi_num = 15
+    --所有人没叫地主的次数
     self.retry_deal_times = 0
-
+    --底牌
     self.down_poker = {}
     --存储叫地主信息
     self.lord_list = {}
-
     --存储出牌信息，如果结束一回合，则清空
     self.play_poker_list = {}
 end
 
+--定时器操作
 function DDZ_DESK_TDCLS:time_update()
     get_class_func(DESK_TDCLS, "time_update")(self)
     if self.cur_step == DDZ_STEP_DEAL then
@@ -57,6 +62,7 @@ function DDZ_DESK_TDCLS:time_update()
     end
 end
 
+--当前阶段变更
 function DDZ_DESK_TDCLS:change_cur_step(new_step)
     self.cur_step = new_step
     if self.cur_step == DDZ_STEP_NONE then
@@ -74,12 +80,14 @@ function DDZ_DESK_TDCLS:change_cur_step(new_step)
     self:broadcast_message(MSG_ROOM_MESSAGE, "step_change", {cur_step = self.cur_step})
 end
 
+--当前操作者变更
 function DDZ_DESK_TDCLS:change_cur_opidx(new_op_idx)
     self.cur_op_idx = new_op_idx
     self.wheels[self.cur_op_idx].last_op_time = os.time()
     self:broadcast_message(MSG_ROOM_MESSAGE, "op_idx", {cur_op_idx = self.cur_op_idx, poker_list = self:get_last_poker_list()})
 end
 
+--得出下一次操作的对象
 function DDZ_DESK_TDCLS:get_next_op_idx()
     local new_op_idx = (self.cur_op_idx + 1) % 3
     if new_op_idx == 0 then
@@ -88,15 +96,16 @@ function DDZ_DESK_TDCLS:get_next_op_idx()
     return new_op_idx
 end
 
+--确定最后谁为地主，并把底牌分给地主
 function DDZ_DESK_TDCLS:finish_lord(lord_idx)
     self:change_cur_step(DDZ_STEP_PLAY)
     self.lord_idx = lord_idx
     local wheel = self.wheels[self.lord_idx]
     append_to_array(wheel.poker_list, self.down_poker)
     DDZ_D.resort_poker(wheel.poker_list)
-    if true then
-        --wheel.poker_list = {0x01}
-    end
+    -- if true then
+    --     wheel.poker_list = {0x01}
+    -- end
     for i,v in ipairs(self.wheels) do
         local desk_info = self:pack_desk_info(v.rid)
         desk_info.lord_idx = self.lord_idx
@@ -105,6 +114,7 @@ function DDZ_DESK_TDCLS:finish_lord(lord_idx)
     self:change_cur_opidx(self.lord_idx)
 end
 
+--当前对象是否叫地主
 function DDZ_DESK_TDCLS:cur_lord_choose(is_choose)
     local info = {idx = self.cur_op_idx, is_choose = is_choose}
     if is_choose == 1 then
@@ -145,14 +155,17 @@ function DDZ_DESK_TDCLS:cur_lord_choose(is_choose)
     end
 end
 
+--角色是否已满员
 function DDZ_DESK_TDCLS:is_full_user()
     return self:get_user_count() >= 3
 end
 
+--玩游戏需要的人数
 function DDZ_DESK_TDCLS:get_play_num()
     return 3
 end
 
+--游戏结束清除所有的状态
 function DDZ_DESK_TDCLS:clear_all_status()
     for idx,info in ipairs(self.wheels) do
         info.is_ready = 0
@@ -168,6 +181,7 @@ function DDZ_DESK_TDCLS:clear_all_status()
     self.retry_deal_times = 0
 end
 
+--是否有掉线的人
 function DDZ_DESK_TDCLS:is_someone_offline()
     for _,info in ipairs(self.wheels) do
         if info.rid and self.users[info.rid] then
@@ -192,16 +206,19 @@ function DDZ_DESK_TDCLS:try_restart_game()
     self:broadcast_message(MSG_ROOM_MESSAGE, "restart_game", {})
 end
 
+--所有的人准备完毕，开始游戏
 function DDZ_DESK_TDCLS:start_game()
     get_class_func(DESK_TDCLS, "start_game")(self)
     self:change_cur_step(DDZ_STEP_DEAL)
     trace("DDZ_DESK_TDCLS:start_game!@!!!")
 end
 
+--是否正在玩游戏
 function DDZ_DESK_TDCLS:is_playing(user_rid)
     return self.cur_step ~= DDZ_STEP_NONE
 end
 
+--获取该玩家能获取的桌子信息
 function DDZ_DESK_TDCLS:pack_desk_info(user_rid)
     local result = {cur_step = self.cur_step, cur_op_idx = self.cur_op_idx, lord_idx = self.lord_idx, multi_num = self.multi_num}
     local user_data = self.users[user_rid]
@@ -234,10 +251,12 @@ function DDZ_DESK_TDCLS:pack_desk_info(user_rid)
     return result
 end
 
+--发送桌子的信息
 function DDZ_DESK_TDCLS:send_desk_info(user_rid)
     self:send_rid_message(user_rid, MSG_ROOM_MESSAGE, "desk_info", self:pack_desk_info(user_rid))
 end
 
+--玩家进入桌子
 function DDZ_DESK_TDCLS:user_enter(user_rid)
     get_class_func(DESK_TDCLS, "user_enter")(self, user_rid)
     local user_data = self.users[user_rid]
@@ -248,6 +267,7 @@ function DDZ_DESK_TDCLS:user_enter(user_rid)
     return 0
 end
 
+--玩家离开桌子 
 function DDZ_DESK_TDCLS:user_leave(user_rid)
     local user_data = self.users[user_rid]
     if not user_data then
@@ -266,6 +286,7 @@ function DDZ_DESK_TDCLS:user_leave(user_rid)
     return 0
 end
 
+--获取所有人豆豆的数量情况
 function DDZ_DESK_TDCLS:get_all_pea_amount()
     local pea_amount_list = {}
     for i=1,3 do
@@ -277,6 +298,7 @@ function DDZ_DESK_TDCLS:get_all_pea_amount()
     return pea_amount_list
 end
 
+--位置xx赢得了比赛
 function DDZ_DESK_TDCLS:win_by_idx(idx)
     local pea_amount_list = self:get_all_pea_amount()
     self:broadcast_message(MSG_ROOM_MESSAGE, "team_win", {idx = idx})
@@ -303,6 +325,7 @@ function DDZ_DESK_TDCLS:win_by_idx(idx)
     self:change_cur_step(DDZ_STEP_NONE)
 end
 
+--最后一个出的牌，如果是第一个出牌则为空，如果碰到不出的往前遍历
 function DDZ_DESK_TDCLS:get_last_poker_list()
     for i=#self.play_poker_list,1,-1 do
         local data = self.play_poker_list[i]
@@ -313,6 +336,7 @@ function DDZ_DESK_TDCLS:get_last_poker_list()
     return nil
 end
 
+--是否当前回合结束，如果是，那确定新的回合是哪个位置开始
 function DDZ_DESK_TDCLS:check_round_end()
     local len = #self.play_poker_list
     if len < 3 then
@@ -324,11 +348,13 @@ function DDZ_DESK_TDCLS:check_round_end()
     return false
 end
 
+--叫地主倍数增加
 function DDZ_DESK_TDCLS:do_double_multi_num()
     self.multi_num = self.multi_num * 2
     self:broadcast_message(MSG_ROOM_MESSAGE, "multi_num_change", {multi_num = self.multi_num})
 end
 
+--是否牌为双倍的牌
 function DDZ_DESK_TDCLS:try_double_multi_num(poker_list)
     local card_type = DDZ_D.get_card_type(poker_list)
     if card_type == DDZ_D.TYPE_BOMB_CARD or card_type == DDZ_D.TYPE_MISSILE_CARD then
@@ -336,6 +362,7 @@ function DDZ_DESK_TDCLS:try_double_multi_num(poker_list)
     end
 end
 
+--处理当前玩家出牌
 function DDZ_DESK_TDCLS:deal_poker(poker_list)
     local op_info = self.wheels[self.cur_op_idx]
     local last_poker_list = self:get_last_poker_list()
@@ -387,6 +414,7 @@ function DDZ_DESK_TDCLS:deal_poker(poker_list)
     return true
 end
 
+--操作信息
 function DDZ_DESK_TDCLS:op_info(user_rid, info)
     local is_oper = get_class_func(DESK_TDCLS, "op_info")(self, user_rid, info)
     if is_oper then
