@@ -4,11 +4,16 @@ use super::DbSqlite;
 use super::DbTrait;
 use std::sync::Mutex;
 use std::any::Any;
+use std::path::Path;
+use std::fs;
 
 use {NetResult, NetMsg};
 
 use time;
 use mysql::{self, Opts};
+
+use rusqlite;
+use rusqlite::{Connection};
 
 static mut el: *mut DbPool = 0 as *mut _;
 
@@ -78,6 +83,9 @@ impl DbPool {
         if db_type == 1 {
             let mysql = unwrap_or!(DbMysql::get_db_trait(self, db_name), return None);
             return Some(DbStruct::MySql(mysql))
+        } else if db_type == 0 {
+            let sqlite = unwrap_or!(DbSqlite::get_db_trait(self, db_name), return None);
+            return Some(DbStruct::Sqlite(sqlite))
         }
         None
     }
@@ -85,8 +93,7 @@ impl DbPool {
     pub fn release_db_trait(&mut self, db_name: &String, mut db: DbStruct) {
         match db {
             DbStruct::MySql(db) => DbMysql::release_db_trait(self, db_name, db),
-            _ => (),
-            // DbStruct::Sqlite(db) => DbMysql::release_db_trait(self, db_name, db),
+            DbStruct::Sqlite(db) => DbSqlite::release_db_trait(self, db_name, db),
         }
     }
 }
@@ -142,6 +149,62 @@ impl PoolTrait for DbMysql {
         opts.db_name = Some(db_name.clone());
         let pool = unwrap_or!(mysql::Conn::new(opts).ok(), return None);
         Some(DbMysql::new(pool))
+    }
+}
+
+impl PoolTrait for DbSqlite {
+    fn get_db_trait(pool: &mut DbPool, db_name: &String) -> Option<DbSqlite> {
+        let db = {
+            let _guard = pool.mutex.lock().unwrap();
+            let mut list = match pool.db_sqlite.contains_key(db_name) {
+                true => pool.db_sqlite.get_mut(db_name).unwrap(),
+                false => {
+                    pool.db_sqlite.entry(db_name.to_string()).or_insert(vec![]);
+                    pool.db_sqlite.get_mut(db_name).unwrap()
+                }
+            };
+            if list.is_empty() {
+                None
+            } else {
+                list.pop()
+            }
+        };
+
+        match db {
+            Some(_) => db,
+            None => Self::init_db_trait(pool, db_name),
+        }
+    }
+
+    fn release_db_trait(pool: &mut DbPool, db_name: &String, mut db: DbSqlite) {
+        // db is lose connection, not need add to pool
+        if !db.is_connect {
+            return;
+        }
+        db.last_use_time = time::precise_time_s();
+        let _guard = pool.mutex.lock().unwrap();
+        let mut list = match pool.db_sqlite.contains_key(db_name) {
+            true => pool.db_sqlite.get_mut(db_name).unwrap(),
+            false => {
+                pool.db_sqlite.entry(db_name.to_string()).or_insert(vec![]);
+                pool.db_sqlite.get_mut(db_name).unwrap()
+            }
+        };
+        list.push(db);
+    }
+
+    fn init_db_trait(pool: &mut DbPool, db_name: &String) -> Option<DbSqlite> {
+        let mut info = pool.db_info.get(&db_name.to_string());
+        if info.is_none() {
+            info = pool.db_info.get(&"sqlite".to_string());
+        }
+        let info = unwrap_or!(info, return None);
+        let _ = fs::create_dir_all(Path::new("db"));
+
+        let db_dir = Path::new("db");
+        let path = db_dir.join(&*info);
+        let db =  unwrap_or!(Connection::open(&path).ok(), return None);
+        Some(DbSqlite::new(db))
     }
 }
 
