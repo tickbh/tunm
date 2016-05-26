@@ -5,6 +5,8 @@ use super::DbTrait;
 use std::sync::Mutex;
 use std::any::Any;
 
+use {NetResult, NetMsg};
+
 use time;
 use mysql::{self, Opts};
 
@@ -20,7 +22,12 @@ pub struct DbPool {
     pub mutex: Mutex<i32>,
 }
 
-pub trait PoolTrait: Sized {
+pub enum DbStruct {
+    MySql(DbMysql),
+    Sqlite(DbSqlite),
+}
+
+pub trait PoolTrait : Sized {
     /// get the db connection from pool, it not exist it will call init_db_trait init connection
     fn get_db_trait(pool: &mut DbPool, db_name: &String) -> Option<Self>;
     /// finish use the connection, it will push into pool
@@ -67,12 +74,20 @@ impl DbPool {
         }
     }
 
-    pub fn get_db_trait(pool: &mut DbPool, db_type: i32, db_name: &String) -> Option<Box<DbTrait>> {
-        if db_type == 0 {
-            let mysql = unwrap_or!(DbMysql::get_db_trait(pool, db_name), return None);
-            return Some(Box::new(mysql))
+    pub fn get_db_trait(&mut self, db_type: u8, db_name: &String) -> Option<DbStruct> {
+        if db_type == 1 {
+            let mysql = unwrap_or!(DbMysql::get_db_trait(self, db_name), return None);
+            return Some(DbStruct::MySql(mysql))
         }
         None
+    }
+
+    pub fn release_db_trait(&mut self, db_name: &String, mut db: DbStruct) {
+        match db {
+            DbStruct::MySql(db) => DbMysql::release_db_trait(self, db_name, db),
+            _ => (),
+            // DbStruct::Sqlite(db) => DbMysql::release_db_trait(self, db_name, db),
+        }
     }
 }
 
@@ -127,5 +142,92 @@ impl PoolTrait for DbMysql {
         opts.db_name = Some(db_name.clone());
         let pool = unwrap_or!(mysql::Conn::new(opts).ok(), return None);
         Some(DbMysql::new(pool))
+    }
+}
+
+impl DbTrait for DbStruct {
+    fn select(&mut self, sql_cmd: &str, msg: &mut NetMsg) -> NetResult<i32> {
+        match *self {
+            DbStruct::MySql(ref mut db) => db.select(sql_cmd, msg),
+            DbStruct::Sqlite(ref mut db) => db.select(sql_cmd, msg),
+        }
+    }
+
+    fn execute(&mut self, sql_cmd: &str) -> NetResult<i32> {
+        match *self {
+            DbStruct::MySql(ref mut db) => db.execute(sql_cmd),
+            DbStruct::Sqlite(ref mut db) => db.execute(sql_cmd),
+        }
+    }
+
+
+    fn insert(&mut self, sql_cmd: &str, msg: &mut NetMsg) -> NetResult<i32> {
+        match *self {
+            DbStruct::MySql(ref mut db) => db.insert(sql_cmd, msg),
+            DbStruct::Sqlite(ref mut db) => db.insert(sql_cmd, msg),
+        }
+    }
+
+    fn begin_transaction(&mut self) -> NetResult<i32> {
+        match *self {
+            DbStruct::MySql(ref mut db) => db.begin_transaction(),
+            DbStruct::Sqlite(ref mut db) => db.begin_transaction(),
+        }
+    }
+
+    fn commit_transaction(&mut self) -> NetResult<i32> {
+        match *self {
+            DbStruct::MySql(ref mut db) => db.commit_transaction(),
+            DbStruct::Sqlite(ref mut db) => db.commit_transaction(),
+        }
+    }
+
+    fn rollback_transaction(&mut self) -> NetResult<i32> {
+        match *self {
+            DbStruct::MySql(ref mut db) => db.rollback_transaction(),
+            DbStruct::Sqlite(ref mut db) => db.rollback_transaction(),
+        }
+    }
+
+    fn get_last_insert_id(&mut self) -> u64 {
+        match *self {
+            DbStruct::MySql(ref mut db) => db.get_last_insert_id(),
+            DbStruct::Sqlite(ref mut db) => db.get_last_insert_id(),
+        }
+    }
+
+    fn get_affected_rows(&mut self) -> u64 {
+        match *self {
+            DbStruct::MySql(ref mut db) => db.get_affected_rows(),
+            DbStruct::Sqlite(ref mut db) => db.get_affected_rows(),
+        }
+    }
+
+    fn get_character_set(&mut self) -> u8 {
+        match *self {
+            DbStruct::MySql(ref mut db) => db.get_character_set(),
+            DbStruct::Sqlite(ref mut db) => db.get_character_set(),
+        }
+    }
+
+    fn is_connected(&mut self) -> bool {
+        match *self {
+            DbStruct::MySql(ref mut db) => db.is_connected(),
+            DbStruct::Sqlite(ref mut db) => db.is_connected(),
+        }
+    }
+
+    fn get_error_code(&mut self) -> i32 {
+        match *self {
+            DbStruct::MySql(ref mut db) => db.get_error_code(),
+            DbStruct::Sqlite(ref mut db) => db.get_error_code(),
+        }
+    }
+
+    fn get_error_str(&mut self) -> Option<String> {
+        match *self {
+            DbStruct::MySql(ref mut db) => db.get_error_str(),
+            DbStruct::Sqlite(ref mut db) => db.get_error_str(),
+        }
     }
 }

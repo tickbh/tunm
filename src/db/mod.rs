@@ -8,5 +8,5 @@ pub mod db_pool;
 pub use self::db_trait::DbTrait;
 pub use self::db_mysql::DbMysql;
 pub use self::db_sqlite::DbSqlite;
-pub use self::db_pool::{DbPool, PoolTrait};
+pub use self::db_pool::{DbPool, PoolTrait, DbStruct};
 pub use self::redis_pool::RedisPool;

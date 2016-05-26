@@ -3,100 +3,105 @@ use td_rp;
 use td_rredis::{self, Cmd, Script};
 use libc;
 
-use {DbTrait, DbMysql, DbPool, PoolTrait, RedisPool};
+use {DbTrait, DbPool, PoolTrait, RedisPool};
 use {LuaEngine, NetMsg, NetConfig, LuaWrapperTableValue, RedisWrapperCmd, RedisWrapperResult,
      RedisWrapperMsg, RedisWrapperVecVec};
 use {ThreadUtils, LogUtils, log_utils};
 
 static MYSQL_POOL_NAME: &'static str = "mysql";
+static SQLITE_POOL_NAME: &'static str = "sqlite";
 static REDIS_POOL_NAME: &'static str = "redis";
+
+fn get_db_pool_name(db_type: u8) -> &'static str {
+    if db_type == 1 {
+        MYSQL_POOL_NAME
+    } else {
+        SQLITE_POOL_NAME
+    }
+}
 // ingnore db_type, because support mysql only
-fn thread_db_select(db_name: &String, _db_type: u8, sql_cmd: &str, cookie: u32) {
-    let pool = DbPool::instance();
-    let mysql = DbMysql::get_db_trait(pool, db_name);
-    if mysql.is_none() {
+fn thread_db_select(db_name: &String, db_type: u8, sql_cmd: &str, cookie: u32) {
+    let db = DbPool::instance().get_db_trait(db_type, db_name);
+    if db.is_none() {
         println!("fail to get dbi - dbname : {}, sqlcmd : {}",
                  db_name,
                  sql_cmd);
         return;
     }
-    let mut mysql = mysql.unwrap();
+    let mut db = db.unwrap();
     let mut net_msg = NetMsg::new();
-    let result = mysql.select(sql_cmd, &mut net_msg);
-    let ret = unwrap_or!(result.ok(), mysql.get_error_code());
+    let result = db.select(sql_cmd, &mut net_msg);
+    let ret = unwrap_or!(result.ok(), db.get_error_code());
     net_msg.end_msg(0);
     if cookie != 0 {
-        LuaEngine::instance().apply_db_result(cookie, ret, mysql.get_error_str(), Some(net_msg));
+        LuaEngine::instance().apply_db_result(cookie, ret, db.get_error_str(), Some(net_msg));
     }
     // record sql error
     if ret != 0 {
-        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql:{:?} --- error:{:?}", sql_cmd, mysql.get_error_str())[..]);
+        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql:{:?} --- error:{:?}", sql_cmd, db.get_error_str())[..]);
     }
-    DbMysql::release_db_trait(pool, db_name, mysql);
+    DbPool::instance().release_db_trait(db_name, db);
 }
 
-fn thread_db_execute(db_name: &String, _db_type: u8, sql_cmd: &str, cookie: u32) {
-    let pool = DbPool::instance();
-    let mysql = DbMysql::get_db_trait(pool, db_name);
-    if mysql.is_none() {
+fn thread_db_execute(db_name: &String, db_type: u8, sql_cmd: &str, cookie: u32) {
+    let db = DbPool::instance().get_db_trait(db_type, db_name);
+    if db.is_none() {
         println!("fail to get dbi - dbname : {}, sqlcmd : {}",
                  db_name,
                  sql_cmd);
         return;
     }
-    let mut mysql = mysql.unwrap();
-    let result = mysql.execute(sql_cmd);
-    let ret = unwrap_or!(result.ok(), mysql.get_error_code());
+    let mut db = db.unwrap();
+    let result = db.execute(sql_cmd);
+    let ret = unwrap_or!(result.ok(), db.get_error_code());
     if cookie != 0 {
-        LuaEngine::instance().apply_db_result(cookie, ret, mysql.get_error_str(), None);
+        LuaEngine::instance().apply_db_result(cookie, ret, db.get_error_str(), None);
     }
     // record sql error
     if ret != 0 {
-        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql:{:?} --- error:{:?}", sql_cmd, mysql.get_error_str())[..]);
+        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql:{:?} --- error:{:?}", sql_cmd, db.get_error_str())[..]);
     }
-    DbMysql::release_db_trait(pool, db_name, mysql);
+    DbPool::instance().release_db_trait(db_name, db);
 }
 
-fn thread_db_insert(db_name: &String, _db_type: u8, sql_cmd: &str, cookie: u32) {
-    let pool = DbPool::instance();
-    let mysql = DbMysql::get_db_trait(pool, db_name);
-    if mysql.is_none() {
+fn thread_db_insert(db_name: &String, db_type: u8, sql_cmd: &str, cookie: u32) {
+    let db = DbPool::instance().get_db_trait(db_type, db_name);
+    if db.is_none() {
         println!("fail to get dbi - dbname : {}, sqlcmd : {}",
                  db_name,
                  sql_cmd);
         return;
     }
-    let mut mysql = mysql.unwrap();
+    let mut db = db.unwrap();
     let mut net_msg = NetMsg::new();
-    let result = mysql.insert(sql_cmd, &mut net_msg);
+    let result = db.insert(sql_cmd, &mut net_msg);
     net_msg.end_msg(0);
-    let ret = unwrap_or!(result.ok(), mysql.get_error_code());
+    let ret = unwrap_or!(result.ok(), db.get_error_code());
     if cookie != 0 {
-        LuaEngine::instance().apply_db_result(cookie, ret, mysql.get_error_str(), Some(net_msg));
+        LuaEngine::instance().apply_db_result(cookie, ret, db.get_error_str(), Some(net_msg));
     }
     // record sql error
     if ret != 0 {
-        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql:{:?} --- error:{:?}", sql_cmd, mysql.get_error_str())[..]);
+        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql:{:?} --- error:{:?}", sql_cmd, db.get_error_str())[..]);
     }
-    DbMysql::release_db_trait(pool, db_name, mysql);
+    DbPool::instance().release_db_trait(db_name, db);
 }
 
-fn thread_db_transaction(db_name: &String, _db_type: u8, sql_cmd_list: Vec<String>, cookie: u32) {
-    let pool = DbPool::instance();
-    let mysql = DbMysql::get_db_trait(pool, db_name);
-    if mysql.is_none() {
+fn thread_db_transaction(db_name: &String, db_type: u8, sql_cmd_list: Vec<String>, cookie: u32) {
+    let db = DbPool::instance().get_db_trait(db_type, db_name);
+    if db.is_none() {
         println!("fail to get dbi - dbname : {}, sql_cmd_list : {:?}",
                  db_name,
                  sql_cmd_list);
         return;
     }
-    let mut mysql = mysql.unwrap();
+    let mut db = db.unwrap();
     let mut failed = false;
     let mut ret = 0;
-    let _ = mysql.begin_transaction();
+    let _ = db.begin_transaction();
 
     for sql_cmd in &sql_cmd_list {
-        ret = unwrap_or!(mysql.execute(&*sql_cmd).ok(), {
+        ret = unwrap_or!(db.execute(&*sql_cmd).ok(), {
             failed = true;
             break;
         });
@@ -106,48 +111,47 @@ fn thread_db_transaction(db_name: &String, _db_type: u8, sql_cmd_list: Vec<Strin
         }
     }
     if failed {
-        let _ = mysql.rollback_transaction();
+        let _ = db.rollback_transaction();
     } else {
-        let _ = mysql.commit_transaction();
+        let _ = db.commit_transaction();
     }
 
     if cookie != 0 {
-        LuaEngine::instance().apply_db_result(cookie, ret, mysql.get_error_str(), None);
+        LuaEngine::instance().apply_db_result(cookie, ret, db.get_error_str(), None);
     }
     // record sql error
     if ret != 0 {
-        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql_list:{:?} --- error:{:?}", sql_cmd_list, mysql.get_error_str())[..]);
+        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql_list:{:?} --- error:{:?}", sql_cmd_list, db.get_error_str())[..]);
     }
-    DbMysql::release_db_trait(pool, db_name, mysql);
+    DbPool::instance().release_db_trait(db_name, db);
 }
 
 
 fn thread_db_batch_execute(db_name: &String,
-                           _db_type: u8,
+                           db_type: u8,
                            sql_cmd_list: Vec<String>,
                            cookie: u32) {
-    let pool = DbPool::instance();
-    let mysql = DbMysql::get_db_trait(pool, db_name);
-    if mysql.is_none() {
+    let db = DbPool::instance().get_db_trait(db_type, db_name);
+    if db.is_none() {
         println!("fail to get dbi - dbname : {}, sql_cmd_list : {:?}",
                  db_name,
                  sql_cmd_list);
         return;
     }
-    let mut mysql = mysql.unwrap();
+    let mut db = db.unwrap();
     let mut failed = false;
     let mut ret;
     let mut err_msg: String = "".to_string();
-    let _ = mysql.begin_transaction();
+    let _ = db.begin_transaction();
 
     for sql_cmd in &sql_cmd_list {
-        ret = unwrap_or!(mysql.execute(&*sql_cmd).ok(), -1);
+        ret = unwrap_or!(db.execute(&*sql_cmd).ok(), -1);
         if ret < 0 {
-            err_msg = err_msg + "|" + &*unwrap_or!(mysql.get_error_str(), "".to_string());
+            err_msg = err_msg + "|" + &*unwrap_or!(db.get_error_str(), "".to_string());
             failed = true;
         }
     }
-    ret = unwrap_or!(mysql.commit_transaction().ok(), -1);
+    ret = unwrap_or!(db.commit_transaction().ok(), -1);
     if failed {
         ret = -1;
     }
@@ -156,97 +160,95 @@ fn thread_db_batch_execute(db_name: &String,
     }
     // record sql error
     if ret != 0 {
-        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql_list:{:?} --- error:{:?}", sql_cmd_list, mysql.get_error_str())[..]);
+        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql_list:{:?} --- error:{:?}", sql_cmd_list, db.get_error_str())[..]);
     }
-    DbMysql::release_db_trait(pool, db_name, mysql);
+    DbPool::instance().release_db_trait(db_name, db);
 }
 
 fn db_select(db_name: String, db_type: u8, sql_cmd: String, cookie: u32) {
-    let pool = ThreadUtils::instance().get_pool(&MYSQL_POOL_NAME.to_string());
+    let pool = ThreadUtils::instance().get_pool(&get_db_pool_name(db_type).to_string());
     pool.execute(move || thread_db_select(&db_name, db_type, &*sql_cmd, cookie));
 }
 
 fn db_execute(db_name: String, db_type: u8, sql_cmd: String, cookie: u32) {
-    let pool = ThreadUtils::instance().get_pool(&MYSQL_POOL_NAME.to_string());
+    let pool = ThreadUtils::instance().get_pool(&get_db_pool_name(db_type).to_string());
     pool.execute(move || thread_db_execute(&db_name, db_type, &*sql_cmd, cookie));
 }
 
 fn db_insert(db_name: String, db_type: u8, sql_cmd: String, cookie: u32) {
-    let pool = ThreadUtils::instance().get_pool(&MYSQL_POOL_NAME.to_string());
+    let pool = ThreadUtils::instance().get_pool(&get_db_pool_name(db_type).to_string());
     pool.execute(move || thread_db_insert(&db_name, db_type, &*sql_cmd, cookie));
 }
 
 fn db_transaction(db_name: String, db_type: u8, sql_cmd_list: Vec<String>, cookie: u32) {
-    let pool = ThreadUtils::instance().get_pool(&MYSQL_POOL_NAME.to_string());
+    let pool = ThreadUtils::instance().get_pool(&get_db_pool_name(db_type).to_string());
     pool.execute(move || thread_db_transaction(&db_name, db_type, sql_cmd_list, cookie));
 }
 
 fn db_batch_execute(db_name: String, db_type: u8, sql_cmd_list: Vec<String>, cookie: u32) {
-    let pool = ThreadUtils::instance().get_pool(&MYSQL_POOL_NAME.to_string());
+    let pool = ThreadUtils::instance().get_pool(&get_db_pool_name(db_type).to_string());
     pool.execute(move || thread_db_batch_execute(&db_name, db_type, sql_cmd_list, cookie));
 }
 
 extern "C" fn db_select_sync(lua: *mut td_rlua::lua_State) -> libc::c_int {
     let db_name: String = unwrap_or!(td_rlua::LuaRead::lua_read_at_position(lua, 1), return 0);
-    let _n_dbtype: u8 = unwrap_or!(td_rlua::LuaRead::lua_read_at_position(lua, 2), return 0);
+    let db_type: u8 = unwrap_or!(td_rlua::LuaRead::lua_read_at_position(lua, 2), return 0);
     let sql_cmd: String = unwrap_or!(td_rlua::LuaRead::lua_read_at_position(lua, 3), return 0);
 
-    let pool = DbPool::instance();
-    let mysql = DbMysql::get_db_trait(pool, &db_name);
-    if mysql.is_none() {
+    let db = DbPool::instance().get_db_trait(db_type, &db_name);
+    if db.is_none() {
         println!("fail to get dbi - dbname : {}, sqlcmd : {}",
                  db_name,
                  sql_cmd);
         return 0;
     }
-    let mut mysql = mysql.unwrap();
+    let mut db = db.unwrap();
     let mut net_msg = NetMsg::new();
-    let result = mysql.select(&*sql_cmd, &mut net_msg);
-    let ret = unwrap_or!(result.ok(), mysql.get_error_code());
+    let result = db.select(&*sql_cmd, &mut net_msg);
+    let ret = unwrap_or!(result.ok(), db.get_error_code());
     ret.push_to_lua(lua);
     let instance = NetConfig::instance();
     net_msg.set_read_data();
     if let Ok((_, val)) = td_rp::decode_proto(net_msg.get_buffer(), instance) {
         LuaWrapperTableValue(val).push_to_lua(lua);
     } else {
-        unwrap_or!(mysql.get_error_str(), "unknown error".to_string()).push_to_lua(lua);
+        unwrap_or!(db.get_error_str(), "unknown error".to_string()).push_to_lua(lua);
     }
     // record sql error
     if ret != 0 {
-        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql:{:?} --- error:{:?}", sql_cmd, mysql.get_error_str())[..]);
+        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql:{:?} --- error:{:?}", sql_cmd, db.get_error_str())[..]);
     }
-    DbMysql::release_db_trait(pool, &db_name, mysql);
+    DbPool::instance().release_db_trait(&db_name, db);
     2
 }
 
 extern "C" fn db_insert_sync(lua: *mut td_rlua::lua_State) -> libc::c_int {
     let db_name: String = unwrap_or!(td_rlua::LuaRead::lua_read_at_position(lua, 1), return 0);
-    let _n_dbtype: u8 = unwrap_or!(td_rlua::LuaRead::lua_read_at_position(lua, 2), return 0);
+    let db_type: u8 = unwrap_or!(td_rlua::LuaRead::lua_read_at_position(lua, 2), return 0);
     let sql_cmd: String = unwrap_or!(td_rlua::LuaRead::lua_read_at_position(lua, 3), return 0);
 
-    let pool = DbPool::instance();
-    let mysql = DbMysql::get_db_trait(pool, &db_name);
-    if mysql.is_none() {
+    let db = DbPool::instance().get_db_trait(db_type, &db_name);
+    if db.is_none() {
         println!("fail to get dbi - dbname : {}, sqlcmd : {}",
                  db_name,
                  sql_cmd);
         return 0;
     }
-    let mut mysql = mysql.unwrap();
+    let mut db = db.unwrap();
     let mut net_msg = NetMsg::new();
-    let result = mysql.insert(&*sql_cmd, &mut net_msg);
-    let ret = unwrap_or!(result.ok(), mysql.get_error_code());
+    let result = db.insert(&*sql_cmd, &mut net_msg);
+    let ret = unwrap_or!(result.ok(), db.get_error_code());
     ret.push_to_lua(lua);
     if ret == 0 {
-        (mysql.get_last_insert_id() as u32).push_to_lua(lua);
+        (db.get_last_insert_id() as u32).push_to_lua(lua);
     } else {
-        unwrap_or!(mysql.get_error_str(), "unknown error".to_string()).push_to_lua(lua);
+        unwrap_or!(db.get_error_str(), "unknown error".to_string()).push_to_lua(lua);
     }
     // record sql error
     if ret != 0 {
-        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql:{:?} --- error:{:?}", sql_cmd, mysql.get_error_str())[..]);
+        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql:{:?} --- error:{:?}", sql_cmd, db.get_error_str())[..]);
     }
-    DbMysql::release_db_trait(pool, &db_name, mysql);
+    DbPool::instance().release_db_trait(&db_name, db);
     2
 }
 
