@@ -3,7 +3,6 @@ use NetMsg;
 
 /// DbTrait is the interface for db, if you would support new db, impl it
 pub trait DbTrait
-    where Self: Sized
 {
     /// data will store in NetMsg, if return i32 not 0, it may occur sql error
     fn select(&mut self, sql_cmd: &str, msg: &mut NetMsg) -> NetResult<i32>;

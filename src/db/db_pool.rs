@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 use super::DbMysql;
+use super::DbSqlite;
+use super::DbTrait;
 use std::sync::Mutex;
+use std::any::Any;
 
 use time;
 use mysql::{self, Opts};
@@ -12,6 +15,7 @@ const MAX_KEEP_CONN: f64 = 3600f64;
 /// it store the db connection,  and the base db info
 pub struct DbPool {
     pub db_mysql: HashMap<String, Vec<DbMysql>>,
+    pub db_sqlite: HashMap<String, Vec<DbSqlite>>,
     pub db_info: HashMap<String, String>,
     pub mutex: Mutex<i32>,
 }
@@ -29,6 +33,7 @@ impl DbPool {
     pub fn new() -> DbPool {
         DbPool {
             db_mysql: HashMap::new(),
+            db_sqlite: HashMap::new(),
             db_info: HashMap::new(),
             mutex: Mutex::new(0),
         }
@@ -60,6 +65,14 @@ impl DbPool {
                 }
             }
         }
+    }
+
+    pub fn get_db_trait(pool: &mut DbPool, db_type: i32, db_name: &String) -> Option<Box<DbTrait>> {
+        if db_type == 0 {
+            let mysql = unwrap_or!(DbMysql::get_db_trait(pool, db_name), return None);
+            return Some(Box::new(mysql))
+        }
+        None
     }
 }
 

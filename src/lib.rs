@@ -6,11 +6,12 @@ extern crate mysql;
 extern crate tiny_http;
 extern crate sys_info;
 extern crate url;
+extern crate time;
+extern crate rusqlite;
 
 extern crate td_rlua;
 extern crate td_proto_rust as td_rp;
 extern crate td_rredis;
-extern crate time;
 extern crate td_rthreadpool;
 extern crate td_revent;
 extern crate td_clua_ext;
