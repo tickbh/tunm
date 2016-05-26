@@ -26,7 +26,7 @@ td_rthreadpool = "0.1.1"
 sys-info = "0.4.1"
 url = "1.1.0"
 mysql = { version = "2.2.1", default-features = false }
-
+rusqlite = { git = "https://github.com/tickbh/rusqlite.git" }
 
 [dependencies.td_clua_ext]
 version = "0.1.0"
