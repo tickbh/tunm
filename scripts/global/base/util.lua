@@ -811,7 +811,11 @@ function clean_array(t)
 end
 
 function trim(s)
-  return s:match'^()%s*$' and '' or s:match'^%s*(.*%S)'
+  return (string.gsub(s, "^%s*(.-)%s*$", "%1"))
+end
+
+function trim_reg(s, reg)
+    return (string.gsub(s, "^".. reg .."*(.-)".. reg .."*$", "%1"))
 end
 
 -- 将字符串根据标识符打断，组成 array

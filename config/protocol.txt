@@ -130,7 +130,10 @@
         "NON_UNIQUE"                   : { "index" :    60020, "pattern" : "str" },
         "INDEX_NAME"                   : { "index" :    60021, "pattern" : "str" },
         "SEQ_IN_INDEX"                 : { "index" :    60022, "pattern" : "str" },
-        "COLUMN_NAME"                  : { "index" :    60023, "pattern" : "str" }
+        "COLUMN_NAME"                  : { "index" :    60023, "pattern" : "str" },
+        "tbl_name"                     : { "index" :    60024, "pattern" : "str" },
+        "rootpage"                     : { "index" :    60025, "pattern" : "i32" },
+        "sql"                          : { "index" :    60026, "pattern" : "str" }
     },
 
     "proto": {

@@ -74,6 +74,10 @@ function get_db_type()
     return db_type
 end
 
+function is_sqlite()
+    return get_db_type() == "sqlite"
+end
+
 
 function get_db_index()
     local dt = get_db_type()
@@ -104,12 +108,15 @@ function convert_table_info(table_struct)
     local result = {}
     for _,value in ipairs(table_struct) do
         local convert = {}
-        convert["field"] = value["COLUMN_NAME"] or ""
-        convert["type"] = value["COLUMN_TYPE"] or ""
-        convert["key"] = value["COLUMN_KEY"] or ""
-        convert["default"] = value["COLUMN_DEFAULT"] or ""
+        convert["field"] = value["COLUMN_NAME"] or value["name"] or ""
+        convert["type"] = value["COLUMN_TYPE"] or value["type"] or ""
+        convert["key"] = value["COLUMN_KEY"] or value["key"] or ""
+        convert["default"] = value["COLUMN_DEFAULT"] or value["dflt_value"] or ""
         convert["extra"] = value["EXTRA"] or ""
         convert["nullable"] = value["IS_NULLABLE"] == "NO" and 0 or 1
+        if get_db_type() == "sqlite" then
+            convert["nullable"] = value["notnull"] == 1 and 0 or 1
+        end
         result[convert["field"]] = convert
     end
     return result
@@ -338,13 +345,18 @@ end
 
 function gen_cloumn_ext(cloumn)
     local sql = ""
+    local has_default = false
     if cloumn["default"] and sizeof(cloumn["default"]) > 0 then
         sql = sql .. string.format(" DEFAULT '%s' ", cloumn["default"])
+        has_default = true
     end
     if cloumn["nullable"] == 0 then
         sql = sql .. " NOT NULL "
+        if not has_default and get_db_type() == "sqlite" then
+            sql = sql .. " default ''"
+        end
     end
-    if cloumn["comment"] then
+    if get_db_type() ~= "sqlite" and cloumn["comment"] then
         sql = sql .. string.format(" COMMENT '%s'", cloumn["comment"])
     end
     return sql
@@ -393,7 +405,9 @@ end
 function add_cloumn(db_name, table_name, cloumn)
     local sql = string.format("ALTER TABLE `%s` ADD COLUMN `%s` %s", table_name, cloumn["field"], cloumn["type"])
     sql = sql .. gen_cloumn_ext(cloumn)
-    sql = sql .. gen_cloumn_after(cloumn)
+    if get_db_type() ~= "sqlite" then
+        sql = sql .. gen_cloumn_after(cloumn)
+    end
     trace("add_cloumn sql is %o", sql)
     return lua_sync_select(db_name, sql)
 end

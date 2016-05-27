@@ -3,7 +3,6 @@ use super::DbMysql;
 use super::DbSqlite;
 use super::DbTrait;
 use std::sync::Mutex;
-use std::any::Any;
 use std::path::Path;
 use std::fs;
 
@@ -12,7 +11,6 @@ use {NetResult, NetMsg};
 use time;
 use mysql::{self, Opts};
 
-use rusqlite;
 use rusqlite::{Connection};
 
 static mut el: *mut DbPool = 0 as *mut _;
@@ -90,7 +88,7 @@ impl DbPool {
         None
     }
 
-    pub fn release_db_trait(&mut self, db_name: &String, mut db: DbStruct) {
+    pub fn release_db_trait(&mut self, db_name: &String, db: DbStruct) {
         match db {
             DbStruct::MySql(db) => DbMysql::release_db_trait(self, db_name, db),
             DbStruct::Sqlite(db) => DbSqlite::release_db_trait(self, db_name, db),

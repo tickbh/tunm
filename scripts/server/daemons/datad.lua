@@ -142,7 +142,7 @@ function is_database_exist(dbname)
 end
 
 function ensure_exist_database(dbname)
-    if is_database_exist(dbname) then
+    if DB_D.is_sqlite() or is_database_exist(dbname) then
         return true
     end
     local sql = string.format("CREATE DATABASE `%s`", dbname)
@@ -157,6 +157,9 @@ function is_table_exist(tablename, dbname)
         return false
     end
     local sql = string.format("SHOW TABLES LIKE '%s'", tablename)
+    if DB_D.is_sqlite() then
+        sql = string.format("select name from sqlite_master where type='table' and name = '%s'", tablename)
+    end
     local err, ret = DB_D.lua_sync_select(dbname, sql, DB_D.get_db_index())
     if err ~= 0 then
         return false
@@ -235,6 +238,8 @@ end
 function is_default_change(default_config, default_db)
     default_config = default_config == nil and "" or default_config
     default_db = default_db == nil and "" or default_db
+    default_config = trim_reg(default_config, '[\']')
+    default_db = trim_reg(default_db, '[\']')
     return default_db ~= default_config
 end
 
@@ -277,34 +282,42 @@ function check_table_right(tinfo)
         DB_D.add_cloumn(dbname, tablename, value)
     end
 
-    for _,value in ipairs(need_modify_cloumn) do
-        local confirm = true
-        if value["field"] ~= test_cloumn then
-            trace("sql_cmd dbname  is %o, modify tablename is %o is %o, 确认执行(Y/N)", dbname, tablename, value)
-            local read = block_read()
-            if read ~= "y" and read ~= "Y" then
-                confirm = false
+    if DB_D.is_sqlite() and #need_modify_cloumn > 0 then
+        LOG.err("error!!!!!! 字段发生变更，sqlite无法变更字段")
+    else
+        for _,value in ipairs(need_modify_cloumn) do
+            local confirm = true
+            if value["field"] ~= test_cloumn then
+                trace("sql_cmd dbname  is %o, modify tablename is %o is %o, 确认执行(Y/N)", dbname, tablename, value)
+                local read = block_read()
+                if read ~= "y" and read ~= "Y" then
+                    confirm = false
+                end
+                trace("read is %o, confirm is %o", read, confirm)
             end
-            trace("read is %o, confirm is %o", read, confirm)
-        end
 
-        if confirm then
-            DB_D.mod_cloumn(dbname, tablename, value)
+            if confirm then
+                DB_D.mod_cloumn(dbname, tablename, value)
+            end
         end
     end
 
-    for _,value in ipairs(need_del_cloumn) do
-        local confirm = true
-        if value["field"] ~= test_cloumn then
-            trace("sql_cmd dbname  is %o, delete  tablename is %o is %o, 确认执行(Y/N)", dbname, tablename, value)
-            local read = block_read()
-            if read ~= "y" and read ~= "Y" then
-                confirm = false
+
+    if DB_D.is_sqlite() and #need_del_cloumn > 0 then
+    else
+        for _,value in ipairs(need_del_cloumn) do
+            local confirm = true
+            if value["field"] ~= test_cloumn then
+                trace("sql_cmd dbname  is %o, delete  tablename is %o is %o, 确认执行(Y/N)", dbname, tablename, value)
+                local read = block_read()
+                if read ~= "y" and read ~= "Y" then
+                    confirm = false
+                end
+                trace("read is %o, confirm is %o", read, confirm)
             end
-            trace("read is %o, confirm is %o", read, confirm)
-        end
-        if confirm then
-            DB_D.del_cloumn(dbname, tablename, value)
+            if confirm then
+                DB_D.del_cloumn(dbname, tablename, value)
+            end
         end
     end
 
@@ -326,6 +339,9 @@ function calc_diff_index_table(index_config, index_in_db)
 end
 
 function check_table_index_right(tinfo)
+    if DB_D.is_sqlite() then
+        return
+    end
     local dbname = tinfo["db"]
     local tablename = tinfo["name"]
     local table_struct = DB_D.get_index_table(tablename, dbname)
