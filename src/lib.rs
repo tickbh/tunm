@@ -27,6 +27,7 @@ mod redis_wrapper;
 mod lua_custom;
 mod net;
 mod mgr;
+// mod protocol;
 
 pub use global_config::GlobalConfig;
 pub use db::{DbTrait, DbMysql, DbPool, PoolTrait, RedisPool};
@@ -38,6 +39,6 @@ pub use redis_wrapper::{RedisWrapperResult, RedisWrapperCmd, RedisWrapperMsg,
 pub use lua_engine::LuaEngine;
 pub use mgr::{ServiceMgr, HttpMgr, CommandMgr, EventMgr};
 pub use lua_custom::register_custom_func;
-pub use net::{NetMsg, NetConfig, SocketEvent};
+pub use net::{NetMsg, NetConfig, SocketEvent, MSG_TYPE_TD, MSG_TYPE_JSON, MSG_TYPE_BIN, MSG_TYPE_TEXT};
 
 pub use td_rthreadpool::ThreadPool;

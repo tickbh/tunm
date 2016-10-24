@@ -1,4 +1,5 @@
 
+use NetMsg;
 use td_rlua::{self, Lua, LuaPush};
 
 
@@ -15,4 +16,4 @@ mod proto_text;
 pub use self::proto_td::ProtoTd;
 pub use self::proto_json::ProtoJson;
 pub use self::proto_bin::ProtoBin;
-pub use self::proto_text::ProtoText;
+// pub use self::proto_text::ProtoText;

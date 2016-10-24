@@ -197,7 +197,7 @@ function AGENT_TDCLS:send_raw_message(msg_buf)
         return;
     end
 
-    local net_msg = pack_raw_message(msg_buf)
+    local name, net_msg = pack_raw_message(msg_buf)
     local ret = self:send_net_msg(net_msg)
     if ret == 0 then
         -- 发送成功

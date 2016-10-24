@@ -1,8 +1,13 @@
 use td_rp;
-use td_rp::{Buffer, Value, encode_number, decode_number, decode_str_raw};
+use td_rp::{Buffer, Value, encode_number, encode_str_raw, decode_number, decode_str_raw};
 
 use std::io::{Read, Write, Result};
 use {NetResult, make_extension_error};
+
+pub const MSG_TYPE_TD: u16 = 0;
+pub const MSG_TYPE_JSON: u16 = 1;
+pub const MSG_TYPE_BIN: u16 = 2;
+pub const MSG_TYPE_TEXT: u16 = 3;
 
 static HEAD_FILL_UP: [u8; 12] = [0; 12];
 
@@ -11,6 +16,7 @@ pub struct NetMsg {
     seq_fd: u16,
     length: u32,
     cookie: u32,
+    msg_type: u16,
     pack_name: String,
 }
 
@@ -22,13 +28,28 @@ impl NetMsg {
             seq_fd: 0u16,
             length: buffer.len() as u32,
             cookie: 0u32,
+            msg_type: 0u16,
             buffer: buffer,
             pack_name: String::new(),
         }
     }
 
-    pub fn min_len() -> usize {
-        HEAD_FILL_UP.len()
+    pub fn new_by_detail(msg_type: u16, msg_name: String, data: &[u8]) -> NetMsg {
+        let mut buffer = Buffer::new();
+        let _ = buffer.write(&HEAD_FILL_UP);
+        let _ = encode_str_raw(&mut buffer, &Value::Str(msg_name.clone()));
+        let _ = encode_number(&mut buffer, &Value::U16(data.len() as u16));
+        let _ = buffer.write(data);
+        let mut net_msg = NetMsg {
+            seq_fd: 0u16,
+            length: buffer.len() as u32,
+            cookie: 0u32,
+            msg_type: msg_type,
+            buffer: buffer,
+            pack_name: msg_name,
+        };
+        net_msg.end_msg(0);
+        net_msg
     }
 
     pub fn new_by_data(data: &[u8]) -> NetResult<NetMsg> {
@@ -40,6 +61,7 @@ impl NetMsg {
         let length: u32 = try!(decode_number(&mut buffer, td_rp::TYPE_U32)).into();
         let seq_fd: u16 = try!(decode_number(&mut buffer, td_rp::TYPE_U16)).into();
         let cookie: u32 = try!(decode_number(&mut buffer, td_rp::TYPE_U32)).into();
+        let msg_type: u16 = try!(decode_number(&mut buffer, td_rp::TYPE_U16)).into();
         if data.len() != length as usize {
             println!("data.len() = {:?}, length = {:?}", data.len(), length);
             return Err(make_extension_error("data length not match", None));
@@ -51,9 +73,14 @@ impl NetMsg {
             seq_fd: seq_fd,
             length: length,
             cookie: cookie,
+            msg_type: msg_type,
             buffer: buffer,
             pack_name: pack_name,
         })
+    }
+
+    pub fn min_len() -> usize {
+        HEAD_FILL_UP.len()
     }
 
     pub fn end_msg(&mut self, seq_fd: u16) {
@@ -64,6 +91,7 @@ impl NetMsg {
         let _ = encode_number(&mut self.buffer, &Value::U32(self.length));
         let _ = encode_number(&mut self.buffer, &Value::U16(self.seq_fd));
         let _ = encode_number(&mut self.buffer, &Value::U32(self.cookie));
+        let _ = encode_number(&mut self.buffer, &Value::U16(self.msg_type));
         self.buffer.set_wpos(wpos);
     }
 
@@ -76,6 +104,8 @@ impl NetMsg {
         self.buffer.set_rpos(0);
         self.length = try!(decode_number(&mut self.buffer, td_rp::TYPE_U32)).into();
         self.seq_fd = try!(decode_number(&mut self.buffer, td_rp::TYPE_U16)).into();
+        self.cookie = try!(decode_number(&mut self.buffer, td_rp::TYPE_U32)).into();
+        self.msg_type = try!(decode_number(&mut self.buffer, td_rp::TYPE_U16)).into();
         self.buffer.set_rpos(HEAD_FILL_UP.len());
         self.pack_name = try!(decode_str_raw(&mut self.buffer, td_rp::TYPE_STR)).into();
         self.buffer.set_rpos(rpos);
@@ -113,6 +143,14 @@ impl NetMsg {
 
     pub fn get_wpos(&self) -> usize {
         self.buffer.get_wpos()
+    }
+
+    pub fn set_msg_type(&mut self, msg_type: u16) {
+        self.msg_type = msg_type
+    }
+
+    pub fn get_msg_type(&self) -> u16 {
+        self.msg_type
     }
 
     pub fn set_seq_fd(&mut self, seq_fd: u16) {

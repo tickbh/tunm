@@ -956,7 +956,6 @@ function encode_json_check(s)
     end
 end
 
-
 function get_rid(serverid)
     return get_next_rid(serverid or 1)
 end
@@ -1207,4 +1206,8 @@ function assert_eq(a, b, msg)
     else
         assert(a == b, msg)
     end
+end
+
+function arg_to_encode(...)
+    return encode_json({...})
 end
