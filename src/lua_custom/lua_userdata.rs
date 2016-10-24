@@ -3,7 +3,7 @@ use std::ffi::CString;
 
 use td_rlua::{self, LuaPush, LuaRead, Lua, NewStruct, LuaStruct, lua_State};
 use td_rp;
-use {NetMsg, LuaWrapperTableValue, NetConfig};
+use {NetMsg, LuaWrapperTableValue, NetConfig, ProtocolMgr};
 
 
 impl NewStruct for NetMsg {
@@ -41,15 +41,7 @@ impl LuaPush for NetMsg {
 
 extern "C" fn msg_to_table(lua: *mut td_rlua::lua_State) -> libc::c_int {
     let net_msg: &mut NetMsg = unwrap_or!(LuaRead::lua_read_at_position(lua, 1), return 0);
-    net_msg.set_read_data();
-    let instance = NetConfig::instance();
-    if let Ok((name, val)) = td_rp::decode_proto(net_msg.get_buffer(), instance) {
-        name.push_to_lua(lua);
-        LuaWrapperTableValue(val).push_to_lua(lua);
-        return 2;
-    } else {
-        return 0;
-    }
+    ProtocolMgr::instance().unpack_protocol(lua, net_msg)
 }
 
 extern "C" fn get_data(lua: *mut td_rlua::lua_State) -> libc::c_int {

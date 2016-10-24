@@ -1,9 +1,11 @@
 use libc;
 use std::mem;
-
+use td_rp;
+use td_rp::*;
 use td_rlua::{self, Lua, LuaPush};
 use super::EngineProtocol;
 use {NetMsg, MSG_TYPE_JSON};
+use {NetResult, LuaWrapperValue};
 
 pub struct ProtoJson;
 
@@ -24,7 +26,12 @@ impl EngineProtocol for ProtoJson {
         }
     }
 
-    fn unpack_message(lua: *mut td_rlua::lua_State, index: i32) -> i32 {
-        0
+    fn unpack_protocol(lua: *mut td_rlua::lua_State, net_msg: &mut NetMsg) -> NetResult<i32> {
+        net_msg.set_read_data();
+        let name: String = try!(decode_str_raw(net_msg.get_buffer(), TYPE_STR)).into();
+        let raw: Value = try!(decode_str_raw(net_msg.get_buffer(), TYPE_RAW));
+        name.push_to_lua(lua);
+        LuaWrapperValue(raw).push_to_lua(lua);
+        return Ok(2);
     }
 }

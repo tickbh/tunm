@@ -71,7 +71,7 @@ function ROOM_TDCLS:broadcast_message(msg, ...)
     local find_object_by_rid = find_object_by_rid
     local is_object = is_object
     local user
-    local msg_buf = pack_message(msg, ...)
+    local msg_buf = pack_message(get_common_msg_type(), msg, ...)
     local send_raw_message = get_class_func(USER_TDCLS, "send_raw_message")
 
     if not msg_buf then
@@ -230,7 +230,7 @@ function ROOM_TDCLS:enter_desk(user_rid, idx, enter_method)
 end
 
 function ROOM_TDCLS:send_rid_message(user_rid, record, msg, ...)
-    local msg_buf = pack_message(msg, ...)
+    local msg_buf = pack_message(get_common_msg_type(), msg, ...)
     if not msg_buf then
         trace("广播消息(%s)打包消息失败。", msg)
         return

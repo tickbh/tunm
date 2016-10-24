@@ -65,3 +65,7 @@ function is_auto_rid(rid)
     end
     return false
 end
+
+function get_common_msg_type()
+    return MSG_TYPE_JSON
+end

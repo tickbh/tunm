@@ -76,7 +76,7 @@ end
 
 -- 对指定的房间，指定的用户进行消息发送
 function send_room_message(room_name, user_rid, record, msg, ...)
-    local net_msg = pack_message(msg, ...)
+    local net_msg = pack_message(get_common_msg_type(), msg, ...)
     if not net_msg then
         return
     end
@@ -102,7 +102,7 @@ end
 -- 对指定的server_id进行消息发送
 function send_server_message(server_id, user_rid, record, msg, ...)
     server_id = tonumber(server_id)
-    local net_msg = pack_message(msg, ...)
+    local net_msg = pack_message(get_common_msg_type(), msg, ...)
     if not net_msg then
         return
     end

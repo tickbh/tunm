@@ -17,7 +17,7 @@ local _ENV = CHAT_D
 
 function deal_with_new_chat(data)
     if data.chat_channel == CHAT_CHANNEL_WORLD then
-        local ret_msg = pack_message(MSG_CHAT, data.chat_channel, data)
+        local ret_msg = pack_message(get_common_msg_type(), MSG_CHAT, data.chat_channel, data)
         local users = USER_D.get_user_list()
         for _,user in pairs(users) do
             user:send_net_msg(ret_msg)

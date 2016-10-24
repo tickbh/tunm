@@ -2,6 +2,12 @@
 -- Created by wugd
 -- 定义全局变量
 
+
+MSG_TYPE_TD = 0;
+MSG_TYPE_JSON = 1;
+MSG_TYPE_BIN = 2;
+MSG_TYPE_TEXT = 3;
+
 -- 连接类型
 CONN_TYPE_CLIENT = 1;
 CONN_TYPE_GS     = 2;

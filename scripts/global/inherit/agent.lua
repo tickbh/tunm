@@ -162,7 +162,7 @@ function AGENT_TDCLS:send_message(msg, ...)
         return;
     end
 
-    local net_msg = pack_message(msg, ...)
+    local net_msg = pack_message(self:get_msg_type(), msg, ...)
     if SERVER_TYPE == "client" and get_network_seq_id then
         net_msg:set_seq_fd(get_network_seq_id(port_no))
     end
@@ -325,7 +325,7 @@ function AGENT_TDCLS:send_logic_message(msg, ...)
         trace("no logic server for %o", self.port_no)
         return
     end
-    local net_msg = pack_message(msg, ...)
+    local net_msg = pack_message(self:get_msg_type(), msg, ...)
     net_msg:set_seq_fd(self.port_no)
     pcall(send_msg_to_port, logic_port, net_msg);
     del_message(net_msg)
@@ -343,4 +343,8 @@ end
 
 function AGENT_TDCLS:print_fd_info()
     trace("____AGENT_TDCLS:print_fd_info()____\n self is %o, fport_no is %o, and bit fport is %o port_no is %o", self, self.fport_no, bit32.band(self.fport_no, 0xFFFF), self.port_no)
+end
+
+function AGENT_TDCLS:get_msg_type()
+    return MSG_TYPE_TD
 end

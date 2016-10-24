@@ -104,7 +104,7 @@ end
 function DESK_TDCLS:broadcast_message(msg, ...)
 
     local size = sizeof(self.users)
-    local msg_buf = pack_message(msg, ...)
+    local msg_buf = pack_message(get_common_msg_type(), msg, ...)
 
     if not msg_buf then
         trace("广播消息(%d)打包消息失败。", msg)
@@ -121,7 +121,7 @@ end
 
 -- 广播消息
 function DESK_TDCLS:send_rid_message(user_rid, msg, ...)
-    local msg_buf = pack_message(msg, ...)
+    local msg_buf = pack_message(get_common_msg_type(), msg, ...)
     if not msg_buf then
         trace("发送消息(%s:%o)打包消息失败。", msg, {...})
         return

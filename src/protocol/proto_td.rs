@@ -3,8 +3,10 @@ use std::mem;
 
 use td_rlua::{self, Lua, LuaPush};
 use td_rp;
+use td_rp::*;
 use super::EngineProtocol;
 use {NetMsg, NetConfig, NetUtils};
+use {NetResult, LuaWrapperTableValue};
 
 pub struct ProtoTd;
 
@@ -30,7 +32,15 @@ impl EngineProtocol for ProtoTd {
         Some(net_msg)
     }
 
-    fn unpack_message(lua: *mut td_rlua::lua_State, index: i32) -> i32 {
-        0
+    fn unpack_protocol(lua: *mut td_rlua::lua_State, net_msg: &mut NetMsg) -> NetResult<i32> {
+        net_msg.set_read_data();
+        let instance = NetConfig::instance();
+        if let Ok((name, val)) = td_rp::decode_proto(net_msg.get_buffer(), instance) {
+            name.push_to_lua(lua);
+            LuaWrapperTableValue(val).push_to_lua(lua);
+            return Ok(2);
+        } else {
+            return Ok(0);
+        }
     }
 }
