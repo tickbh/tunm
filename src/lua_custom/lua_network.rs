@@ -6,7 +6,7 @@ use td_rp;
 use td_rlua::{self, Lua, LuaPush};
 use td_revent::*;
 use net2;
-use {EventMgr, ServiceMgr, ProtocolMgr, NetMsg, NetConfig, NetUtils, ThreadUtils, HttpMgr, SocketEvent};
+use {EventMgr, ServiceMgr, ProtocolMgr, NetMsg, NetConfig, NetUtils, ThreadUtils, HttpMgr, WebSocketMgr, SocketEvent};
 
 static LUA_POOL_NAME: &'static str = "lua";
 
@@ -142,6 +142,10 @@ fn listen_http(url: String) {
     HttpMgr::instance().start_listen(url);
 }
 
+fn listen_websocket(url: String) {
+    WebSocketMgr::instance().start_listen(url);
+}
+
 pub fn register_network_func(lua: &mut Lua) {
     lua.set("close_fd", td_rlua::function1(close_fd));
     lua.set("forward_to_port", td_rlua::function2(forward_to_port));
@@ -160,6 +164,7 @@ pub fn register_network_func(lua: &mut Lua) {
             td_rlua::function2(http_server_respone));
     lua.set("http_get_request", td_rlua::function3(http_get_request));
     lua.set("listen_http", td_rlua::function1(listen_http));
+    lua.set("listen_websocket", td_rlua::function1(listen_websocket));
 
 
 }

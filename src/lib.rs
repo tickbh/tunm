@@ -8,6 +8,7 @@ extern crate sys_info;
 extern crate url;
 extern crate time;
 extern crate rusqlite;
+extern crate ws;
 
 extern crate td_rlua;
 extern crate td_proto_rust as td_rp;
@@ -37,7 +38,7 @@ pub use rp_wrapper::{LuaWrapperValue, LuaWrapperVecValue, LuaWrapperTableValue};
 pub use redis_wrapper::{RedisWrapperResult, RedisWrapperCmd, RedisWrapperMsg,
                         RedisWrapperVecVec};
 pub use lua_engine::LuaEngine;
-pub use mgr::{ServiceMgr, HttpMgr, CommandMgr, EventMgr, ProtocolMgr};
+pub use mgr::{ServiceMgr, HttpMgr, CommandMgr, EventMgr, ProtocolMgr, WebSocketMgr};
 pub use lua_custom::register_custom_func;
 pub use net::{NetMsg, NetConfig, SocketEvent, MSG_TYPE_TD, MSG_TYPE_JSON, MSG_TYPE_BIN, MSG_TYPE_TEXT};
 pub use protocol::{EngineProtocol, ProtoTd, ProtoJson, ProtoBin, ProtoText};
