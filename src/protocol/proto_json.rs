@@ -21,6 +21,7 @@ impl EngineProtocol for ProtoJson {
 
             let mut lua = Lua::from_existing_state(lua, false);
             let json: String = unwrap_or!(lua.exec_func("arg_to_encode"), return None);
+            println!("json = {}", json);
             let net_msg = NetMsg::new_by_detail(MSG_TYPE_JSON, name, &json.as_bytes()[..]);
             Some(net_msg)
         }
@@ -28,8 +29,11 @@ impl EngineProtocol for ProtoJson {
 
     fn unpack_protocol(lua: *mut td_rlua::lua_State, net_msg: &mut NetMsg) -> NetResult<i32> {
         net_msg.set_read_data();
+        println!("net_msg len = {}", net_msg.get_pack_len());
         let name: String = try!(decode_str_raw(net_msg.get_buffer(), TYPE_STR)).into();
-        let raw: Value = try!(decode_str_raw(net_msg.get_buffer(), TYPE_RAW));
+        println!("name len = {}", name);
+        let raw: Value = try!(decode_str_raw(net_msg.get_buffer(), TYPE_STR));
+        println!("raw len = {:?}", raw);
         name.push_to_lua(lua);
         LuaWrapperValue(raw).push_to_lua(lua);
         return Ok(2);

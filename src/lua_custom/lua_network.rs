@@ -6,7 +6,7 @@ use td_rp;
 use td_rlua::{self, Lua, LuaPush};
 use td_revent::*;
 use net2;
-use {EventMgr, ServiceMgr, NetMsg, NetConfig, NetUtils, ThreadUtils, HttpMgr, SocketEvent};
+use {EventMgr, ServiceMgr, ProtocolMgr, NetMsg, NetConfig, NetUtils, ThreadUtils, HttpMgr, SocketEvent};
 
 static LUA_POOL_NAME: &'static str = "lua";
 
@@ -43,46 +43,12 @@ fn send_msg_to_port(fd: i32, net_msg: &mut NetMsg) -> i32 {
     }
 }
 
-extern "C" fn send_to_port(lua: *mut td_rlua::lua_State) -> libc::c_int {
-    let fd: i32 = unwrap_or!(td_rlua::LuaRead::lua_read_at_position(lua, 1), return 0);
-    let name: String = unwrap_or!(td_rlua::LuaRead::lua_read_at_position(lua, 2), return 0);
-    let config = NetConfig::instance();
-    let proto = unwrap_or!(config.get_proto_by_name(&name), return 0);
-    let value = NetUtils::lua_convert_value(lua, config, 3, &proto.args);
-    if value.is_none() {
-        println!("data convert failed name = {:?}", name);
-        return 0;
-    }
-    let value = value.unwrap();
-    let mut net_msg = NetMsg::new();
-    unwrap_or!(td_rp::encode_proto(net_msg.get_buffer(), config, &name, value).ok(),
-               return 0);
-    net_msg.end_msg(0);
-    let success = EventMgr::instance().send_netmsg(fd, &mut net_msg);
-    if success {
-        0.push_to_lua(lua);
-    } else {
-        -1.push_to_lua(lua);
-    }
-    1
-}
-
 extern "C" fn pack_message(lua: *mut td_rlua::lua_State) -> libc::c_int {
-    let name: String = unwrap_or!(td_rlua::LuaRead::lua_read_at_position(lua, 1), return 0);
-    let config = NetConfig::instance();
-    let proto = unwrap_or!(config.get_proto_by_name(&name), return 0);
-    let value = NetUtils::lua_convert_value(lua, config, 2, &proto.args);
-    if value.is_none() {
-        println!("data convert failed name = {:?}", name);
-        return 0;
-    }
-    let value = value.unwrap();
-    let mut net_msg = NetMsg::new();
-    unwrap_or!(td_rp::encode_proto(net_msg.get_buffer(), config, &name, value).ok(),
-               return 0);
-    net_msg.end_msg(0);
+
+    let msg_type: u16 = unwrap_or!(td_rlua::LuaRead::lua_read_at_position(lua, 1), return 0);
+    let net_msg = unwrap_or!(ProtocolMgr::instance().pack_protocol(lua, 2, msg_type), return 0);
     if net_msg.len() > 0xFFFFFF {
-        println!("pack message({}) size > 0xFFFF fail!", name);
+        println!("pack message({}) size > 0xFFFF fail!", net_msg.get_pack_name());
         return 0;
     }
     net_msg.push_to_lua(lua);
@@ -180,7 +146,6 @@ pub fn register_network_func(lua: &mut Lua) {
     lua.set("close_fd", td_rlua::function1(close_fd));
     lua.set("forward_to_port", td_rlua::function2(forward_to_port));
     lua.set("send_msg_to_port", td_rlua::function2(send_msg_to_port));
-    lua.register("send_to_port", send_to_port);
 
     lua.register("pack_message", pack_message);
     lua.register("del_message", del_message);

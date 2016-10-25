@@ -223,7 +223,7 @@ function get_message_manage_type(message, server_type)
 end
 
 function oper_message(agent, message, msg_buf)
-    local name, args = msg_buf:msg_to_table()
+    local name, args = msg_to_table(msg_buf)
     assert(name == message)
     local flag = get_debug_flag()
     if (type(flag) == "number" and flag == 1) or

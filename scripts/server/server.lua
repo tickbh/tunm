@@ -54,6 +54,10 @@ local function main()
     post_init()
     start_command_input()
     print("------------------welcome to rust lua game server------------------")
+
+    local msg = pack_message(MSG_TYPE_JSON, "aaaaaaaa", {a="1111", c="xxxxxxxxxx", d= {a="xxxx"}}, {b="xxxxxxxxxxx"})
+    local name, un = msg_to_table(msg)
+    trace("name = %o un = %o", name, un)
 end
 
 

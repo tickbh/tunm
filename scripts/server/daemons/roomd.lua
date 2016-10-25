@@ -230,7 +230,7 @@ function redis_dispatch_message(room_name, user_rid, cookie, msg_buf)
         return
     end
 
-    local name, args = net_msg:msg_to_table()
+    local name, args = msg_to_table(net_msg)
     if name and args and ROOM_D[name] then
         ROOM_D[name](room_name, user_rid, cookie, unpack(args))
     end

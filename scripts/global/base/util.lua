@@ -905,6 +905,7 @@ function restore_json(s)
 end
 
 function decode_json(s)
+    trace("s = %o", s)
     assert(type(s) == "string", "decode_json arg error")
     if sizeof(s) == 0 then
         return {}
@@ -1209,5 +1210,23 @@ function assert_eq(a, b, msg)
 end
 
 function arg_to_encode(...)
+    trace("xxx %o", {...})
+
+    trace("after encode is %o", encode_json({...}))
     return encode_json({...})
+end
+
+function msg_to_table(net_msg)
+    local msg_type = net_msg:get_msg_type()
+    local name, args = net_msg:msg_to_table()
+    trace("msg_type is %o", msg_type)
+    
+    trace("name is %o", name)
+    trace("args is %o", args)
+    if msg_type == MSG_TYPE_JSON and type(args) == 'string' then
+        --json format first arg is protocol name, repeat so remove
+        args = decode_json(args)
+        table.remove(args, 1)
+    end
+    return name, args
 end

@@ -68,6 +68,13 @@ fn register_netmsg_func(lua: &mut Lua) {
     value.create().def("get_seq_fd",
                        td_rlua::function1(|net_msg: &mut NetMsg| -> u16 { net_msg.get_seq_fd() }));
 
+    value.create().def("set_msg_type",
+                       td_rlua::function2(|net_msg: &mut NetMsg, msg_type: u16| {
+                           net_msg.set_msg_type(msg_type);
+                       }));
+    value.create().def("get_msg_type",
+                       td_rlua::function1(|net_msg: &mut NetMsg| -> u16 { net_msg.get_msg_type() }));
+
     value.create().def("set_cookie",
                        td_rlua::function2(|net_msg: &mut NetMsg, cookie: u32| {
                            net_msg.set_cookie(cookie);
