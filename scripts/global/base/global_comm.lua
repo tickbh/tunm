@@ -225,7 +225,7 @@ end
 
 function oper_message(agent, message, msg_buf)
     local name, args = msg_to_table(msg_buf)
-    assert(name == message)
+    -- assert(name == message)
     local flag = get_debug_flag()
     if (type(flag) == "number" and flag == 1) or
            (type(flag) == "table" and self:is_user() and flag[self:get_rid()]) then
@@ -248,7 +248,9 @@ function websocket_recalc_name(message, buffer)
         if type(args) ~= "string" then
             return nil
         end
+        trace("args is %o", args)
         message = READ_MSG_NAME(args)
+        trace("message is %o", message)
     end
     return message
 end
@@ -256,13 +258,14 @@ end
 -- 派发消息的入口函数
 function global_dispatch_command(port_no, message, buffer)
     -- 判断是否已存在对应的 agent
-    local old_message = message
+    -- local old_message = message
     local agent = find_agent_by_port(port_no)
-    if agent:is_websocket() then
-        message = websocket_recalc_name(message, buffer)
-    end
+    -- if agent:is_websocket() then
+    --     message = websocket_recalc_name(message, buffer)
+    -- end
+    trace("message is %o", message)
     if not message then
-        trace("非法连接(%d)\n 传送非法消息(源消息为%o)", port_no, old_message)
+        trace("非法连接(%d)\n 传送非法消息(源消息为%o)", port_no, message)
         if is_object(agent) then
             agent:print_fd_info()
             destruct_object(agent)
@@ -289,6 +292,7 @@ function global_dispatch_command(port_no, message, buffer)
     end
 
 
+    trace(" 11111111111 message is %o", message)
     local mm_type = get_message_manage_type(message, agent:get_server_type())
     if mm_type == MESSAGE_DISCARD then
         trace("------------- discard port_no is %o, cmd : %s -------------", port_no, message)
@@ -296,7 +300,7 @@ function global_dispatch_command(port_no, message, buffer)
         return 
     end
 
-    if agent:get_server_type() == SERVER_TYPE_CLIENT and CHECK_PACK and not agent:check_next_client(buffer:get_seq_fd()) then
+    if not agent:is_websocket() and agent:get_server_type() == SERVER_TYPE_CLIENT and CHECK_PACK and not agent:check_next_client(buffer:get_seq_fd()) then
         trace("package check failed %o kick the socket", agent:get_ob_id())
         trace("agent:get_server_type() = %o ", agent:get_server_type())
         agent:connection_lost()

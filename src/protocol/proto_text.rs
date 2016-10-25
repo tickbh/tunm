@@ -31,4 +31,11 @@ impl EngineProtocol for ProtoText {
         LuaWrapperValue(raw).push_to_lua(lua);
         return Ok(2);
     }
+
+    fn convert_string(lua: *mut td_rlua::lua_State, net_msg: &mut NetMsg) -> NetResult<String> {
+        net_msg.set_read_data();
+        let name: String = try!(decode_str_raw(net_msg.get_buffer(), TYPE_STR)).into();
+        let raw: String = try!(decode_str_raw(net_msg.get_buffer(), TYPE_STR)).into();
+        return Ok(raw);
+    }
 }

@@ -7,6 +7,7 @@ use std::boxed::Box;
 use SocketEvent;
 use LuaEngine;
 use NetMsg;
+use WebSocketMgr;
 
 use std::sync::Arc;
 use td_rthreadpool::ReentrantMutex;
@@ -178,7 +179,61 @@ impl EventMgr {
             println!("error!!!!!!!! net_msg.get_pack_len() = {:?}, net_msg.len() = {:?}", net_msg.get_pack_len(), net_msg.len());
             return false;
         }
-        self.write_data(fd, net_msg.get_buffer().get_data())
+        let mutex = self.mutex.clone();
+        let _guard = mutex.lock().unwrap();
+        if !self.connect_ids.contains_key(&fd) {
+            return false;
+        }
+        {
+            let socket_event = self.connect_ids.get_mut(&fd).unwrap();
+            if socket_event.is_websocket() {
+                return WebSocketMgr::instance().send_message(fd, net_msg);
+            }
+        }
+        let data = net_msg.get_buffer().get_data();
+        let mut tcp = TcpStream::from_fd(fd);
+        let mut write_ret;
+        let mut success = false;
+        loop {
+            let socket_event = self.connect_ids.get_mut(&fd).unwrap();
+            if socket_event.get_out_cache().len() > 0 {
+                write_ret = tcp.write(socket_event.get_out_cache().get_data());
+                if write_ret.is_err() {
+                    break;
+                }
+                let size = write_ret.as_ref().map(|ref e| *e.clone()).unwrap();
+                if size != socket_event.get_out_cache().len() {
+                    if size > 0 {
+                        socket_event.get_out_cache().drain(size);    
+                    }
+                    let _ = socket_event.get_out_cache().write(data);
+                    break;
+                }
+                socket_event.get_out_cache().clear();
+            }
+            write_ret = tcp.write(data);
+            if write_ret.is_err() {
+                break;
+            }
+
+            let size = write_ret.as_ref().map(|ref e| *e.clone()).unwrap();
+            if size != data.len() {
+                let _ = socket_event.get_out_cache().write(&data[size..]);
+                break;
+            }
+
+            success = true;
+            break;
+        }
+
+        mem::forget(tcp);
+        if write_ret.is_err() {
+            self.add_kick_event(fd);
+            return success;
+        }
+
+        //TODO if success = false, we may need add write event
+        success
     }
 
     pub fn get_socket_event(&mut self, fd: i32) -> Option<&mut SocketEvent> {

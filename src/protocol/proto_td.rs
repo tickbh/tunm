@@ -43,4 +43,20 @@ impl EngineProtocol for ProtoTd {
             return Ok(0);
         }
     }
+
+    fn convert_string(lua: *mut td_rlua::lua_State, net_msg: &mut NetMsg) -> NetResult<String> {
+        net_msg.set_read_data();
+        let instance = NetConfig::instance();
+        if let Ok((name, val)) = td_rp::decode_proto(net_msg.get_buffer(), instance) {
+            unsafe {
+                td_rlua::lua_settop(lua, 0);
+                LuaWrapperTableValue(val).push_to_lua(lua);
+                let mut lua = Lua::from_existing_state(lua, false);
+                let json: String = unwrap_or!(lua.exec_func("encode_json"), return Ok("".to_string()));
+                return Ok(json);
+            }
+        } else {
+            return Ok("".to_string());
+        }
+    }
 }

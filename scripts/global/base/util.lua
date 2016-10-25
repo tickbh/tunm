@@ -1222,7 +1222,7 @@ function msg_to_table(net_msg)
     
     trace("name is %o", name)
     trace("args is %o", args)
-    if msg_type == MSG_TYPE_JSON and type(args) == 'string' then
+    if (msg_type == MSG_TYPE_JSON or msg_type == MSG_TYPE_TEXT) and type(args) == 'string' then
         --json format first arg is protocol name, repeat so remove
         args = decode_json(args)
         table.remove(args, 1)

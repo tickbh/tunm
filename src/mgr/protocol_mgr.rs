@@ -5,7 +5,7 @@ use std::io::Read;
 
 use td_rlua::{self, Lua, LuaPush};
 use {EngineProtocol, ProtoTd, ProtoJson, ProtoBin, ProtoText};
-use {NetMsg, MSG_TYPE_TD, MSG_TYPE_BIN, MSG_TYPE_TEXT, MSG_TYPE_JSON};
+use {NetMsg, MSG_TYPE_TD, MSG_TYPE_BIN, MSG_TYPE_TEXT, MSG_TYPE_JSON, NetResult};
 
 pub struct ProtocolMgr {
     td: ProtoTd,
@@ -57,4 +57,15 @@ impl ProtocolMgr {
     }
 
 
+    pub fn convert_string(&mut self, lua: *mut td_rlua::lua_State, net_msg: &mut NetMsg) -> NetResult<String> {
+        let msg_type = net_msg.get_msg_type();
+        let ret = match msg_type {
+            MSG_TYPE_TD => ProtoTd::convert_string(lua, net_msg),
+            MSG_TYPE_JSON => ProtoJson::convert_string(lua, net_msg),
+            MSG_TYPE_BIN => ProtoBin::convert_string(lua, net_msg),
+            MSG_TYPE_TEXT => ProtoText::convert_string(lua, net_msg),
+            _ => Ok("".to_string())
+        };
+        ret
+    }
 }

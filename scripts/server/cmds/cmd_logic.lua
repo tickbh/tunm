@@ -19,6 +19,9 @@ function new_client_init(agent, port, data, ext)
     -- 设置端口与 agent 的映射关系
     client_agent:set_all_port_no(port, agent:get_port_no())
     client_agent:set_client_ip(ext["client_ip"])
+    if ext.is_websocket then
+        client_agent:set_websocket(ext.is_websocket)
+    end
     client_agent:set_server_type(SERVER_TYPE_CLIENT)
     client_agent:set_authed(true)
 end

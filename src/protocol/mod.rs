@@ -6,6 +6,7 @@ use {NetResult};
 pub trait EngineProtocol: Sized {
     fn pack_protocol(lua: *mut td_rlua::lua_State, index: i32) -> Option<NetMsg>;
     fn unpack_protocol(lua: *mut td_rlua::lua_State, net_msg: &mut NetMsg) -> NetResult<i32>;
+    fn convert_string(lua: *mut td_rlua::lua_State, net_msg: &mut NetMsg) -> NetResult<String>;
 }
 
 mod proto_td;

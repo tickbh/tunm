@@ -347,9 +347,9 @@ function AGENT_TDCLS:print_fd_info()
 end
 
 function AGENT_TDCLS:get_msg_type()
-    if self.websocket then
-        return MSG_TYPE_JSON
-    end
+    -- if self.websocket then
+    --     return MSG_TYPE_JSON
+    -- end
     return MSG_TYPE_TD
 end
 

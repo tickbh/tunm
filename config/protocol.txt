@@ -83,6 +83,7 @@
         "is_escape"                    : { "index" :    77,    "pattern" : "u8" },
         "multi_num"                    : { "index" :    78,    "pattern" : "u32" },
         "pea_amount_list"              : { "index" :    79,    "pattern" : "u32[]" },
+        "is_websocket"                 : { "index" :    80,    "pattern" : "u8" },
 
 
         "i8"                           : { "index" :    50000, "pattern" : "i8" },
