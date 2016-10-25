@@ -51,7 +51,8 @@ impl EventMgr {
         LuaEngine::instance().apply_new_connect(ev.get_cookie(),
                                                 ev.get_socket_fd(),
                                                 ev.get_client_ip(),
-                                                ev.get_server_port());
+                                                ev.get_server_port(),
+                                                ev.is_websocket());
         self.connect_ids.insert(ev.get_socket_fd(), ev);
         true
     }
@@ -119,13 +120,8 @@ impl EventMgr {
     //     //判断缓冲区大小
     //     true
     // }
-
-    pub fn send_netmsg(&mut self, fd: i32, net_msg: &mut NetMsg) -> bool {
-        let _ = net_msg.read_head();
-        if net_msg.get_pack_len() != net_msg.len() as u32 {
-            println!("error!!!!!!!! net_msg.get_pack_len() = {:?}, net_msg.len() = {:?}", net_msg.get_pack_len(), net_msg.len());
-            return false;
-        }
+    // 
+    pub fn write_data(&mut self, fd: i32, data: &[u8]) -> bool {
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
         if !self.connect_ids.contains_key(&fd) {
@@ -146,22 +142,19 @@ impl EventMgr {
                     if size > 0 {
                         socket_event.get_out_cache().drain(size);    
                     }
-                    let _ = socket_event.get_out_cache().write(net_msg.get_buffer().get_data());
+                    let _ = socket_event.get_out_cache().write(data);
                     break;
                 }
                 socket_event.get_out_cache().clear();
             }
-            write_ret = tcp.write(net_msg.get_buffer().get_data());
+            write_ret = tcp.write(data);
             if write_ret.is_err() {
                 break;
             }
 
             let size = write_ret.as_ref().map(|ref e| *e.clone()).unwrap();
-            if size != net_msg.get_buffer().len() {
-                if size > 0 {
-                    net_msg.get_buffer().drain(size);    
-                }
-                let _ = socket_event.get_out_cache().write(net_msg.get_buffer().get_data());
+            if size != data.len() {
+                let _ = socket_event.get_out_cache().write(&data[size..]);
                 break;
             }
 
@@ -177,6 +170,15 @@ impl EventMgr {
 
         //TODO if success = false, we may need add write event
         success
+    }
+
+    pub fn send_netmsg(&mut self, fd: i32, net_msg: &mut NetMsg) -> bool {
+        let _ = net_msg.read_head();
+        if net_msg.get_pack_len() != net_msg.len() as u32 {
+            println!("error!!!!!!!! net_msg.get_pack_len() = {:?}, net_msg.len() = {:?}", net_msg.get_pack_len(), net_msg.len());
+            return false;
+        }
+        self.write_data(fd, net_msg.get_buffer().get_data())
     }
 
     pub fn get_socket_event(&mut self, fd: i32) -> Option<&mut SocketEvent> {

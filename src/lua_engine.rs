@@ -16,8 +16,8 @@ enum LuaElem {
     DbResult(u32, i32, Option<String>, Option<NetMsg>),
     /// cookie, value
     RedisResult(u32, Option<RedisResult<Value>>),
-    /// cookie, new_fd, client_ip, server_port
-    NewConnection(u32, i32, String, u16),
+    /// cookie, new_fd, client_ip, server_port, websocket
+    NewConnection(u32, i32, String, u16, bool),
     /// fd
     LostConnection(i32),
     /// func_str
@@ -80,8 +80,8 @@ impl LuaEngine {
                     self.execute_db_result(cookie, ret, err_msg, net_msg)
                 }
                 LuaElem::RedisResult(cookie, result) => self.execute_redis_result(cookie, result),
-                LuaElem::NewConnection(cookie, new_fd, client_ip, server_port) => {
-                    self.execute_new_connect(cookie, new_fd, client_ip, server_port)
+                LuaElem::NewConnection(cookie, new_fd, client_ip, server_port, websocket) => {
+                    self.execute_new_connect(cookie, new_fd, client_ip, server_port, websocket)
                 }
                 LuaElem::LostConnection(lost_fd) => self.execute_lost_connect(lost_fd),
                 LuaElem::ExecString(func_str) => self.execute_string(func_str),
@@ -95,9 +95,10 @@ impl LuaEngine {
                              cookie: u32,
                              new_fd: i32,
                              client_ip: String,
-                             server_port: u16) {
+                             server_port: u16,
+                             websocket: bool) {
         let _guard = self.mutex.lock().unwrap();
-        self.exec_list.push(LuaElem::NewConnection(cookie, new_fd, client_ip, server_port));
+        self.exec_list.push(LuaElem::NewConnection(cookie, new_fd, client_ip, server_port, websocket));
     }
 
     pub fn apply_lost_connect(&mut self, lost_fd: i32) {
@@ -139,9 +140,10 @@ impl LuaEngine {
                                cookie: u32,
                                new_fd: i32,
                                client_ip: String,
-                               server_port: u16)
+                               server_port: u16,
+                               websocket: bool)
                                -> i32 {
-        self.lua.exec_func4("cmd_new_connection", cookie, new_fd, client_ip, server_port)
+        self.lua.exec_func5("cmd_new_connection", cookie, new_fd, client_ip, server_port, websocket)
     }
 
     pub fn execute_lost_connect(&mut self, lost_fd: i32) -> i32 {

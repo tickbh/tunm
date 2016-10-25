@@ -136,7 +136,7 @@ impl HttpMgr {
         });
     }
 
-    pub fn start_listen(&mut self, url: String) -> bool {
+    pub fn start_listen(&mut self, url: String, port: u16) -> bool {
         thread::spawn(move || {
             let server = Server::http(&*url).unwrap();
 

@@ -95,7 +95,7 @@ function get_server_type(client_ip, server_port)
 end
 
 -- 收到新连接
-function cmd_new_connection(cookie, fd, client_ip, server_port)
+function cmd_new_connection(cookie, fd, client_ip, server_port, websocket)
     trace("收到新连接(%d)。端口(%d), 客户端地址(%s), new connect info", fd, server_port, client_ip)
     local f = new_connection_callback[cookie]
     if type(f) == "function" then
@@ -108,6 +108,7 @@ function cmd_new_connection(cookie, fd, client_ip, server_port)
     -- 设置端口与 agent 的映射关系
     agent:set_port_no(fd)
     agent:set_client_ip(client_ip)
+    agent:set_websocket(websocket)
     local server_type = get_server_type(client_ip, server_port)
     if server_type == SERVER_TYPE_GATE or server_type == SERVER_TYPE_LOGIC then
         -- 现在暂时不需要验证
@@ -241,12 +242,35 @@ function oper_message(agent, message, msg_buf)
     message_handler(agent, unpack(args or {}))
 end
 
+function websocket_recalc_name(message, buffer)
+    if message == "web_socket_text" then
+        local name, args = buffer:msg_to_table()
+        if type(args) ~= "string" then
+            return nil
+        end
+        message = READ_MSG_NAME(args)
+    end
+    return message
+end
+
 -- 派发消息的入口函数
 function global_dispatch_command(port_no, message, buffer)
-    
-
     -- 判断是否已存在对应的 agent
+    local old_message = message
     local agent = find_agent_by_port(port_no)
+    if agent:is_websocket() then
+        message = websocket_recalc_name(message, buffer)
+    end
+    if not message then
+        trace("非法连接(%d)\n 传送非法消息(源消息为%o)", port_no, old_message)
+        if is_object(agent) then
+            agent:print_fd_info()
+            destruct_object(agent)
+        else 
+            close_fd(port_no)
+        end
+        do return end
+    end
     -- trace("------- my agent = %o ---------", agent)
     if not agent or
        (not agent:is_authed() and message ~= "cmd_internal_auth") then

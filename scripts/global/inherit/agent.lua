@@ -19,6 +19,7 @@ function AGENT_TDCLS:create()
     self.client_seq = -1;
     self.server_seq = 234;
 
+    self.websocket = false;
     self.authed = false;
     -- 保存agent数据
     self.data = {};
@@ -346,5 +347,16 @@ function AGENT_TDCLS:print_fd_info()
 end
 
 function AGENT_TDCLS:get_msg_type()
+    if self.websocket then
+        return MSG_TYPE_JSON
+    end
     return MSG_TYPE_TD
+end
+
+function AGENT_TDCLS:set_websocket(websocket)
+    self.websocket = websocket
+end
+
+function AGENT_TDCLS:is_websocket()
+    return self.websocket
 end

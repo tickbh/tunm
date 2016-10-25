@@ -905,7 +905,6 @@ function restore_json(s)
 end
 
 function decode_json(s)
-    trace("s = %o", s)
     assert(type(s) == "string", "decode_json arg error")
     if sizeof(s) == 0 then
         return {}

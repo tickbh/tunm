@@ -9,6 +9,7 @@ pub struct SocketEvent {
     buffer: Buffer,
     out_cache: Buffer,
     online: bool,
+    websocket: bool,
 }
 
 impl SocketEvent {
@@ -21,6 +22,7 @@ impl SocketEvent {
             buffer: Buffer::new(),
             out_cache: Buffer::new(),
             online: true,
+            websocket: false,
         }
     }
 
@@ -56,7 +58,15 @@ impl SocketEvent {
         self.online = online;
     }
 
-    pub fn is_online(&mut self) -> bool {
+    pub fn is_online(&self) -> bool {
         self.online
+    }
+
+    pub fn set_websocket(&mut self, websocket: bool) {
+        self.websocket = websocket;
+    }
+
+    pub fn is_websocket(&self) -> bool {
+        self.websocket
     }
 }

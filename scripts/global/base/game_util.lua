@@ -69,3 +69,12 @@ end
 function get_common_msg_type()
     return MSG_TYPE_JSON
 end
+
+-- 读取 pos
+function READ_MSG_NAME(all)
+    local name = string.match(all, "%[%s*\"([%w_]+)\".*");
+    return name
+end
+
+local test = "[  \"aaaaaafdsgf_fsd\", xxxx]"
+trace("msg name is %o", READ_MSG_NAME(test))

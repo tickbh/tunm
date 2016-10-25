@@ -138,12 +138,12 @@ fn http_get_request(cookie: u32, addr: String, url: String) {
     HttpMgr::instance().http_get_request(cookie, addr, url);
 }
 
-fn listen_http(url: String) {
-    HttpMgr::instance().start_listen(url);
+fn listen_http(url: String, port: u16) {
+    HttpMgr::instance().start_listen(url, port);
 }
 
-fn listen_websocket(url: String) {
-    WebSocketMgr::instance().start_listen(url);
+fn listen_websocket(url: String, port: u16) {
+    WebSocketMgr::instance().start_listen(url, port);
 }
 
 pub fn register_network_func(lua: &mut Lua) {
@@ -163,8 +163,8 @@ pub fn register_network_func(lua: &mut Lua) {
     lua.set("http_server_respone",
             td_rlua::function2(http_server_respone));
     lua.set("http_get_request", td_rlua::function3(http_get_request));
-    lua.set("listen_http", td_rlua::function1(listen_http));
-    lua.set("listen_websocket", td_rlua::function1(listen_websocket));
+    lua.set("listen_http", td_rlua::function2(listen_http));
+    lua.set("listen_websocket", td_rlua::function2(listen_websocket));
 
 
 }
