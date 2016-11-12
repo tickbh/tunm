@@ -76,7 +76,7 @@ local function init_network_status()
         listen_server(GATE_LOGIC_PORT, BIND_IP)
         listen_server(GATE_CLIENT_PORT)
         listen_http("0.0.0.0:" .. GATE_HTTP_PORT)
-        listen_websocket("0.0.0.0", 12345)
+        listen_websocket("0.0.0.0", tonumber(GATE_WEBSOCKET_PORT))
         
         CURRENT_IP = CURRENT_IP or "127.0.0.1"
         gate_heartbeat_network()

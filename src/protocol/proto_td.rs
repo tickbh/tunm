@@ -50,9 +50,10 @@ impl EngineProtocol for ProtoTd {
         if let Ok((name, val)) = td_rp::decode_proto(net_msg.get_buffer(), instance) {
             unsafe {
                 td_rlua::lua_settop(lua, 0);
+                name.push_to_lua(lua);
                 LuaWrapperTableValue(val).push_to_lua(lua);
                 let mut lua = Lua::from_existing_state(lua, false);
-                let json: String = unwrap_or!(lua.exec_func("encode_json"), return Ok("".to_string()));
+                let json: String = unwrap_or!(lua.exec_func("arg_to_encode"), return Ok("".to_string()));
                 return Ok(json);
             }
         } else {

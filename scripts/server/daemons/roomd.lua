@@ -54,7 +54,7 @@ function create_room(roomdata)
     assert(room_tdcls ~= nil, "场景配置必须存在")
     local room = clone_object(room_tdcls, roomdata)
     assert(room_list[room:get_room_name()] == nil, "重复配置房间")
-    room_list[room:get_room_name()] = room
+    room_list[room:get_room_name()] = room 
     REDIS_D.add_subscribe_channel(room:get_listen_channel())
     REDIS_D.add_subscribe_channel(room:get_respone_channel())
     return room
