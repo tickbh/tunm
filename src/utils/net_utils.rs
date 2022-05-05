@@ -1,9 +1,7 @@
 use td_rlua::{self, lua_State, LuaRead};
 use td_rp::*;
-use libc;
-use std::mem;
-use std::ptr;
 use std::collections::HashMap;
+use LuaUtils;
 pub struct NetUtils;
 
 impl NetUtils {
@@ -49,16 +47,8 @@ impl NetUtils {
                 Some(Value::from(val))
             }
             TYPE_RAW => {
-                let mut size: libc::size_t = unsafe { mem::uninitialized() };
-                let c_str_raw = unsafe { td_rlua::lua_tolstring(lua, index, &mut size) };
-                if c_str_raw.is_null() {
-                    return None;
-                }
-                let mut dst = Vec::with_capacity(size);
-                unsafe {
-                    dst.set_len(size);
-                    ptr::copy(c_str_raw as *mut u8, dst.as_mut_ptr(), size);
-                }
+
+                let dst = unwrap_or!(LuaUtils::read_str_to_vec(lua, index), return None);
                 Some(Value::from(dst))
             }
             TYPE_MAP => {

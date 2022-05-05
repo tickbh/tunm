@@ -1,9 +1,5 @@
-use libc;
-use std::mem;
-
-use td_rp;
 use td_rp::*;
-use td_rlua::{self, Lua, LuaPush};
+use td_rlua::{self, LuaPush};
 use super::EngineProtocol;
 use {NetMsg, MSG_TYPE_TEXT};
 use {NetResult, LuaWrapperValue};
@@ -32,9 +28,9 @@ impl EngineProtocol for ProtoText {
         return Ok(2);
     }
 
-    fn convert_string(lua: *mut td_rlua::lua_State, net_msg: &mut NetMsg) -> NetResult<String> {
+    fn convert_string(_: *mut td_rlua::lua_State, net_msg: &mut NetMsg) -> NetResult<String> {
         net_msg.set_read_data();
-        let name: String = try!(decode_str_raw(net_msg.get_buffer(), TYPE_STR)).into();
+        let _: String = try!(decode_str_raw(net_msg.get_buffer(), TYPE_STR)).into();
         let raw: String = try!(decode_str_raw(net_msg.get_buffer(), TYPE_STR)).into();
         return Ok(raw);
     }

@@ -1,9 +1,9 @@
-use std::net::{TcpStream, TcpListener};
 use std::collections::HashMap;
-use std::mem;
-use std::io::{Read, Write};
+use std::io::{Write};
+use psocket::{TcpSocket, SOCKET, INVALID_SOCKET};
+use std::any::Any;
+use std::io::Result;
 
-use net2;
 use td_revent::*;
 
 use {EventMgr, LuaEngine};
@@ -14,7 +14,7 @@ const SP: u8 = 32u8;
 
 #[derive(Debug)]
 pub struct ClientInfo {
-    pub tcp: TcpStream,
+    pub tcp: TcpSocket,
     pub data: Vec<u8>,
     pub ipos: usize,
     pub records: Vec<Vec<u8>>,
@@ -25,7 +25,7 @@ pub struct ClientInfo {
 }
 
 impl ClientInfo {
-    pub fn new(tcp: TcpStream) -> ClientInfo {
+    pub fn new(tcp: TcpSocket) -> ClientInfo {
         ClientInfo {
             tcp: tcp,
             data: vec![],
@@ -38,30 +38,36 @@ impl ClientInfo {
         }
     }
 }
+
+impl Drop for ClientInfo {
+    fn drop(&mut self) {
+        let tcp = ::std::mem::replace(&mut self.tcp, TcpSocket::new_invalid().unwrap());
+        let _ = tcp.unlink();
+    }
+}
+
 #[derive(Debug)]
 pub struct TelnetUtils {
-    clients: HashMap<i32, ClientInfo>,
-    tcp_listener: Option<TcpListener>,
-    listen_fd: i32,
+    clients: HashMap<SOCKET, ClientInfo>,
+    listen_fd: SOCKET,
     prompt: String,
 }
 
-static mut el: *mut TelnetUtils = 0 as *mut _;
+static mut EL: *mut TelnetUtils = 0 as *mut _;
 impl TelnetUtils {
     pub fn instance() -> &'static mut TelnetUtils {
         unsafe {
-            if el == 0 as *mut _ {
-                el = Box::into_raw(Box::new(TelnetUtils::new()));
+            if EL == 0 as *mut _ {
+                EL = Box::into_raw(Box::new(TelnetUtils::new()));
             }
-            &mut *el
+            &mut *EL
         }
     }
 
     pub fn new() -> TelnetUtils {
         TelnetUtils {
             clients: HashMap::new(),
-            tcp_listener: None,
-            listen_fd: 0,
+            listen_fd: INVALID_SOCKET,
             prompt: "telnet>".to_string(),
         }
     }
@@ -79,11 +85,11 @@ impl TelnetUtils {
         }
     }
 
-    pub fn remove_client(&mut self, fd: i32) {
+    pub fn remove_client(&mut self, fd: SOCKET) {
         self.clients.remove(&fd);
     }
 
-    pub fn send(&mut self, fd: i32, data: &str) {
+    pub fn send(&mut self, fd: SOCKET, data: &str) {
         let client = unwrap_or!(self.clients.get_mut(&fd), return);
         if data.len() == 0 {
             return;
@@ -99,11 +105,14 @@ impl TelnetUtils {
         return false;
     }
 
-    pub fn login(&mut self, fd: i32, bytes: &[u8]) {
+    pub fn login(&mut self, fd: SOCKET, bytes: &[u8]) {
         let client = unwrap_or!(self.clients.get_mut(&fd), return);
         for (i, b) in bytes.iter().enumerate() {
             if b == &255u8 {
                 break;
+            }
+            if b == &0u8 {
+                continue;
             }
             // 接受到回车键，开始处理消息
             if b == &13 {
@@ -174,7 +183,7 @@ impl TelnetUtils {
 
     }
 
-    pub fn update_data(&mut self, fd: i32, bytes: &[u8]) -> i32 {
+    pub fn update_data(&mut self, fd: SOCKET, bytes: &[u8]) -> i32 {
         let blogin = {
             let client = unwrap_or!(self.clients.get_mut(&fd), return 1);
             client.blogin
@@ -232,7 +241,9 @@ impl TelnetUtils {
             }
             // 收到删除键消息
             else if b == &127 {
-                if client.ipos as usize != client.data.len() {
+                client.ipos -= 1;
+                client.data.pop();
+                if !client.benterpwd {
                     let _ = client.tcp.write(&[BS]);
                     let _ = client.tcp.write(&client.data[client.ipos as usize..]);
                     let _ = client.tcp.write(&[SP]);
@@ -240,7 +251,6 @@ impl TelnetUtils {
                         let _ = client.tcp.write(&[BS]);
                     }
                 }
-
             }
             // 接收到方向键或插入键
             else if b == &27 && i + 1 < bytes.len() && bytes[i + 1] == 91 && i + 2 < bytes.len() {
@@ -351,62 +361,77 @@ impl TelnetUtils {
         0
     }
 
-    fn read_callback(_: &mut EventLoop, fd: u32, _: EventFlags, _: *mut ()) -> i32 {
+    fn read_callback(
+        _ev: &mut EventLoop,
+        buffer: &mut EventBuffer,
+        _data: Option<&mut CellAny>,
+    ) -> RetValue {
         let telnet = TelnetUtils::instance();
-        let mut tcp = TcpStream::from_fd(fd as i32);
-        let mut buffer = [0; 1024];
-        let size = match tcp.read(&mut buffer) {
-            Ok(size) => {
-                if size == 0 {
-                    telnet.remove_client(fd as i32);
-                    return 0;
-                }
-                size
-            }
-            Err(_) => {
-                telnet.remove_client(fd as i32);
-                return 0;
-            }
-        };
-        telnet.update_data(fd as i32, &buffer[..size]);
-        mem::forget(tcp);
-        0
+        let data = buffer.read.drain_all_collect();
+        telnet.update_data(buffer.as_raw_socket(), &data[..]);
+        RetValue::OK
     }
 
-    fn accept_callback(ev: &mut EventLoop, fd: u32, _: EventFlags, _: *mut ()) -> i32 {
-        println!("accept_callback {:?}", fd);
-        let listener = TcpListener::from_fd(fd as i32);
-        let (mut stream, _) = unwrap_or!(listener.accept().ok(), return 0);
-        net2::TcpStreamExt::set_nonblocking(&stream, true).ok().unwrap();
-        ev.add_event(EventEntry::new(stream.as_fd() as u32,
-                                     FLAG_READ | FLAG_PERSIST,
-                                     Some(Self::read_callback),
-                                     None));
-
-        {
-            let _ = stream.write(b"                        ** WELCOME TO TDENGINE SERVER! **                         \n");
-            let _ = stream.write(b"login:");
-            // 开启单字符模式和回显
-            let _ = stream.write(&[255, 251, 3]);
-            let _ = stream.write(&[255, 251, 1]);
-        }
-
+    fn read_end_callback(_ev: &mut EventLoop, buffer: &mut EventBuffer, _data: Option<CellAny>) {
         let telnet = TelnetUtils::instance();
-        telnet.clients.insert(stream.as_fd() as i32, ClientInfo::new(stream));
-        mem::forget(listener);
-        0
+        telnet.remove_client(buffer.as_raw_socket());
+    }
+
+    fn accept_callback(
+        ev: &mut EventLoop,
+        tcp: Result<TcpSocket>,
+        _data: Option<&mut CellAny>,
+    ) -> RetValue {
+        if tcp.is_err() {
+            return RetValue::OK;
+        }
+        
+        let telnet = TelnetUtils::instance();
+        let new_socket = tcp.unwrap();
+        let _ = new_socket.set_nonblocking(true);
+        let mut stream = new_socket.clone();
+
+        let socket = new_socket.as_raw_socket();
+        let buffer = ev.new_buff(new_socket);
+        let _ = ev.register_socket(
+            buffer,
+            EventEntry::new_event(
+                socket,
+                EventFlags::FLAG_READ | EventFlags::FLAG_PERSIST,
+                Some(Self::read_callback),
+                None,
+                Some(Self::read_end_callback),
+                None,
+            ));
+
+        let _ = stream.write(b"                        ** WELCOME TO TDENGINE SERVER! **                         \n");
+        let _ = stream.write(b"login:");
+        // 开启单字符模式和回显
+        let _ = stream.write(&[255, 251, 3]);
+        let _ = stream.write(&[255, 251, 1]);
+
+        telnet.clients.insert(socket, ClientInfo::new(stream));
+
+        return RetValue::OK;
     }
 
     pub fn listen(&mut self, addr: &str) {
-        assert!(self.listen_fd == 0, "repeat listen telnet");
-        let listener = TcpListener::bind(addr).unwrap();
-        let fd = listener.as_fd();
+        assert!(self.listen_fd == INVALID_SOCKET, "repeat listen telnet");
+        let listener = TcpSocket::bind(addr).unwrap();
+        let socket = listener.as_raw_socket();
         let event_loop = EventMgr::instance().get_event_loop();
-        event_loop.add_event(EventEntry::new(listener.as_fd() as u32,
-                                             FLAG_READ | FLAG_PERSIST,
-                                             Some(Self::accept_callback),
-                                             None));
-        self.listen_fd = fd;
-        self.tcp_listener = Some(listener);
+        let buffer = event_loop.new_buff(listener);
+        let _ = event_loop.register_socket(
+            buffer,
+            EventEntry::new_accept(
+                socket,
+                EventFlags::FLAG_READ | EventFlags::FLAG_PERSIST | EventFlags::FLAG_ACCEPT,
+                Some(Self::accept_callback),
+                None,
+                None,
+            ),
+        );
+        
+        self.listen_fd = socket;
     }
 }

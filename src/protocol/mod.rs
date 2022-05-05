@@ -1,6 +1,6 @@
 
 use NetMsg;
-use td_rlua::{self, Lua, LuaPush};
+use td_rlua::{self};
 use {NetResult};
 
 pub trait EngineProtocol: Sized {

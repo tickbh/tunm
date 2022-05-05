@@ -1,8 +1,9 @@
 use td_rp::Buffer;
+use psocket::{SOCKET};
 
 #[derive(Debug)]
 pub struct SocketEvent {
-    socket_fd: i32,
+    socket_fd: SOCKET,
     cookie: u32,
     client_ip: String,
     server_port: u16,
@@ -10,10 +11,12 @@ pub struct SocketEvent {
     out_cache: Buffer,
     online: bool,
     websocket: bool,
+    local: bool, //is local create fd
+    mio: bool,
 }
 
 impl SocketEvent {
-    pub fn new(socket_fd: i32, client_ip: String, server_port: u16) -> SocketEvent {
+    pub fn new(socket_fd: SOCKET, client_ip: String, server_port: u16) -> SocketEvent {
         SocketEvent {
             socket_fd: socket_fd,
             cookie: 0,
@@ -23,10 +26,16 @@ impl SocketEvent {
             out_cache: Buffer::new(),
             online: true,
             websocket: false,
+            local: false,
+            mio: false,
         }
     }
 
     pub fn get_socket_fd(&self) -> i32 {
+        self.socket_fd as i32
+    }
+    
+    pub fn as_raw_socket(&self) -> SOCKET {
         self.socket_fd
     }
 
@@ -68,5 +77,21 @@ impl SocketEvent {
 
     pub fn is_websocket(&self) -> bool {
         self.websocket
+    }
+
+    pub fn set_local(&mut self, local: bool) {
+        self.local = local;
+    }
+
+    pub fn is_local(&self) -> bool {
+        self.local
+    }
+
+    pub fn set_mio(&mut self, mio: bool) {
+        self.mio = mio;
+    }
+
+    pub fn is_mio(&self) -> bool {
+        self.mio
     }
 }

@@ -5,17 +5,17 @@ pub struct ThreadUtils {
     pools: HashMap<String, ThreadPool>,
 }
 
-static mut el: *mut ThreadUtils = 0 as *mut _;
+static mut EL: *mut ThreadUtils = 0 as *mut _;
 const DEFAULT_THREADS: usize = 1;
 
 impl ThreadUtils {
     pub fn instance() -> &'static mut ThreadUtils {
         unsafe {
-            if el == 0 as *mut _ {
+            if EL == 0 as *mut _ {
                 let config = ThreadUtils { pools: HashMap::new() };
-                el = Box::into_raw(Box::new(config));
+                EL = Box::into_raw(Box::new(config));
             }
-            &mut *el
+            &mut *EL
         }
     }
 
@@ -28,6 +28,14 @@ impl ThreadUtils {
         if !self.pools.contains_key(name) {
             self.pools.insert(name.clone(),
                               ThreadPool::new_with_name(DEFAULT_THREADS, name.clone()));
+        }
+        self.pools.get_mut(name).unwrap()
+    }
+
+    pub fn get_default_pool(&mut self, name: &String, threads: usize) -> &mut ThreadPool {
+        if !self.pools.contains_key(name) {
+            self.pools.insert(name.clone(),
+                              ThreadPool::new_with_name(threads, name.clone()));
         }
         self.pools.get_mut(name).unwrap()
     }

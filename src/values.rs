@@ -26,6 +26,8 @@ pub enum ErrorKind {
     IoError,
     /// net protocol error
     RpError,
+    
+    MysqlError,
     /// An extension error.  This is an error created by the server
     /// that is not directly understood by the library.
     ExtensionError,
@@ -38,6 +40,7 @@ enum ErrorRepr {
     ExtensionError(String, String),
     IoError(io::Error),
     RpError(RpError),
+    MysqlError(mysql::Error),
 }
 
 /// Represents a redis error.  For the most part you should be using
@@ -79,6 +82,14 @@ impl From<RpError> for NetError {
     }
 }
 
+
+impl From<mysql::Error> for NetError {
+    fn from(err: mysql::Error) -> NetError {
+        NetError { repr: ErrorRepr::MysqlError(err) }
+    }
+}
+
+
 impl From<(ErrorKind, &'static str)> for NetError {
     fn from((kind, desc): (ErrorKind, &'static str)) -> NetError {
         NetError { repr: ErrorRepr::WithDescription(kind, desc) }
@@ -101,6 +112,7 @@ impl error::Error for NetError {
             ErrorRepr::ExtensionError(_, _) => "extension error",
             ErrorRepr::IoError(ref err) => err.description(),
             ErrorRepr::RpError(ref err) => err.description(),
+            ErrorRepr::MysqlError(ref err) => err.description(),
         }
     }
 
@@ -128,6 +140,7 @@ impl fmt::Display for NetError {
             }
             ErrorRepr::IoError(ref err) => err.fmt(f),
             ErrorRepr::RpError(ref err) => err.fmt(f),
+            ErrorRepr::MysqlError(ref err) => err.fmt(f),
         }
     }
 }
@@ -149,6 +162,7 @@ impl NetError {
             ErrorRepr::ExtensionError(_, _) => ErrorKind::ExtensionError,
             ErrorRepr::IoError(_) => ErrorKind::IoError,
             ErrorRepr::RpError(_) => ErrorKind::RpError,
+            ErrorRepr::MysqlError(_) => ErrorKind::MysqlError,
         }
     }
 
@@ -165,6 +179,7 @@ impl NetError {
             ErrorKind::IoError => "I/O error",
             ErrorKind::ExtensionError => "extension error",
             ErrorKind::RpError => "rust protocol error",
+            ErrorKind::MysqlError => "mysql error",
         }
     }
 

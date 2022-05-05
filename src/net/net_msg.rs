@@ -52,6 +52,28 @@ impl NetMsg {
         net_msg
     }
 
+
+
+    pub fn new_by_proto_data(data: &[u8]) -> NetResult<NetMsg> {
+        let mut buffer = Buffer::new();
+        let _ = buffer.write(&HEAD_FILL_UP);
+        let _ = buffer.write(&data);
+        buffer.set_rpos(HEAD_FILL_UP.len());
+        let pack_name: String = try!(decode_str_raw(&mut buffer, td_rp::TYPE_STR)).into();
+        buffer.set_rpos(HEAD_FILL_UP.len());
+
+        let mut net_msg = NetMsg {
+            seq_fd: 0u16,
+            length: buffer.len() as u32,
+            cookie: 0u32,
+            msg_type: 0,
+            buffer: buffer,
+            pack_name: pack_name,
+        };
+        net_msg.end_msg(0);
+        Ok(net_msg)
+    }
+
     pub fn new_by_data(data: &[u8]) -> NetResult<NetMsg> {
         if data.len() < HEAD_FILL_UP.len() {
             return Err(make_extension_error("data len too small", None));
@@ -63,7 +85,7 @@ impl NetMsg {
         let cookie: u32 = try!(decode_number(&mut buffer, td_rp::TYPE_U32)).into();
         let msg_type: u16 = try!(decode_number(&mut buffer, td_rp::TYPE_U16)).into();
         if data.len() != length as usize {
-            println!("data.len() = {:?}, length = {:?}", data.len(), length);
+            trace!("data.len() = {:?}, length = {:?}", data.len(), length);
             return Err(make_extension_error("data length not match", None));
         }
         buffer.set_rpos(HEAD_FILL_UP.len());
@@ -198,8 +220,8 @@ impl Write for NetMsg {
     }
 }
 
-impl Drop for NetMsg {
-    fn drop(&mut self) {
-        // println!("drop net_msg!!!!!!!!!!!!!!!!!");
-    }
-}
+// impl Drop for NetMsg {
+//     fn drop(&mut self) {
+//         println!("drop net_msg!!!!!!!!!!!!!!!!!");
+//     }
+// }

@@ -1,20 +1,21 @@
-use std::mem;
-use std::net::TcpStream;
+use psocket::{TcpSocket};
 use libc;
-
-use td_rp;
 use td_rlua::{self, Lua, LuaPush};
 use td_revent::*;
-use net2;
-use {EventMgr, ServiceMgr, ProtocolMgr, NetMsg, NetConfig, NetUtils, ThreadUtils, HttpMgr, WebSocketMgr, SocketEvent};
+use psocket::SOCKET;
+use ws;
+use {EventMgr, ServiceMgr, ProtocolMgr, NetMsg, NetConfig, ThreadUtils, 
+    HttpMgr, WebSocketMgr, WebsocketMyMgr, SocketEvent,
+    LuaUtils, WebsocketClient, GlobalConfig};
 
 static LUA_POOL_NAME: &'static str = "lua";
+static TEST_WEBSOCKET_POOL_NAME: &'static str = "test_webscoket";
 
-fn close_fd(fd: i32) {
-    EventMgr::instance().add_kick_event(fd);
+fn close_fd(fd: SOCKET) {
+    EventMgr::instance().close_fd(fd, "Script Close".to_string());
 }
 
-fn forward_to_port(fd: i32, net_msg: &mut NetMsg) -> i32 {
+fn forward_to_port(fd: SOCKET, net_msg: &mut NetMsg) -> i32 {
     if net_msg.len() < NetMsg::min_len() {
         println!("forward_to_port {:?}", net_msg.len());
         return -1;
@@ -34,7 +35,7 @@ fn forward_to_port(fd: i32, net_msg: &mut NetMsg) -> i32 {
     }
 }
 
-fn send_msg_to_port(fd: i32, net_msg: &mut NetMsg) -> i32 {
+fn send_msg_to_port(fd: SOCKET, net_msg: &mut NetMsg) -> i32 {
     let success = EventMgr::instance().send_netmsg(fd, net_msg);
     if success {
         0
@@ -55,10 +56,11 @@ extern "C" fn pack_message(lua: *mut td_rlua::lua_State) -> libc::c_int {
     1
 }
 
-extern "C" fn del_message(lua: *mut td_rlua::lua_State) -> libc::c_int {
-    let msg: &mut NetMsg = unwrap_or!(td_rlua::LuaRead::lua_read_at_position(lua, 1), return 0);
-    unsafe { drop(Box::from_raw(msg)) };
-    1
+// 用light_userdata, 降低整体lua的内存占有量, 尽量小的cc
+extern "C" fn del_message(_lua: *mut td_rlua::lua_State) -> libc::c_int {
+    let msg: &mut NetMsg = unwrap_or!(td_rlua::LuaRead::lua_read_at_position(_lua, 1), return 0);
+    let _msg = unsafe { Box::from_raw(msg) };
+    0
 }
 
 
@@ -67,14 +69,8 @@ extern "C" fn pack_raw_message(lua: *mut td_rlua::lua_State) -> libc::c_int {
         if td_rlua::lua_isstring(lua, 1) == 0 {
             return 0;
         }
-        let mut size: libc::size_t = mem::uninitialized();
-        let c_str_raw = td_rlua::lua_tolstring(lua, 1, &mut size);
-        if c_str_raw.is_null() {
-            return 0;
-        }
-        let val: Vec<u8> = Vec::from_raw_parts(c_str_raw as *mut u8, size, size);
+        let val = unwrap_or!(LuaUtils::read_str_to_vec(lua, 1), return 0);
         let net_msg = unwrap_or!(NetMsg::new_by_data(&val[..]).ok(), return 0);
-        mem::forget(val);
         net_msg.get_pack_name().clone().push_to_lua(lua);
         net_msg.push_to_lua(lua);
         2
@@ -103,29 +99,55 @@ fn new_connect(ip: String, port: u16, _timeout: i32, cookie: u32) -> i32 {
     let pool = ThreadUtils::instance().get_pool(&LUA_POOL_NAME.to_string());
     pool.execute(move || {
         let ip = ip.trim_matches('\"');
-        let stream = TcpStream::connect(&format!("{}:{}", ip.trim_matches('\"'), port)[..]);
-        if stream.is_ok() {
-            let stream = stream.unwrap();
+        let new_socket = TcpSocket::connect(&format!("{}:{}", ip.trim_matches('\"'), port)[..]);
+        if new_socket.is_ok() {
+            let new_socket = new_socket.unwrap();
             let mut peer_ip = "unkown_ip".to_string();
-            if stream.peer_addr().is_ok() {
-                peer_ip = format!("{}", stream.peer_addr().ok().unwrap());
+            if new_socket.peer_addr().is_ok() {
+                peer_ip = format!("{}", new_socket.peer_addr().ok().unwrap());
             }
-            let mut event = SocketEvent::new(stream.as_fd(), peer_ip, 0);
+            let mut event = SocketEvent::new(new_socket.as_raw_socket(), peer_ip, 0);
             event.set_cookie(cookie);
+            event.set_local(true);
             EventMgr::instance().new_socket_event(event);
-            net2::TcpStreamExt::set_nonblocking(&stream, true).ok().unwrap();
-            EventMgr::instance()
-                .get_event_loop()
-                .add_event(EventEntry::new(stream.as_fd() as u32,
-                                           FLAG_READ | FLAG_PERSIST,
-                                           Some(ServiceMgr::read_write_callback),
-                                           None));
+            // net2::TcpStreamExt::set_nonblocking(&stream, true).ok().unwrap();
 
-            mem::forget(stream);
+            let socket = new_socket.as_raw_socket();
+            let ev = EventMgr::instance().get_event_loop();
+            let buffer = ev.new_buff(new_socket);
+            let _ = ev.register_socket(
+                buffer,
+                EventEntry::new_event(
+                    socket,
+                    EventFlags::FLAG_READ | EventFlags::FLAG_PERSIST,
+                    Some(ServiceMgr::server_read_callback),
+                    None,
+                    Some(ServiceMgr::server_end_callback),
+                    None,
+                ),
+            );
+            
+            // TcpMgr::instance().insert_stream(stream.as_fd(), stream);
         } else {
             // TODO remove cookie
             println!("failed to connect server ip = {:?}, port = {:?}", ip, port);
         }
+    });
+    1
+}
+
+
+fn new_websocket_connect(ip: String, port: u16, _timeout: i32, cookie: u32) -> i32 {
+    let pool = ThreadUtils::instance().get_default_pool(&TEST_WEBSOCKET_POOL_NAME.to_string(), 100);
+    pool.execute(move || {
+        let ip = ip.trim_matches('\"');
+        ws::connect(&format!("ws://{}:{}", ip.trim_matches('\"'), port)[..], |sender| {
+            WebsocketClient {
+                out: sender,
+                port: port,
+                cookie: cookie,
+            }
+        }).unwrap();
     });
     1
 }
@@ -138,12 +160,32 @@ fn http_get_request(cookie: u32, addr: String, url: String) {
     HttpMgr::instance().http_get_request(cookie, addr, url);
 }
 
+fn http_post_request(cookie: u32, addr: String, url: String, body: String) {
+    HttpMgr::instance().http_post_request(cookie, addr, url, body);
+}
+
 fn listen_http(url: String, port: u16) {
     HttpMgr::instance().start_listen(url, port);
 }
 
-fn listen_websocket(url: String, port: u16) {
+fn listen_mio_websocket(url: String, port: u16) {
     WebSocketMgr::instance().start_listen(url, port);
+}
+
+fn listen_websocket(url: String, port: u16) {
+    WebsocketMyMgr::instance().start_listen(url, port);
+}
+
+fn update_net_message(path: String) {
+    let success = {
+        if path.len() == 0 {
+            let global_config = GlobalConfig::instance();
+            NetConfig::change_by_file(&*global_config.net_info)
+        } else {
+            NetConfig::change_by_file(&*path)
+        }
+    };
+    println!("update_net_message {:?}", success);
 }
 
 pub fn register_network_func(lua: &mut Lua) {
@@ -159,12 +201,16 @@ pub fn register_network_func(lua: &mut Lua) {
     lua.register("listen_server", listen_server);
     lua.set("stop_server", td_rlua::function0(stop_server));
     lua.set("new_connect", td_rlua::function4(new_connect));
+    lua.set("new_websocket_connect", td_rlua::function4(new_websocket_connect));
 
     lua.set("http_server_respone",
             td_rlua::function2(http_server_respone));
     lua.set("http_get_request", td_rlua::function3(http_get_request));
+    lua.set("http_post_request", td_rlua::function4(http_post_request));
+
     lua.set("listen_http", td_rlua::function2(listen_http));
     lua.set("listen_websocket", td_rlua::function2(listen_websocket));
+    lua.set("listen_mio_websocket", td_rlua::function2(listen_mio_websocket));
 
-
+    lua.set("update_net_message", td_rlua::function1(update_net_message));
 }

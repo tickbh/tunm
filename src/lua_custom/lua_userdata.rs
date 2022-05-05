@@ -2,8 +2,7 @@ use libc;
 use std::ffi::CString;
 
 use td_rlua::{self, LuaPush, LuaRead, Lua, NewStruct, LuaStruct, lua_State};
-use td_rp;
-use {NetMsg, LuaWrapperTableValue, NetConfig, ProtocolMgr};
+use {NetMsg, ProtocolMgr};
 
 
 impl NewStruct for NetMsg {
@@ -24,9 +23,9 @@ impl<'a> LuaRead for &'a mut NetMsg {
 
 impl LuaPush for NetMsg {
     fn push_to_lua(self, lua: *mut lua_State) -> i32 {
-        let t = Box::into_raw(Box::new(self));
-        let stack = td_rlua::userdata::push_lightuserdata(unsafe { &mut *t }, lua, |_| {});
         unsafe {
+            let obj = Box::into_raw(Box::new(self));
+            td_rlua::userdata::push_lightuserdata(&mut *obj, lua, |_|{});
             let typeid = CString::new(NetMsg::name()).unwrap();
             td_rlua::lua_getglobal(lua, typeid.as_ptr());
             if td_rlua::lua_istable(lua, -1) {
@@ -34,8 +33,8 @@ impl LuaPush for NetMsg {
             } else {
                 td_rlua::lua_pop(lua, 1);
             }
+            1
         }
-        stack
     }
 }
 

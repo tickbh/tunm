@@ -4,10 +4,10 @@ use std::path::Path;
 use std::sync::Arc;
 
 use time;
-
+use chrono::prelude::*;
 use td_rthreadpool::ReentrantMutex;
 
-use FileUtils;
+use {FileUtils, TimeUtils};
 
 const KEEP_ROLE_SECOND: u64 = 60 * 60 * 24;
 
@@ -22,6 +22,7 @@ pub struct LogUtils {
     mutex: Arc<ReentrantMutex<i32>>,
     log_path: String,
     basename: String,
+    server_id: String,
     roll_size: usize,
     flush_interval: u64,
     check_every_n: u64,
@@ -37,14 +38,14 @@ pub struct LogUtils {
     date_cache: String,
 }
 
-static mut ins: *mut LogUtils = 0 as *mut _;
+static mut EL: *mut LogUtils = 0 as *mut _;
 impl LogUtils {
     pub fn instance() -> &'static mut LogUtils {
         unsafe {
-            if ins == 0 as *mut _ {
-                ins = Box::into_raw(Box::new(LogUtils::new()));
+            if EL == 0 as *mut _ {
+                EL = Box::into_raw(Box::new(LogUtils::new()));
             }
-            &mut *ins
+            &mut *EL
         }
     }
 
@@ -54,6 +55,7 @@ impl LogUtils {
             mutex: Arc::new(ReentrantMutex::new(0)),
             log_path: String::new(),
             basename: "TDEngine".to_string(),
+            server_id: "0".to_string(),
             roll_size: 1024 * 1024 * 50,
             flush_interval: 3,
             check_every_n: 1024,
@@ -66,6 +68,7 @@ impl LogUtils {
 
             cache_time: 0,
             date_cache: String::new(),
+
         }
     }
 
@@ -79,10 +82,11 @@ impl LogUtils {
     }
 
     pub fn role_file(&mut self) -> Option<File> {
-        let filename = self.get_log_filename(time::now());
+        let filename = self.get_log_filename();
         let file = unwrap_or!(File::create(filename).ok(), return None);
-        let now = time::precise_time_s() as u64;
+        let now = TimeUtils::get_time_s() as u64;
         let start = now / KEEP_ROLE_SECOND;
+        self.cur_file_size = 0;
         self.start_of_period = start;
         self.last_flush = now;
         self.last_append = now;
@@ -104,9 +108,21 @@ impl LogUtils {
         unreachable!("find no use file");
     }
 
-    pub fn get_log_filename(&mut self, now: time::Tm) -> String {
-        let name = now.strftime(".%Y-%m-%d-%H_%M_%S").unwrap().to_string();
-        let filename = self.log_path.clone() + &*self.basename + &*name + ".log";
+    pub fn set_server_id(&mut self, server_id: String) {
+        self.server_id = server_id;
+    }
+
+    pub fn get_log_filename(&mut self) -> String {
+        
+        let tm = Local::now();
+        let name = format!("{:4}-{:02}-{:02}_{:02}:{:02}:{:02}",
+                                  tm.year() + 1900,
+                                  tm.month() + 1,
+                                  tm.day(),
+                                  tm.hour(),
+                                  tm.minute(),
+                                  tm.second());
+        let filename = self.log_path.clone() + &*self.basename + "_" + &*self.server_id + "_" + &*name + ".log";
         self.get_can_use_filename(filename)
     }
 
@@ -150,17 +166,17 @@ impl LogUtils {
         if self.file.is_none() {
             return;
         }
-        let now = time::precise_time_s() as u64;
+        let now = TimeUtils::get_time_ms() as u64;
         if now != self.cache_time {
             self.cache_time = now;
-            let tm = time::now();
+            let tm = Local::now();
             self.date_cache = format!("[{:4}-{:02}-{:02} {:02}:{:02}:{:02}] ",
-                                      tm.tm_year + 1900,
-                                      tm.tm_mon + 1,
-                                      tm.tm_mday,
-                                      tm.tm_hour,
-                                      tm.tm_min,
-                                      tm.tm_sec);
+                                      tm.year() + 1900,
+                                      tm.month() + 1,
+                                      tm.day(),
+                                      tm.hour(),
+                                      tm.minute(),
+                                      tm.second());
         }
         self.write_date();
         self.write_log_method(method);
@@ -170,7 +186,7 @@ impl LogUtils {
     }
 
     pub fn check_file_status(&mut self) {
-        let now = time::precise_time_s() as u64;
+        let now = TimeUtils::get_time_ms() as u64;
         if self.cur_file_size > self.roll_size {
             self.file = self.role_file();
         } else {

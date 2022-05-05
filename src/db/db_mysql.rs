@@ -1,14 +1,15 @@
 use std::collections::HashMap;
+use std::str::FromStr;
 
 use super::DbTrait;
-use {NetResult, NetMsg, NetConfig, ErrorKind};
+use {NetResult, NetMsg, NetConfig, ErrorKind, TimeUtils};
 
 use td_rp::{self, Value, encode_proto};
-
+use chrono::prelude::*;
 use url;
-use time::{self, Timespec};
 use mysql;
 use mysql::{Conn, Result as MyResult, QueryResult, Opts};
+use mysql::prelude::*;
 
 
 static DB_RESULT_PROTO: &'static str = "msg_db_result";
@@ -20,7 +21,7 @@ pub struct DbMysql {
     pub affected_rows: u64,
     pub error: Option<mysql::Error>,
     pub is_connect: bool,
-    pub last_use_time : f64,
+    pub last_use_time : u64,
 }
 
 impl DbMysql {
@@ -31,22 +32,22 @@ impl DbMysql {
             affected_rows: 0,
             error: None,
             is_connect: true,
-            last_use_time: time::precise_time_s(),
+            last_use_time: TimeUtils::get_time_ms(),
         }
     }
 
-    pub fn is_io_error<'a>(value: &MyResult<QueryResult<'a>>) -> bool {
-        match value {
-            &Err(ref val) => {
-                match val {
-                    &mysql::Error::IoError(_) => return true,
-                    _ => (),
-                }
-            }
-            _ => (),
-        }
-        false
-    }
+    // pub fn is_io_error<'a, 't, 'tc>(value: &MyResult<QueryResult<'a, 't, 'tc>>) -> bool {
+    //     match value {
+    //         &Err(ref val) => {
+    //             match val {
+    //                 &mysql::Error::IoError(_) => return true,
+    //                 _ => (),
+    //             }
+    //         }
+    //         _ => (),
+    //     }
+    //     false
+    // }
 
     pub fn check_connect(&mut self) -> NetResult<()> {
         if !self.conn.ping() {
@@ -60,40 +61,7 @@ impl DbMysql {
 
 
     pub fn from_url_basic(url: &str) -> Option<Opts> {
-        let url = url::Url::parse(url).unwrap();
-        if url.scheme() != "mysql" {
-            return None
-        }
-        let user = if url.username().len() == 0 {
-            None
-        } else {
-            Some(url.username().to_string())
-        };
-        let pass = match url.password() {
-            Some(p) => Some(p.to_string()),
-            None  => None,
-        };
-
-        url.password().unwrap_or("").to_string();
-        let ip_or_hostname = match url.host_str() {
-            Some(host_str) => Some(host_str.to_string()),
-            None => Some("127.0.0.1".to_string()),
-        };
-        let tcp_port = url.port().unwrap_or(3306);
-        let db_name = if url.path().len() <= 1 {
-            None
-        } else {
-            Some(url.path()[1..].to_string())
-        };
-        let opts = Opts {
-            user: user,
-            pass: pass,
-            ip_or_hostname: ip_or_hostname,
-            tcp_port: tcp_port,
-            db_name: db_name,
-            ..Opts::default()
-        };
-        Some(opts)
+        Opts::from_url(url).ok()
     }
 
 }
@@ -102,132 +70,164 @@ impl DbMysql {
 impl DbTrait for DbMysql {
     fn select(&mut self, sql_cmd: &str, msg: &mut NetMsg) -> NetResult<i32> {
         try!(self.check_connect());
-        let value = self.conn.prep_exec(sql_cmd, ());
+        let mut value = self.conn.query_iter(sql_cmd)?;
         let config = NetConfig::instance();
         let mut success: i32 = 0;
-        match value {
-            Ok(val) => {
-                self.last_insert_id = val.last_insert_id();
-                self.affected_rows = val.affected_rows();
-                let mut array = vec![];
-                let mut columns = HashMap::new();
-                for (i, column) in val.columns_ref().iter().enumerate() {
-                    columns.insert(String::from_utf8_lossy(&column.org_name[..]).to_string(), i);
-                }
 
-                for (_, row) in val.enumerate() {
-                    let mut hash = HashMap::<String, Value>::new();
-                    let mut row = row.unwrap();
+        while let Some(val) = value.iter() {
+            
+            self.last_insert_id = unwrap_or!(val.last_insert_id(), 0u64) ;
+            self.affected_rows = val.affected_rows();
+            let mut array = vec![];
+            for (_, row) in val.enumerate() {
+                // row.ok().unwrap().columns()
+                let mut hash = HashMap::<String, Value>::new();
+                let mut row = row.unwrap();
+                
+                for column in row.columns_ref() {
+                    let _name = column.org_name_str().to_string();
+                    let (field, name) = if config.get_field_by_name(&_name).is_some() {
+                        (config.get_field_by_name(&_name).unwrap(), _name)
+                    } else {
+                        let _name = column.name_str().to_string();
+                        (unwrap_or!(config.get_field_by_name(&_name), continue), _name)
+                    };
 
-                    for (name, idx) in &columns {
-                        let field = unwrap_or!(config.get_field_by_name(name), continue);
-                        let fix_value = match row.take(*idx) {
-                            Some(row_val) => {
-                                match row_val {
-                                    mysql::Value::NULL => continue,
-                                    mysql::Value::Bytes(sub_val) => {
-                                        match &*field.pattern {
-                                            td_rp::STR_TYPE_STR => {
-                                                Value::from(unwrap_or!(String::from_utf8(sub_val)
-                                                                           .ok(),
-                                                                       continue))
-                                            }
-                                            td_rp::STR_TYPE_RAW => Value::from(sub_val),
-                                            _ => continue,
-                                        }
+                    let fix_value = 
+                        match row[column.name_str().as_ref()].clone() {
+                            mysql::Value::NULL => continue,
+                            mysql::Value::Bytes(sub_val) => {
+                                match &*field.pattern {
+                                    td_rp::STR_TYPE_STR => {
+                                        Value::from(unwrap_or!(String::from_utf8(sub_val)
+                                                                    .ok(),
+                                                                continue))
                                     }
-                                    mysql::Value::Int(sub_val) => {
-                                        match &*field.pattern {
-                                            td_rp::STR_TYPE_U8 => Value::from(sub_val as u8),
-                                            td_rp::STR_TYPE_I8 => Value::from(sub_val as i8),
-                                            td_rp::STR_TYPE_U16 => Value::from(sub_val as u16),
-                                            td_rp::STR_TYPE_I16 => Value::from(sub_val as i16),
-                                            td_rp::STR_TYPE_U32 => Value::from(sub_val as u32),
-                                            td_rp::STR_TYPE_I32 => Value::from(sub_val as i32),
-                                            td_rp::STR_TYPE_FLOAT => Value::from(sub_val as f32),
-                                            _ => continue,
-                                        }
-                                    }
-                                    mysql::Value::UInt(sub_val) => {
-                                        match &*field.pattern {
-                                            td_rp::STR_TYPE_U8 => Value::from(sub_val as u8),
-                                            td_rp::STR_TYPE_I8 => Value::from(sub_val as i8),
-                                            td_rp::STR_TYPE_U16 => Value::from(sub_val as u16),
-                                            td_rp::STR_TYPE_I16 => Value::from(sub_val as i16),
-                                            td_rp::STR_TYPE_U32 => Value::from(sub_val as u32),
-                                            td_rp::STR_TYPE_I32 => Value::from(sub_val as i32),
-                                            td_rp::STR_TYPE_FLOAT => Value::from(sub_val as f32),
-                                            _ => continue,
-                                        }
-                                    }
-                                    mysql::Value::Float(sub_val) => {
-                                        match &*field.pattern {
-                                            td_rp::STR_TYPE_U8 => Value::from(sub_val as u8),
-                                            td_rp::STR_TYPE_I8 => Value::from(sub_val as i8),
-                                            td_rp::STR_TYPE_U16 => Value::from(sub_val as u16),
-                                            td_rp::STR_TYPE_I16 => Value::from(sub_val as i16),
-                                            td_rp::STR_TYPE_U32 => Value::from(sub_val as u32),
-                                            td_rp::STR_TYPE_I32 => Value::from(sub_val as i32),
-                                            td_rp::STR_TYPE_FLOAT => Value::from(sub_val as f32),
-                                            _ => continue,
-                                        }
-                                    }
-                                    mysql::Value::Date(_, _, _, _, _, _, _) => {
-                                        match &*field.pattern {
-                                            td_rp::STR_TYPE_U32 => {
-                                                let timespec =
-                                                    mysql::from_value::<Timespec>(row_val);
-                                                Value::from(timespec.sec as u32)
-                                            }
-                                            _ => continue,
-                                        }
+                                    td_rp::STR_TYPE_RAW => Value::from(sub_val),
+                                    td_rp::STR_TYPE_U8 => {
+                                        let string = unwrap_or!(String::from_utf8(sub_val)
+                                                                    .ok(),
+                                                                continue);
+                                        Value::from(unwrap_or!(u8::from_str_radix(&*string, 10).ok(),
+                                                                continue))
+                                    },
+                                    td_rp::STR_TYPE_I8 => {
+                                        let string = unwrap_or!(String::from_utf8(sub_val)
+                                                                    .ok(),
+                                                                continue);
+                                        Value::from(unwrap_or!(i8::from_str_radix(&*string, 10).ok(),
+                                                                continue))
+                                    },
+                                    td_rp::STR_TYPE_U16 => {
+                                        let string = unwrap_or!(String::from_utf8(sub_val)
+                                                                    .ok(),
+                                                                continue);
+                                        Value::from(unwrap_or!(u16::from_str_radix(&*string, 10).ok(),
+                                                                continue))
+                                    },
+                                    td_rp::STR_TYPE_I16 => {
+                                        let string = unwrap_or!(String::from_utf8(sub_val)
+                                                                    .ok(),
+                                                                continue);
+                                        Value::from(unwrap_or!(i16::from_str_radix(&*string, 10).ok(),
+                                                                continue))
+                                    },
+                                    td_rp::STR_TYPE_U32 => {
+                                        let string = unwrap_or!(String::from_utf8(sub_val)
+                                                                    .ok(),
+                                                                continue);
+                                        Value::from(unwrap_or!(u32::from_str_radix(&*string, 10).ok(),
+                                                                continue))
+                                    },
+                                    td_rp::STR_TYPE_I32 => {
+                                        let string = unwrap_or!(String::from_utf8(sub_val)
+                                                                    .ok(),
+                                                                continue);
+                                        Value::from(unwrap_or!(i32::from_str_radix(&*string, 10).ok(),
+                                                                continue))
+                                    },
+                                    td_rp::STR_TYPE_FLOAT => {
+                                        let string = unwrap_or!(String::from_utf8(sub_val)
+                                                                    .ok(),
+                                                                continue);
+                                        Value::from(unwrap_or!(f32::from_str(&*string).ok(),
+                                                                continue))
+                                    },
+                                    _ => continue,
+                                }
+                            }
+                            mysql::Value::Int(sub_val) => {
+                                match &*field.pattern {
+                                    td_rp::STR_TYPE_U8 => Value::from(sub_val as u8),
+                                    td_rp::STR_TYPE_I8 => Value::from(sub_val as i8),
+                                    td_rp::STR_TYPE_U16 => Value::from(sub_val as u16),
+                                    td_rp::STR_TYPE_I16 => Value::from(sub_val as i16),
+                                    td_rp::STR_TYPE_U32 => Value::from(sub_val as u32),
+                                    td_rp::STR_TYPE_I32 => Value::from(sub_val as i32),
+                                    td_rp::STR_TYPE_FLOAT => Value::from(sub_val as f32),
+                                    _ => continue,
+                                }
+                            }
+                            mysql::Value::UInt(sub_val) => {
+                                match &*field.pattern {
+                                    td_rp::STR_TYPE_U8 => Value::from(sub_val as u8),
+                                    td_rp::STR_TYPE_I8 => Value::from(sub_val as i8),
+                                    td_rp::STR_TYPE_U16 => Value::from(sub_val as u16),
+                                    td_rp::STR_TYPE_I16 => Value::from(sub_val as i16),
+                                    td_rp::STR_TYPE_U32 => Value::from(sub_val as u32),
+                                    td_rp::STR_TYPE_I32 => Value::from(sub_val as i32),
+                                    td_rp::STR_TYPE_FLOAT => Value::from(sub_val as f32),
+                                    _ => continue,
+                                }
+                            }
+                            mysql::Value::Float(sub_val) => {
+                                match &*field.pattern {
+                                    td_rp::STR_TYPE_U8 => Value::from(sub_val as u8),
+                                    td_rp::STR_TYPE_I8 => Value::from(sub_val as i8),
+                                    td_rp::STR_TYPE_U16 => Value::from(sub_val as u16),
+                                    td_rp::STR_TYPE_I16 => Value::from(sub_val as i16),
+                                    td_rp::STR_TYPE_U32 => Value::from(sub_val as u32),
+                                    td_rp::STR_TYPE_I32 => Value::from(sub_val as i32),
+                                    td_rp::STR_TYPE_FLOAT => Value::from(sub_val as f32),
+                                    _ => continue,
+                                }
+                            }
+                            mysql::Value::Date(year, month, day, hour, minutes, seconds, micro) => {
+                                match &*field.pattern {
+                                    td_rp::STR_TYPE_U32 => {
+                                        let dt = Utc.ymd((year + 1970) as i32, month as u32, day as u32).and_hms(hour as u32, minutes as u32, seconds as u32); // `2014-07-08T09:10:11Z`
+                                        Value::from(dt.timestamp() as u32)
                                     }
                                     _ => continue,
                                 }
                             }
-                            None => continue,
+                            _ => continue,
                         };
-
-                        hash.insert(name.clone(), fix_value);
-                    }
-                    array.push(Value::from(hash));
+                    hash.insert(name.clone(), fix_value);
                 }
-                msg.set_write_data();
-                try!(encode_proto(msg.get_buffer(),
-                                  config,
-                                  &DB_RESULT_PROTO.to_string(),
-                                  vec![Value::AMap(array)]));
-                self.error = None;
+                array.push(Value::from(hash));
             }
-            Err(val) => {
-                match val {
-                    mysql::Error::MySqlError(ref val) => success = val.code as i32,
-                    _ => success = -1,
-                }
-                self.error = Some(val);
-
-            }
+            
+            msg.set_write_data();
+            try!(encode_proto(msg.get_buffer(),
+                                config,
+                                &DB_RESULT_PROTO.to_string(),
+                                vec![Value::AMap(array)]));
+            self.error = None;
         }
+        
         Ok(success)
     }
 
     fn execute(&mut self, sql_cmd: &str) -> NetResult<i32> {
         try!(self.check_connect());
-        let value = self.conn.prep_exec(sql_cmd, ());
+        let mut value = self.conn.query_iter(sql_cmd)?;
         let mut success: i32 = 0;
-        match value {
-            Ok(val) => {
-                self.last_insert_id = val.last_insert_id();
-                self.affected_rows = val.affected_rows();
-                self.error = None;
-            }
-            Err(val) => {
-                match val {
-                    mysql::Error::MySqlError(ref val) => success = val.code as i32,
-                    _ => success = -1,
-                }
-                self.error = Some(val);
-            }
+        
+        if let Some(val) = value.iter() {
+            self.last_insert_id = unwrap_or!(val.last_insert_id(), 0u64) ;
+            self.affected_rows = val.affected_rows();
+            self.error = None;
         }
         Ok(success)
     }
@@ -235,12 +235,12 @@ impl DbTrait for DbMysql {
 
     fn insert(&mut self, sql_cmd: &str, msg: &mut NetMsg) -> NetResult<i32> {
         try!(self.check_connect());
-        let value = self.conn.prep_exec(sql_cmd, ());
+        let value = self.conn.query_iter(sql_cmd);
         let config = NetConfig::instance();
         let mut success: i32 = 0;
         match value {
             Ok(val) => {
-                self.last_insert_id = val.last_insert_id();
+                self.last_insert_id = unwrap_or!(val.last_insert_id(), 0u64);
                 self.affected_rows = val.affected_rows();
                 let mut array = vec![];
                 let mut hash = HashMap::<String, Value>::new();

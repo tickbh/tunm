@@ -4,7 +4,7 @@ use std::path::Path;
 use std::env;
 use std::fs::{self, File};
 
-static mut ins: *mut FileUtils = 0 as *mut _;
+static mut EL: *mut FileUtils = 0 as *mut _;
 
 
 pub struct FileUtils {
@@ -14,7 +14,7 @@ pub struct FileUtils {
 impl FileUtils {
     pub fn instance() -> &'static mut FileUtils {
         unsafe {
-            if ins == 0 as *mut _ {
+            if EL == 0 as *mut _ {
                 let val = FileUtils {
                     search_paths: vec![::std::env::current_dir()
                                            .unwrap()
@@ -23,9 +23,9 @@ impl FileUtils {
                                            .to_string() +
                                        "/"],
                 };
-                ins = Box::into_raw(Box::new(val));
+                EL = Box::into_raw(Box::new(val));
             }
-            &mut *ins
+            &mut *EL
         }
     }
 

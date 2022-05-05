@@ -1,9 +1,5 @@
-use libc;
-use std::mem;
-
 use td_rlua::{self, Lua, LuaPush};
 use td_rp;
-use td_rp::*;
 use super::EngineProtocol;
 use {NetMsg, NetConfig, NetUtils};
 use {NetResult, LuaWrapperTableValue};

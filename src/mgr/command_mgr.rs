@@ -11,6 +11,7 @@ impl CommandMgr {
                 let mut line = String::new();
                 let _ = unwrap_or!(::std::io::stdin().read_line(&mut line).ok(), 0);
                 if line.is_empty() {
+                    ::std::thread::sleep(::std::time::Duration::from_millis(100));
                     continue;
                 }
                 let line = line.trim_matches(|c| c == '\r' || c == '\n').to_string();

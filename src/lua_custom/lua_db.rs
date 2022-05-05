@@ -2,8 +2,7 @@ use td_rlua::{self, LuaPush, Lua, LuaRead};
 use td_rp;
 use td_rredis::{self, Cmd, Script};
 use libc;
-
-use {DbTrait, DbPool, PoolTrait, RedisPool};
+use {DbTrait, DbPool, RedisPool};
 use {LuaEngine, NetMsg, NetConfig, LuaWrapperTableValue, RedisWrapperCmd, RedisWrapperResult,
      RedisWrapperMsg, RedisWrapperVecVec};
 use {ThreadUtils, LogUtils, log_utils};
@@ -38,7 +37,9 @@ fn thread_db_select(db_name: &String, db_type: u8, sql_cmd: &str, cookie: u32) {
     }
     // record sql error
     if ret != 0 {
-        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql:{:?} --- error:{:?}", sql_cmd, db.get_error_str())[..]);
+        let sql_err = &format!(" sql:{:?} --- error:{:?}", sql_cmd, db.get_error_str())[..];
+        println!("{:?}", sql_err);
+        LogUtils::instance().append(log_utils::LOG_WARN, sql_err);
     }
     DbPool::instance().release_db_trait(db_name, db);
 }
@@ -59,7 +60,9 @@ fn thread_db_execute(db_name: &String, db_type: u8, sql_cmd: &str, cookie: u32) 
     }
     // record sql error
     if ret != 0 {
-        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql:{:?} --- error:{:?}", sql_cmd, db.get_error_str())[..]);
+        let sql_err = &format!(" sql:{:?} --- error:{:?}", sql_cmd, db.get_error_str())[..];
+        println!("{:?}", sql_err);
+        LogUtils::instance().append(log_utils::LOG_WARN, sql_err);
     }
     DbPool::instance().release_db_trait(db_name, db);
 }
@@ -82,7 +85,9 @@ fn thread_db_insert(db_name: &String, db_type: u8, sql_cmd: &str, cookie: u32) {
     }
     // record sql error
     if ret != 0 {
-        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql:{:?} --- error:{:?}", sql_cmd, db.get_error_str())[..]);
+        let sql_err = &format!(" sql:{:?} --- error:{:?}", sql_cmd, db.get_error_str())[..];
+        println!("{:?}", sql_err);
+        LogUtils::instance().append(log_utils::LOG_WARN, sql_err);
     }
     DbPool::instance().release_db_trait(db_name, db);
 }
@@ -121,7 +126,9 @@ fn thread_db_transaction(db_name: &String, db_type: u8, sql_cmd_list: Vec<String
     }
     // record sql error
     if ret != 0 {
-        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql_list:{:?} --- error:{:?}", sql_cmd_list, db.get_error_str())[..]);
+        let sql_err = &format!(" sql:{:?} --- error:{:?}", sql_cmd_list, db.get_error_str())[..];
+        println!("{:?}", sql_err);
+        LogUtils::instance().append(log_utils::LOG_WARN, sql_err);
     }
     DbPool::instance().release_db_trait(db_name, db);
 }
@@ -160,7 +167,9 @@ fn thread_db_batch_execute(db_name: &String,
     }
     // record sql error
     if ret != 0 {
-        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql_list:{:?} --- error:{:?}", sql_cmd_list, db.get_error_str())[..]);
+        let sql_err = &format!(" sql:{:?} --- error:{:?}", sql_cmd_list, db.get_error_str())[..];
+        println!("{:?}", sql_err);
+        LogUtils::instance().append(log_utils::LOG_WARN, sql_err);
     }
     DbPool::instance().release_db_trait(db_name, db);
 }
@@ -216,7 +225,9 @@ extern "C" fn db_select_sync(lua: *mut td_rlua::lua_State) -> libc::c_int {
     }
     // record sql error
     if ret != 0 {
-        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql:{:?} --- error:{:?}", sql_cmd, db.get_error_str())[..]);
+        let sql_err = &format!(" sql:{:?} --- error:{:?}", sql_cmd, db.get_error_str())[..];
+        println!("{:?}", sql_err);
+        LogUtils::instance().append(log_utils::LOG_WARN, sql_err);
     }
     DbPool::instance().release_db_trait(&db_name, db);
     2
@@ -246,7 +257,9 @@ extern "C" fn db_insert_sync(lua: *mut td_rlua::lua_State) -> libc::c_int {
     }
     // record sql error
     if ret != 0 {
-        LogUtils::instance().append(log_utils::LOG_WARN, &format!(" sql:{:?} --- error:{:?}", sql_cmd, db.get_error_str())[..]);
+        let sql_err = &format!(" sql:{:?} --- error:{:?}", sql_cmd, db.get_error_str())[..];
+        println!("{:?}", sql_err);
+        LogUtils::instance().append(log_utils::LOG_WARN, sql_err);
     }
     DbPool::instance().release_db_trait(&db_name, db);
     2
@@ -264,10 +277,14 @@ fn thread_redis_run_command(cookie: u32, cmd: Cmd) {
     }
     let mut cluster = cluster.unwrap();
     let value: td_rredis::RedisResult<td_rredis::Value> = cmd.query_cluster(&mut cluster);
+    let is_ok = value.is_ok();
     if cookie != 0 {
         LuaEngine::instance().apply_redis_result(cookie, Some(value));
     }
-    RedisPool::instance().release_redis_connection(cluster);
+    //若接收出错, 则此连接失效
+    if is_ok {
+        RedisPool::instance().release_redis_connection(cluster);
+    }
 }
 
 
@@ -336,6 +353,16 @@ fn redis_subs_command(cookie: u32, op: String, channels: Vec<String>) {
     });
 }
 
+
+fn redis_start_recv_subs_command() {
+    RedisPool::instance().start_recv_sub_msg();
+}
+
+fn redis_ensure_subs_command() {
+    RedisPool::instance().ensure_subconnectioin();
+}
+
+
 extern "C" fn redis_subs_get_reply(lua: *mut td_rlua::lua_State) -> libc::c_int {
     let receiver = RedisPool::instance().get_sub_receiver();
     if receiver.is_none() {
@@ -355,6 +382,10 @@ fn load_redis_script(path: String, hash: String) -> String {
     let script = unwrap_or!(Script::new_path_hash(&*path, &*hash).ok(),
                             return String::new());
     script.get_hash().to_string()
+}
+
+fn redis_is_sub_work() -> bool {
+    RedisPool::instance().is_sub_work()
 }
 
 extern "C" fn redis_run_script(lua: *mut td_rlua::lua_State) -> libc::c_int {
@@ -423,5 +454,9 @@ pub fn register_db_func(lua: &mut Lua) {
     lua.set("redis_subs_command", td_rlua::function3(redis_subs_command));
     lua.register("redis_subs_get_reply", redis_subs_get_reply);
     lua.set("load_redis_script", td_rlua::function2(load_redis_script));
+    lua.set("redis_start_recv_subs_command", td_rlua::function0(redis_start_recv_subs_command));
+    lua.set("redis_ensure_subs_command", td_rlua::function0(redis_ensure_subs_command));
+    lua.set("redis_is_sub_work", td_rlua::function0(redis_is_sub_work));
     lua.register("redis_run_script", redis_run_script);
 }
+

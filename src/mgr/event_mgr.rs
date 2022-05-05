@@ -1,26 +1,29 @@
 use std::collections::HashMap;
-use std::net::TcpStream;
 use std::io::prelude::*;
-use std::mem;
 use std::boxed::Box;
+use psocket::SOCKET;
+use std::any::Any;
 
 use SocketEvent;
 use LuaEngine;
 use NetMsg;
 use WebSocketMgr;
+use WebsocketMyMgr;
+use LogUtils;
 
 use std::sync::Arc;
 use td_rthreadpool::ReentrantMutex;
 use td_rp::{self, Buffer, decode_number};
 use td_revent::*;
 
-static mut el: *mut EventMgr = 0 as *mut _;
-static mut read_data: [u8; 65536] = [0; 65536];
+static mut EL: *mut EventMgr = 0 as *mut _;
+static mut READ_DATA: [u8; 65536] = [0; 65536];
 pub struct EventMgr {
-    connect_ids: HashMap<i32, SocketEvent>,
+    connect_ids: HashMap<SOCKET, SocketEvent>,
     mutex: Arc<ReentrantMutex<i32>>,
     event_loop: EventLoop,
     lua_exec_id: u32,
+    exit: bool,
 }
 
 impl EventMgr {
@@ -30,15 +33,16 @@ impl EventMgr {
             mutex: Arc::new(ReentrantMutex::new(0)),
             event_loop: EventLoop::new().ok().unwrap(),
             lua_exec_id: 0,
+            exit: false,
         }
     }
 
     pub fn instance() -> &'static mut EventMgr {
         unsafe {
-            if el == 0 as *mut _ {
-                el = Box::into_raw(Box::new(EventMgr::new()));
+            if EL == 0 as *mut _ {
+                EL = Box::into_raw(Box::new(EventMgr::new()));
             }
-            &mut *el
+            &mut *EL
         }
     }
 
@@ -46,223 +50,134 @@ impl EventMgr {
         &mut self.event_loop
     }
 
+    pub fn shutdown_event(&mut self) {
+        self.exit = true;
+        self.event_loop.shutdown();
+    }
+
+    pub fn is_exit(&self) -> bool {
+        self.exit
+    }
+
     pub fn new_socket_event(&mut self, ev: SocketEvent) -> bool {
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
         LuaEngine::instance().apply_new_connect(ev.get_cookie(),
-                                                ev.get_socket_fd(),
+                                                ev.as_raw_socket(),
                                                 ev.get_client_ip(),
                                                 ev.get_server_port(),
                                                 ev.is_websocket());
-        self.connect_ids.insert(ev.get_socket_fd(), ev);
+        self.connect_ids.insert(ev.as_raw_socket(), ev);
         true
     }
 
-    pub fn kick_socket(&mut self, sock: i32) {
+    pub fn receive_socket_event(&mut self, ev: SocketEvent) -> bool {
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
-        let sock_ev = self.connect_ids.remove(&sock);
-        if sock_ev.is_some() {
-            drop(TcpStream::from_fd(sock_ev.unwrap().get_socket_fd()));
-        }
-        self.event_loop.del_event(sock as u32, EventFlags::all());
+        self.connect_ids.insert(ev.as_raw_socket(), ev);
+        true
     }
 
-    pub fn write_callback(_ev: &mut EventLoop, fd: u32, _: EventFlags, _: *mut ()) -> i32 {
-        let fd = fd as i32;
-        let socket_event = unwrap_or!(EventMgr::instance().get_socket_event(fd), return 0);
-        if socket_event.get_out_cache().len() == 0 {
-            return 0;
-        }
-        let mut tcp = TcpStream::from_fd(fd);
-        let write_ret;
-        loop {
-            write_ret = tcp.write(socket_event.get_out_cache().get_data());
-            if write_ret.is_err() {
-                break;
-            }
-            let size = write_ret.as_ref().map(|ref e| *e.clone()).unwrap();
-            if size != socket_event.get_out_cache().len() {
-                if size > 0 {
-                    socket_event.get_out_cache().drain(size);    
-                }
-                break;
-            }
-            socket_event.get_out_cache().clear();
-            break;
-        }
-
-        mem::forget(tcp);
-
-        if write_ret.is_err() {
-            EventMgr::instance().add_kick_event(fd);
-            return 0;
-        }
-
-        0
+    pub fn kick_socket(&mut self, sock: SOCKET) {
+        let mutex = self.mutex.clone();
+        let _guard = mutex.lock().unwrap();
+        let _sock_ev = self.connect_ids.remove(&sock);
+        let _ = self.event_loop.unregister_socket(sock);
     }
 
-    // pub fn send_netmsg(&mut self, fd: i32, net_msg: &mut NetMsg) -> bool {
-    //     println!("send_netmsg {:?}", fd);
-    //     let _ = net_msg.read_head();
-    //     if net_msg.get_pack_len() != net_msg.len() as u32 {
-    //         println!("error!!!!!!!! net_msg.get_pack_len() = {:?}, net_msg.len() = {:?}", net_msg.get_pack_len(), net_msg.len());
-    //         return false;
-    //     }
-    //     let mutex = self.mutex.clone();
-    //     let _guard = mutex.lock().unwrap();
-    //     if !self.connect_ids.contains_key(&fd) {
-    //         println!("send_netmsg but connect_ids no exist ==== {:?}", fd);
-    //         return false;
-    //     }
-
-    //     let socket_event = self.connect_ids.get_mut(&fd).unwrap();
-    //     let _ = socket_event.get_out_cache().write(net_msg.get_buffer().get_data());
-    //     //判断缓冲区大小
-    //     true
-    // }
-    // 
-    pub fn write_data(&mut self, fd: i32, data: &[u8]) -> bool {
+    pub fn write_data(&mut self, fd: SOCKET, data: &[u8]) -> bool {
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
         if !self.connect_ids.contains_key(&fd) {
             return false;
         }
-        let mut tcp = TcpStream::from_fd(fd);
-        let mut write_ret;
-        let mut success = false;
-        loop {
-            let socket_event = self.connect_ids.get_mut(&fd).unwrap();
-            if socket_event.get_out_cache().len() > 0 {
-                write_ret = tcp.write(socket_event.get_out_cache().get_data());
-                if write_ret.is_err() {
-                    break;
-                }
-                let size = write_ret.as_ref().map(|ref e| *e.clone()).unwrap();
-                if size != socket_event.get_out_cache().len() {
-                    if size > 0 {
-                        socket_event.get_out_cache().drain(size);    
-                    }
-                    let _ = socket_event.get_out_cache().write(data);
-                    break;
-                }
-                socket_event.get_out_cache().clear();
-            }
-            write_ret = tcp.write(data);
-            if write_ret.is_err() {
-                break;
-            }
-
-            let size = write_ret.as_ref().map(|ref e| *e.clone()).unwrap();
-            if size != data.len() {
-                let _ = socket_event.get_out_cache().write(&data[size..]);
-                break;
-            }
-
-            success = true;
-            break;
+        let event_loop = EventMgr::instance().get_event_loop();
+        match event_loop.send_socket(&fd, data) {
+            Ok(_len) => return true,
+            Err(_) => return false,
         }
-
-        mem::forget(tcp);
-        if write_ret.is_err() {
-            self.add_kick_event(fd);
-            return success;
-        }
-
-        //TODO if success = false, we may need add write event
-        success
     }
 
-    pub fn send_netmsg(&mut self, fd: i32, net_msg: &mut NetMsg) -> bool {
+    pub fn send_netmsg(&mut self, fd: SOCKET, net_msg: &mut NetMsg) -> bool {
         let _ = net_msg.read_head();
         if net_msg.get_pack_len() != net_msg.len() as u32 {
             println!("error!!!!!!!! net_msg.get_pack_len() = {:?}, net_msg.len() = {:?}", net_msg.get_pack_len(), net_msg.len());
             return false;
         }
-        let mutex = self.mutex.clone();
-        let _guard = mutex.lock().unwrap();
-        if !self.connect_ids.contains_key(&fd) {
-            return false;
-        }
-        {
-            let socket_event = self.connect_ids.get_mut(&fd).unwrap();
-            if socket_event.is_websocket() {
-                return WebSocketMgr::instance().send_message(fd, net_msg);
+        let (is_websocket, is_mio) = {
+            let mutex = self.mutex.clone();
+            let _guard = mutex.lock().unwrap();
+            if !self.connect_ids.contains_key(&fd) {
+                return false;
+            } else {
+                let socket_event = self.connect_ids.get_mut(&fd).unwrap();
+                (socket_event.is_websocket(), socket_event.is_mio())
             }
-        }
-        let data = net_msg.get_buffer().get_data();
-        let mut tcp = TcpStream::from_fd(fd);
-        let mut write_ret;
-        let mut success = false;
-        loop {
-            let socket_event = self.connect_ids.get_mut(&fd).unwrap();
-            if socket_event.get_out_cache().len() > 0 {
-                write_ret = tcp.write(socket_event.get_out_cache().get_data());
-                if write_ret.is_err() {
-                    break;
-                }
-                let size = write_ret.as_ref().map(|ref e| *e.clone()).unwrap();
-                if size != socket_event.get_out_cache().len() {
-                    if size > 0 {
-                        socket_event.get_out_cache().drain(size);    
-                    }
-                    let _ = socket_event.get_out_cache().write(data);
-                    break;
-                }
-                socket_event.get_out_cache().clear();
+        };
+
+        if is_websocket {
+            if is_mio {
+                return WebSocketMgr::instance().send_message(fd as i32, net_msg);
+            } else {
+                return WebsocketMyMgr::instance().send_message(fd, net_msg);
             }
-            write_ret = tcp.write(data);
-            if write_ret.is_err() {
-                break;
-            }
-
-            let size = write_ret.as_ref().map(|ref e| *e.clone()).unwrap();
-            if size != data.len() {
-                let _ = socket_event.get_out_cache().write(&data[size..]);
-                break;
-            }
-
-            success = true;
-            break;
+        } else {
+            let data = net_msg.get_buffer().get_data();
+            self.write_data(fd, data)
         }
-
-        mem::forget(tcp);
-        if write_ret.is_err() {
-            self.add_kick_event(fd);
-            return success;
-        }
-
-        //TODO if success = false, we may need add write event
-        success
     }
 
-    pub fn get_socket_event(&mut self, fd: i32) -> Option<&mut SocketEvent> {
+    pub fn close_fd(&mut self, fd: SOCKET, reason: String) -> bool {
+        let (is_websocket, is_mio) = {
+            let mutex = self.mutex.clone();
+            let _guard = mutex.lock().unwrap();
+            if !self.connect_ids.contains_key(&fd) {
+                return false;
+            } else {
+                let socket_event = self.connect_ids.get_mut(&fd).unwrap();
+                (socket_event.is_websocket(), socket_event.is_mio())
+            }
+        };
+
+        if is_websocket {
+            if is_mio {
+                return WebSocketMgr::instance().close_fd(fd as i32);
+            } else {
+                return WebsocketMyMgr::instance().close_fd(fd);
+            }
+        } else {
+            self.add_kick_event(fd, reason);
+        }
+        true
+    }
+
+    pub fn get_socket_event(&mut self, fd: SOCKET) -> Option<&mut SocketEvent> {
     let _guard = self.mutex.lock().unwrap();
         self.connect_ids.get_mut(&fd)
     }
 
-    pub fn data_recieved(&mut self, fd: i32, data: &[u8]) {
+    pub fn data_recieved(&mut self, fd: SOCKET, data: &[u8]) {
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
 
-        let socket_event = EventMgr::instance().get_socket_event(fd as i32);
+        let socket_event = EventMgr::instance().get_socket_event(fd);
         if socket_event.is_none() {
             return;
         }
-        let mut socket_event = socket_event.unwrap();
+        let socket_event = socket_event.unwrap();
         let _ = socket_event.get_buffer().write(data);
         self.try_dispatch_message(fd);
     }
 
-    pub fn try_dispatch_message(&mut self, fd: i32) {
+    pub fn try_dispatch_message(&mut self, fd: SOCKET) {
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
 
-        let socket_event = EventMgr::instance().get_socket_event(fd as i32);
+        let socket_event = EventMgr::instance().get_socket_event(fd);
         if socket_event.is_none() {
             return;
         }
-        let mut socket_event = socket_event.unwrap();
+        let socket_event = socket_event.unwrap();
         let buffer_len = socket_event.get_buffer().len();
         let buffer = socket_event.get_buffer();
         loop {
@@ -273,7 +188,7 @@ impl EventMgr {
             let msg = NetMsg::new_by_data(&message.unwrap()[..]);
             if msg.is_err() {
                 println!("message error kick fd {:?} msg = {:?}, buffer = {}", fd, msg.err(), buffer_len);
-                self.add_kick_event(fd);
+                self.add_kick_event(fd, "Message Dispatch Error".to_string());
                 break;
             }
 
@@ -289,14 +204,14 @@ impl EventMgr {
         let mut length: u32 = unwrap_or!(decode_number(buffer, td_rp::TYPE_U32).ok(), return None)
                               .into();
         buffer.set_rpos(rpos);
-        length = unsafe { ::std::cmp::min(length, read_data.len() as u32) };
+        length = unsafe { ::std::cmp::min(length, READ_DATA.len() as u32) };
         if buffer.len() - rpos < length as usize {
             return None;
         }
         Some(buffer.drain_collect(length as usize))
     }
 
-    pub fn exist_socket_event(&self, fd: i32) -> bool {
+    pub fn exist_socket_event(&self, fd: SOCKET) -> bool {
         let _guard = self.mutex.lock().unwrap();
         self.connect_ids.contains_key(&fd)
     }
@@ -311,34 +226,69 @@ impl EventMgr {
         self.connect_ids.len();
     }
 
-    pub fn add_kick_event(&mut self, fd: i32) {
+    pub fn remove_connection(&mut self, fd:SOCKET) {
         let _guard = self.mutex.lock().unwrap();
-        let sock_ev = unwrap_or!(self.connect_ids.remove(&fd), return);
-        self.event_loop.del_event(sock_ev.get_socket_fd() as u32, EventFlags::all());
-        self.event_loop
-            .add_timer(EventEntry::new_timer(200_000,
-                                             false,
-                                             Some(EventMgr::kick_callback),
-                                             Some(Box::into_raw(Box::new(sock_ev)) as *mut ())));
+        let _sock_ev = unwrap_or!(self.connect_ids.remove(&fd), return);
     }
 
-    fn kick_callback(_: &mut EventLoop, _: u32, _: EventFlags, data: *mut ()) -> i32 {
-        let sock_ev = unsafe { Box::from_raw(data as *mut SocketEvent) };
-        LuaEngine::instance().apply_lost_connect(sock_ev.get_socket_fd());
-        drop(TcpStream::from_fd(sock_ev.get_socket_fd()));
-        0
+    pub fn add_kick_event(&mut self, fd: SOCKET, reason: String) {
+        println!("add kick event fd = {} reason = {}", fd, reason);
+        let websocket_fd = {
+            let _guard = self.mutex.lock().unwrap();
+            let info = format!("Close Fd {} by Reason {}", fd, reason);
+            println!("{}", info);
+            LogUtils::instance().append(2, &*info);
+
+            let sock_ev = unwrap_or!(self.connect_ids.remove(&fd), return);
+            if !sock_ev.is_websocket() || !sock_ev.is_mio() {
+                // self.event_loop.unregister_socket(sock_ev.as_raw_socket(), EventFlags::all());
+                self.event_loop
+                    .add_timer(EventEntry::new_timer(200_000,
+                                                     false,
+                                                     Some(Self::kick_callback),
+                                                     Some(Box::new(sock_ev))));
+                return;
+            }
+            sock_ev.get_socket_fd()
+        };
+
+        LuaEngine::instance().apply_lost_connect(websocket_fd as SOCKET);
     }
 
-    fn lua_exec_callback(_: &mut EventLoop, _: u32, _: EventFlags, _: *mut ()) -> i32 {
+    //由事件管理主动推送关闭的调用
+    pub fn notify_connect_lost(&mut self, socket: SOCKET) {
+        let _sock_ev = unwrap_or!(self.connect_ids.remove(&socket), return);
+        LuaEngine::instance().apply_lost_connect(socket);
+    }
+
+    fn kick_callback(
+        ev: &mut EventLoop,
+        _timer: u32,
+        data: Option<&mut CellAny>,
+    ) -> (RetValue, u64) {
+        let sock_ev = any_to_mut!(data.unwrap(), SocketEvent);
+        let _ = ev.unregister_socket(sock_ev.as_raw_socket());
+        LuaEngine::instance().apply_lost_connect(sock_ev.as_raw_socket());
+        if sock_ev.is_websocket() {
+            WebsocketMyMgr::instance().remove_socket(sock_ev.as_raw_socket());
+        }
+        (RetValue::OVER, 0)
+    }
+
+    fn lua_exec_callback(
+        _ev: &mut EventLoop,
+        _timer: u32,
+        _data: Option<&mut CellAny>,
+    ) -> (RetValue, u64) {
         LuaEngine::instance().execute_lua();
-        0
+        (RetValue::OK, 0)
     }
 
     pub fn add_lua_excute(&mut self) {
         self.lua_exec_id = self.event_loop
-                               .add_timer(EventEntry::new_timer(100,
+                               .add_timer(EventEntry::new_timer(1_000,
                                                                 true,
-                                                                Some(EventMgr::lua_exec_callback),
+                                                                Some(Self::lua_exec_callback),
                                                                 None));
     }
 }

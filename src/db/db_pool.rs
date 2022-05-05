@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use crate::TimeUtils;
+
 use super::DbMysql;
 use super::DbSqlite;
 use super::DbTrait;
@@ -9,13 +11,13 @@ use std::fs;
 use {NetResult, NetMsg};
 
 use time;
-use mysql::{self, Opts};
+use mysql::{self, Opts, OptsBuilder};
 
 use rusqlite::{Connection};
 
-static mut el: *mut DbPool = 0 as *mut _;
+static mut EL: *mut DbPool = 0 as *mut _;
 
-const MAX_KEEP_CONN: f64 = 3600f64;
+const MAX_KEEP_CONN: u64 = 3600u64;
 
 /// it store the db connection,  and the base db info
 pub struct DbPool {
@@ -51,10 +53,10 @@ impl DbPool {
 
     pub fn instance() -> &'static mut DbPool {
         unsafe {
-            if el == 0 as *mut _ {
-                el = Box::into_raw(Box::new(DbPool::new()));
+            if EL == 0 as *mut _ {
+                EL = Box::into_raw(Box::new(DbPool::new()));
             }
-            &mut *el
+            &mut *EL
         }
     }
 
@@ -66,7 +68,7 @@ impl DbPool {
     /// try remove the long time unuse connection
     pub fn check_connect_timeout(&mut self) {
         let _guard = self.mutex.lock().unwrap();
-        let cur_time = time::precise_time_s();
+        let cur_time = TimeUtils::get_time_ms();
         for (_, list) in self.db_mysql.iter_mut() {
             let val: Vec<DbMysql> = list.drain(..).collect();
             for v in val {
@@ -100,7 +102,7 @@ impl PoolTrait for DbMysql {
     fn get_db_trait(pool: &mut DbPool, db_name: &String) -> Option<DbMysql> {
         let db = {
             let _guard = pool.mutex.lock().unwrap();
-            let mut list = match pool.db_mysql.contains_key(db_name) {
+            let list = match pool.db_mysql.contains_key(db_name) {
                 true => pool.db_mysql.get_mut(db_name).unwrap(),
                 false => {
                     pool.db_mysql.entry(db_name.to_string()).or_insert(vec![]);
@@ -125,9 +127,9 @@ impl PoolTrait for DbMysql {
         if !db.is_connect {
             return;
         }
-        db.last_use_time = time::precise_time_s();
+        db.last_use_time = TimeUtils::get_time_ms();
         let _guard = pool.mutex.lock().unwrap();
-        let mut list = match pool.db_mysql.contains_key(db_name) {
+        let list = match pool.db_mysql.contains_key(db_name) {
             true => pool.db_mysql.get_mut(db_name).unwrap(),
             false => {
                 pool.db_mysql.entry(db_name.to_string()).or_insert(vec![]);
@@ -138,13 +140,15 @@ impl PoolTrait for DbMysql {
     }
 
     fn init_db_trait(pool: &mut DbPool, db_name: &String) -> Option<DbMysql> {
-        let mut info = pool.db_info.get(&db_name.to_string());
+        let info = pool.db_info.get(&db_name.to_string());
         if info.is_none() {
             info = pool.db_info.get(&"mysql".to_string());
         }
         let info = unwrap_or!(info, return None);
         let mut opts: Opts = DbMysql::from_url_basic(&**info).unwrap();
-        opts.db_name = Some(db_name.clone());
+        let opts = OptsBuilder::from_opts(opts).db_name(Some(db_name.clone()));
+        // opts.db_name(db_name.clone());
+        println!("opts = {:?}", opts);
         let pool = unwrap_or!(mysql::Conn::new(opts).ok(), return None);
         Some(DbMysql::new(pool))
     }
@@ -154,7 +158,7 @@ impl PoolTrait for DbSqlite {
     fn get_db_trait(pool: &mut DbPool, db_name: &String) -> Option<DbSqlite> {
         let db = {
             let _guard = pool.mutex.lock().unwrap();
-            let mut list = match pool.db_sqlite.contains_key(db_name) {
+            let list = match pool.db_sqlite.contains_key(db_name) {
                 true => pool.db_sqlite.get_mut(db_name).unwrap(),
                 false => {
                     pool.db_sqlite.entry(db_name.to_string()).or_insert(vec![]);
@@ -179,9 +183,9 @@ impl PoolTrait for DbSqlite {
         if !db.is_connect {
             return;
         }
-        db.last_use_time = time::precise_time_s();
+        db.last_use_time = TimeUtils::get_time_ms();
         let _guard = pool.mutex.lock().unwrap();
-        let mut list = match pool.db_sqlite.contains_key(db_name) {
+        let list = match pool.db_sqlite.contains_key(db_name) {
             true => pool.db_sqlite.get_mut(db_name).unwrap(),
             false => {
                 pool.db_sqlite.entry(db_name.to_string()).or_insert(vec![]);

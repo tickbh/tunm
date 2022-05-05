@@ -1,11 +1,16 @@
-use td_revent::{EventLoop, EventEntry, EventFlags};
+use td_revent::{EventLoop, EventEntry};
 use td_rlua::{self, Lua};
 use {EventMgr, LuaEngine};
+use td_revent::{RetValue, CellAny};
 
 // timer return no success(0) will no be repeat
-fn time_callback(_ev: &mut EventLoop, fd: u32, _: EventFlags, _: *mut ()) -> i32 {
-    LuaEngine::instance().apply_args_func("timer_event_dispatch".to_string(), vec![fd.to_string()]);
-    0
+fn time_callback(
+    _ev: &mut EventLoop,
+    timer: u32,
+    _data: Option<&mut CellAny>,
+) -> (RetValue, u64) {
+    LuaEngine::instance().apply_args_func("timer_event_dispatch".to_string(), vec![timer.to_string()]);
+    (RetValue::OK, 0)
 }
 
 fn timer_event_del(time: u32) -> u32 {

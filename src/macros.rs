@@ -6,12 +6,6 @@ macro_rules! fail {
     )
 }
 
-macro_rules! ensure {
-    ($expr:expr, $err_result:expr) => (
-        if !($expr) { fail!($err_result) }
-    )
-}
-
 macro_rules! unwrap_or {
     ($expr:expr, $or:expr) => (
         match $expr {

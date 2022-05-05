@@ -1,24 +1,23 @@
 use std::collections::HashSet;
-use std::net::{TcpListener, TcpStream};
-use std::mem;
-use std::io::Read;
+use std::any::Any;
+use psocket::{TcpSocket, SOCKET};
+use std::io::Result;
 
-use net2;
 use td_revent::*;
 
 use {EventMgr, SocketEvent};
 pub struct ServiceMgr {
-    listen_fds: HashSet<i32>,
+    listen_fds: HashSet<SOCKET>,
 }
 
-static mut el: *mut ServiceMgr = 0 as *mut _;
+static mut EL: *mut ServiceMgr = 0 as *mut _;
 impl ServiceMgr {
     pub fn instance() -> &'static mut ServiceMgr {
         unsafe {
-            if el == 0 as *mut _ {
-                el = Box::into_raw(Box::new(ServiceMgr::new()));
+            if EL == 0 as *mut _ {
+                EL = Box::into_raw(Box::new(ServiceMgr::new()));
             }
-            &mut *el
+            &mut *EL
         }
     }
 
@@ -26,84 +25,77 @@ impl ServiceMgr {
         ServiceMgr { listen_fds: HashSet::new() }
     }
 
+    pub fn server_read_callback(
+        _ev: &mut EventLoop,
+        buffer: &mut EventBuffer,
+        _data: Option<&mut CellAny>,
+    ) -> RetValue {
+        let data = buffer.read.drain_all_collect();
+        EventMgr::instance().data_recieved(buffer.as_raw_socket(), &data[..]);
+        RetValue::OK
+    }
 
-    pub fn read_write_callback(ev: &mut EventLoop,
-                               fd: u32,
-                               flag: EventFlags,
-                               data: *mut ())
-                               -> i32 {
-        if flag.contains(FLAG_READ) {
-            Self::read_callback(ev, fd, flag, data);
-        } 
+    pub fn server_end_callback(_ev: &mut EventLoop, buffer: &mut EventBuffer, _data: Option<CellAny>) {
+        EventMgr::instance().notify_connect_lost(buffer.as_raw_socket());
+    }
 
-        if flag.contains(FLAG_WRITE) {
-            Self::write_callback(ev, fd, flag, data);
+    fn accept_callback(
+        ev: &mut EventLoop,
+        tcp: Result<TcpSocket>,
+        data: Option<&mut CellAny>,
+    ) -> RetValue {
+        if tcp.is_err() {
+            return RetValue::OK;
         }
-        0
-    }
+        
+        let port = any_to_ref!(data.unwrap(), u16);
 
-    fn read_callback(_ev: &mut EventLoop, fd: u32, _: EventFlags, _: *mut ()) -> i32 {
-        let mut tcp = TcpStream::from_fd(fd as i32);
-        let mut buffer = [0; 1024];
-        let size = match tcp.read(&mut buffer) {
-            Ok(size) => {
-                if size == 0 {
-                    println!("read fd = {:?} size = 0", fd);
-                    EventMgr::instance().add_kick_event(fd as i32);
-                    mem::forget(tcp);
-                    return 0;
-                }
-                size
-            }
-            Err(err) => {
-                println!("read fd = {:?} err = {:?}", fd, err);
-                EventMgr::instance().add_kick_event(fd as i32);
-                mem::forget(tcp);
-                return 0;
-            }
-        };
-        EventMgr::instance().data_recieved(fd as i32, &buffer[..size]);
-        mem::forget(tcp);
-        0
-    }
-
-    fn write_callback(ev: &mut EventLoop, fd: u32, flag: EventFlags, data: *mut ()) -> i32 {
-        EventMgr::write_callback(ev, fd, flag, data);
-        0
-    }
-
-    fn accept_callback(ev: &mut EventLoop, fd: u32, _: EventFlags, _: *mut ()) -> i32 {
-        let listener = TcpListener::from_fd(fd as i32);
-        let (stream, addr) = unwrap_or!(listener.accept().ok(), return 0);
-        let local_addr = listener.local_addr().unwrap();
-        let event = SocketEvent::new(stream.as_fd(), format!("{}", addr), local_addr.port());
+        let new_socket = tcp.unwrap();
+        let _ = new_socket.set_nonblocking(true);
+        let socket = new_socket.as_raw_socket();
+        let event = SocketEvent::new(socket, format!("{}", new_socket.peer_addr().unwrap()), port.clone());
         EventMgr::instance().new_socket_event(event);
-        net2::TcpStreamExt::set_nonblocking(&stream, true).ok().unwrap();
-        ev.add_event(EventEntry::new(stream.as_fd() as u32,
-                                     FLAG_READ | FLAG_PERSIST,
-                                     Some(ServiceMgr::read_write_callback),
-                                     None));
-        mem::forget(listener);
-        mem::forget(stream);
-        0
+
+        let buffer = ev.new_buff(new_socket);
+        let _ = ev.register_socket(
+            buffer,
+            EventEntry::new_event(
+                socket,
+                EventFlags::FLAG_READ | EventFlags::FLAG_PERSIST,
+                Some(Self::server_read_callback),
+                None,
+                Some(Self::server_end_callback),
+                None,
+            ),
+        );
+
+        // TcpMgr::instance().insert_stream(stream.as_fd(), stream);
+        
+        RetValue::OK
     }
 
     pub fn start_listener(&mut self, bind_ip: String, bind_port: u16) {
-        let listener = TcpListener::bind(&format!("{}:{}", bind_ip, bind_port)[..]).unwrap();
-        let fd = listener.as_fd();
+        let listener = TcpSocket::bind(&format!("{}:{}", bind_ip, bind_port)[..]).unwrap();
         let event_loop = EventMgr::instance().get_event_loop();
-        event_loop.add_event(EventEntry::new(listener.as_fd() as u32,
-                                             FLAG_READ | FLAG_PERSIST,
-                                             Some(ServiceMgr::accept_callback),
-                                             None));
-        self.listen_fds.insert(fd);
-        mem::forget(listener);
+        let socket = listener.as_raw_socket();
+        let buffer = event_loop.new_buff(listener);
+        let _ = event_loop.register_socket(
+            buffer,
+            EventEntry::new_accept(
+                socket,
+                EventFlags::FLAG_READ | EventFlags::FLAG_PERSIST | EventFlags::FLAG_ACCEPT,
+                Some(Self::accept_callback),
+                None,
+                Some(Box::new(bind_port)),
+            ),
+        );
+        self.listen_fds.insert(socket);
     }
 
     pub fn stop_listener(&mut self) {
         let event_loop = EventMgr::instance().get_event_loop();
         for fd in &self.listen_fds {
-            event_loop.del_event(*fd as u32, EventFlags::all());
+            let _ = event_loop.unregister_socket(*fd);
         }
         self.listen_fds.clear();
     }

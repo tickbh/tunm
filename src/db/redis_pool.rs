@@ -19,7 +19,7 @@ pub struct RedisPool {
     pub sub_thread_run: Option<Arc<Mutex<bool>>>,
 }
 
-static mut el: *mut RedisPool = 0 as *mut _;
+static mut EL: *mut RedisPool = 0 as *mut _;
 
 impl RedisPool {
     pub fn new() -> RedisPool {
@@ -37,10 +37,10 @@ impl RedisPool {
 
     pub fn instance() -> &'static mut RedisPool {
         unsafe {
-            if el == 0 as *mut _ {
-                el = Box::into_raw(Box::new(RedisPool::new()));
+            if EL == 0 as *mut _ {
+                EL = Box::into_raw(Box::new(RedisPool::new()));
             }
-            &mut *el
+            &mut *EL
         }
     }
 
@@ -70,7 +70,17 @@ impl RedisPool {
         self.db_redis.push(cluster);
     }
 
+    pub fn is_sub_work(&self) -> bool {
+        if self.sub_thread_run.is_some() && *self.sub_thread_run.as_ref().unwrap().lock().unwrap() {
+            return true;
+        }
+        false
+    }
+
     pub fn get_sub_connection(&mut self) -> Option<&mut PubSub> {
+        // if self.is_sub_work() {
+        //     return self.sub_connect.as_mut();
+        // }
         // becuase no support noblock recv msg
         // so if start recv thread, the connect is move to thread
         // so we can't change in other thread
@@ -110,8 +120,22 @@ impl RedisPool {
         false
     }
 
+    pub fn ensure_subconnectioin(&mut self) -> bool {
+        if self.is_sub_work() {
+            return true;
+        }
+        self.stop_recv_sub_msg();
+        self.get_sub_connection();
+        self.start_recv_sub_msg();
+        true
+    }
+
     // run in thread
     pub fn start_recv_sub_msg(&mut self) {
+        if self.is_sub_work() {
+            return;
+        }
+
         if self.sub_connect.is_none() {
             return;
         }
@@ -126,7 +150,12 @@ impl RedisPool {
         let pool = ThreadUtils::instance().get_pool(&REDIS_SUB_POOL_NAME.to_string());
         pool.execute(move || {
             loop {
-                let result = unwrap_or!(sub_connect.get_message().ok(), break);
+                
+                let result = unwrap_or!(sub_connect.get_message().ok(), {
+                    *thread_run.lock().unwrap() = false;
+                    println!("Recv Message Error, Lose Redis Sub Connection");
+                    break;
+                });
                 let _ = sub_sender.send(result);
                 if *thread_run.lock().unwrap() == false {
                     break;

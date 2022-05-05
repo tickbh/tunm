@@ -5,16 +5,14 @@ use time;
 use crypto;
 use libc;
 use td_rlua::{self, Lua, lua_State, LuaPush, LuaRead};
-use {FileUtils, NetConfig, TelnetUtils, CommandMgr, LogUtils};
+use {FileUtils, NetConfig, TelnetUtils, CommandMgr, LogUtils, EventMgr, TimeUtils};
 use sys_info;
+use {MaJiang, LuaEngine};
 
 static ENCODE_MAP: &'static [u8; 32] = b"0123456789ACDEFGHJKLMNPQRSTUWXYZ";
 
 
-fn lua_print(method : u8, val: String) {
-    if method == 1 || method == 2 {
-        LogUtils::instance().append(method, &*val);    
-    }
+fn lua_print(_method : u8, val: String) {
     println!("{}", val);
     TelnetUtils::instance().new_message(val);
 }
@@ -24,26 +22,26 @@ fn write_log(method : u8, val: String) {
 }
 
 fn get_rid(server_id: u16, flag: Option<u8>) -> [u8; 12] {
-    static mut rid_sequence: u32 = 0;
-    static mut last_rid_time: u32 = 0;
+    static mut RID_SEQUENCE: u32 = 0;
+    static mut LAST_RID_TIME: u32 = 0;
 
     let mut rid = [0; 12];
     unsafe {
-        rid_sequence += 1;
-        rid_sequence &= 0x8FFF;
+        RID_SEQUENCE += 1;
+        RID_SEQUENCE &= 0x8FFF;
 
         // Get time as 1 p
         // Get time as 1 part, if time < _lastRidTime (may be carried), use _lastRidTime
         // Notice: There may be too many rids generated in 1 second, at this time
-        if rid_sequence == 0 {
-            last_rid_time += 1;
+        if RID_SEQUENCE == 0 {
+            LAST_RID_TIME += 1;
         }
 
-        let ti = time::get_time().sec as u32;
-        if ti > last_rid_time {
-            last_rid_time = ti;
+        let ti = TimeUtils::get_time_s() as u32;
+        if ti > LAST_RID_TIME {
+            LAST_RID_TIME = ti;
         }
-        let ti = last_rid_time - 1292342400; // 2010/12/15 0:0:0
+        let ti = LAST_RID_TIME - 1292342400; // 2010/12/15 0:0:0
         /* 60bits RID
          * 00000-00000-00000-00000-00000-00000 00000-00000-00 000-00000-00000-00000
          * -------------- TIME --------------- - SERVER_ID -- --- RID SEQUENCE ----
@@ -60,9 +58,9 @@ fn get_rid(server_id: u16, flag: Option<u8>) -> [u8; 12] {
             rid[6] = ENCODE_MAP[(((ti) & 0x7) | ((server_id >> 10) as u32 & 0x3)) as usize];
             rid[7] = ENCODE_MAP[((server_id >> 5) & 0x1F) as usize]; //[5..9]
             rid[8] = ENCODE_MAP[(server_id & 0x1F) as usize]; //[0..4]
-            rid[9] = ENCODE_MAP[((rid_sequence >> 10) & 0x1F) as usize];
-            rid[10] = ENCODE_MAP[((rid_sequence >> 5) & 0x1F) as usize];
-            rid[11] = ENCODE_MAP[(rid_sequence & 0x1F) as usize];
+            rid[9] = ENCODE_MAP[((RID_SEQUENCE >> 10) & 0x1F) as usize];
+            rid[10] = ENCODE_MAP[((RID_SEQUENCE >> 5) & 0x1F) as usize];
+            rid[11] = ENCODE_MAP[(RID_SEQUENCE & 0x1F) as usize];
         } else {
             rid[0] = ENCODE_MAP[((ti >> 25) & 0x1F) as usize];
             rid[1] = ENCODE_MAP[((ti >> 20) & 0x1F) as usize];
@@ -73,9 +71,9 @@ fn get_rid(server_id: u16, flag: Option<u8>) -> [u8; 12] {
             rid[6] = ENCODE_MAP[((server_id >> 10) & 0x1F) as usize]; //
             rid[7] = ENCODE_MAP[((server_id >> 5) & 0x1F) as usize]; //server_id[2..11]
             rid[8] = ENCODE_MAP[((server_id) & 0x1F) as usize]; //server_id[0..2]
-            rid[9] = ENCODE_MAP[((rid_sequence >> 10) & 0x1F) as usize];
-            rid[10] = ENCODE_MAP[((rid_sequence >> 5) & 0x1F) as usize];
-            rid[11] = ENCODE_MAP[(rid_sequence & 0x1F) as usize];
+            rid[9] = ENCODE_MAP[((RID_SEQUENCE >> 10) & 0x1F) as usize];
+            rid[10] = ENCODE_MAP[((RID_SEQUENCE >> 5) & 0x1F) as usize];
+            rid[11] = ENCODE_MAP[(RID_SEQUENCE & 0x1F) as usize];
         }
     }
     rid
@@ -88,6 +86,8 @@ extern "C" fn get_next_rid(lua: *mut lua_State) -> libc::c_int {
     String::from_utf8_lossy(&rid).push_to_lua(lua);
     1
 }
+
+
 
 fn get_full_path(path: String) -> String {
     let full_path = FileUtils::instance().full_path_for_name(&*path);
@@ -115,7 +115,7 @@ fn get_msg_type(name: String) -> String {
 }
 
 fn time_ms() -> u32 {
-    (time::precise_time_ns() / 1000_000) as u32
+    TimeUtils::get_time_ms() as u32
 }
 
 fn block_read() -> String {
@@ -203,6 +203,35 @@ fn system_mem_info() -> HashMap<String, u32> {
     map
 }
 
+fn native_all_socket_size() -> usize {
+    EventMgr::instance().all_socket_size()
+}
+
+fn do_hotfix_file(path: String) -> i32 {
+    LuaEngine::instance().do_hotfix_file(path)
+}
+
+fn shutdown_server() {
+    EventMgr::instance().shutdown_event();
+}
+
+fn sleep_ms(ms: u32) {
+    ::std::thread::sleep(::std::time::Duration::from_millis(ms as u64));
+}
+
+extern "C" fn native_check_hu(lua: *mut lua_State) -> libc::c_int {
+    let poker_list: Vec<u8> = unwrap_or!(LuaRead::lua_read_at_position(lua, 1), return 0);
+    let king_num: i32 = unwrap_or!(LuaRead::lua_read_at_position(lua, 2), return 0);
+    let king_poker: u8 = unwrap_or!(LuaRead::lua_read_at_position(lua, 3), return 0);
+    let is_spec_eat: bool = unwrap_or!(LuaRead::lua_read_at_position(lua, 4), return 0);
+    if let Some((can_hu, hu_list, _other_list)) = MaJiang::check_can_hu(poker_list, king_num, king_poker, is_spec_eat) {
+        can_hu.push_to_lua(lua);
+        hu_list.push_to_lua(lua);
+        return 2;
+    }
+    false.push_to_lua(lua);
+    1
+}
 
 pub fn register_util_func(lua: &mut Lua) {
     lua.set("lua_print", td_rlua::function2(lua_print));
@@ -225,5 +254,9 @@ pub fn register_util_func(lua: &mut Lua) {
     lua.set("system_loadavg", td_rlua::function0(system_loadavg));
     lua.set("system_disk_info", td_rlua::function0(system_disk_info));
     lua.set("system_mem_info", td_rlua::function0(system_mem_info));
-
+    lua.set("native_all_socket_size", td_rlua::function0(native_all_socket_size));
+    lua.set("do_hotfix_file", td_rlua::function1(do_hotfix_file));
+    lua.register("native_check_hu", native_check_hu);
+    lua.set("shutdown_server", td_rlua::function0(shutdown_server));
+    lua.set("sleep_ms", td_rlua::function1(sleep_ms));
 }

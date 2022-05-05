@@ -1,12 +1,8 @@
-use std::collections::HashSet;
-use std::net::{TcpListener, TcpStream};
-use std::mem;
-use std::io::Read;
-
-use td_rlua::{self, Lua, LuaPush};
+use td_rlua::{self};
 use {EngineProtocol, ProtoTd, ProtoJson, ProtoBin, ProtoText};
 use {NetMsg, MSG_TYPE_TD, MSG_TYPE_BIN, MSG_TYPE_TEXT, MSG_TYPE_JSON, NetResult};
 
+#[allow(dead_code)]
 pub struct ProtocolMgr {
     td: ProtoTd,
     bin: ProtoBin,
@@ -14,14 +10,14 @@ pub struct ProtocolMgr {
     text: ProtoText,
 }
 
-static mut el: *mut ProtocolMgr = 0 as *mut _;
+static mut EL: *mut ProtocolMgr = 0 as *mut _;
 impl ProtocolMgr {
     pub fn instance() -> &'static mut ProtocolMgr {
         unsafe {
-            if el == 0 as *mut _ {
-                el = Box::into_raw(Box::new(ProtocolMgr::new()));
+            if EL == 0 as *mut _ {
+                EL = Box::into_raw(Box::new(ProtocolMgr::new()));
             }
-            &mut *el
+            &mut *EL
         }
     }
 

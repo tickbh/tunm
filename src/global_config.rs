@@ -10,12 +10,12 @@ pub struct GlobalConfig {
     pub telnet_addr: Option<String>,
     pub net_info: String,
 }
-static mut el: *mut GlobalConfig = 0 as *mut _;
+static mut EL: *mut GlobalConfig = 0 as *mut _;
 
 impl GlobalConfig {
     pub fn instance() -> &'static GlobalConfig {
         unsafe {
-            if el == 0 as *mut _ {
+            if EL == 0 as *mut _ {
                 let config = GlobalConfig {
                     lua_macros: HashMap::new(),
                     db_info: HashMap::new(),
@@ -23,9 +23,9 @@ impl GlobalConfig {
                     telnet_addr: None,
                     net_info: "protocol.txt".to_string(),
                 };
-                el = Box::into_raw(Box::new(config));
+                EL = Box::into_raw(Box::new(config));
             }
-            &*el
+            &*EL
         }
     }
 
@@ -33,17 +33,18 @@ impl GlobalConfig {
         let field: Result<GlobalConfig, _> = json::decode(file_data);
         let config = unwrap_or!(field.ok(), return false);
         unsafe {
-            if el != 0 as *mut _ {
-                let old = Box::from_raw(el);
+            if EL != 0 as *mut _ {
+                let old = Box::from_raw(EL);
                 drop(old);
             }
-            el = Box::into_raw(Box::new(config));
+            EL = Box::into_raw(Box::new(config));
         }
         true
     }
 
     pub fn change_by_file(file_name: &str) -> bool {
         if let Ok(file_data) = FileUtils::get_file_data(file_name) {
+            println!("load config file:{}", file_name);
             let file_data = unwrap_or!(String::from_utf8(file_data).ok(), return false);
             return GlobalConfig::change_instance(&*file_data);
         }

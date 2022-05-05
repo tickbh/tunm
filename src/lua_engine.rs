@@ -1,25 +1,44 @@
+use std::iter::repeat;
+use std::ffi::{CString};
+use crypto::aes_gcm::AesGcm;
+use crypto::aes::{KeySize};
+use crypto::aead::AeadDecryptor;
 use {NetMsg, NetConfig, FileUtils};
-use td_rlua::{self, Lua};
+use td_rlua::{self, Lua, LuaRead};
 use libc;
 use td_rp;
 use std::sync::Arc;
 use td_rthreadpool::ReentrantMutex;
 use td_rredis::{RedisResult, Value};
 use super::{LuaWrapperTableValue, RedisWrapperResult};
+use psocket::SOCKET;
 
-static mut el: *mut LuaEngine = 0 as *mut _;
+const AES_KEY: [u8; 32] = [
+            0x60, 0x3d, 0xeb, 0x10, 0x15, 0xca, 0x71, 0xbe,
+            0x2b, 0x72, 0xaf, 0xf0, 0x85, 0x7d, 0x77, 0x81,
+            0x1f, 0x35, 0x2c, 0x08, 0x3b, 0x62, 0x08, 0xd7,
+            0x2d, 0x98, 0x10, 0xa3, 0x09, 0x14, 0xdf, 0xf4 
+        ];
+
+
+const AES_IV: [u8; 12] = [
+            0x60, 0x3d, 0xeb, 0x10, 0x15, 0xca, 0x71, 0xbe,
+            0x2b, 0x72, 0xaf, 0xf0
+        ];
+
+static mut EL: *mut LuaEngine = 0 as *mut _;
 /// the type of lua call type
 enum LuaElem {
     /// fd, msg
-    Message(i32, NetMsg),
+    Message(SOCKET, NetMsg),
     /// cookie, ret, err_msg, msg
     DbResult(u32, i32, Option<String>, Option<NetMsg>),
     /// cookie, value
     RedisResult(u32, Option<RedisResult<Value>>),
     /// cookie, new_fd, client_ip, server_port, websocket
-    NewConnection(u32, i32, String, u16, bool),
+    NewConnection(u32, SOCKET, String, u16, bool),
     /// fd
-    LostConnection(i32),
+    LostConnection(SOCKET),
     /// func_str
     ExecString(String),
     /// Args fuc
@@ -38,17 +57,42 @@ extern "C" fn load_func(lua: *mut td_rlua::lua_State) -> libc::c_int {
     let path: String = unwrap_or!(td_rlua::LuaRead::lua_read(lua), return 0);
     let full_path = unwrap_or!(FileUtils::instance().full_path_for_name(&*path), path);
     let full_path = full_path.trim_matches('\"');
-    let mut lua = Lua::from_existing_state(lua, false);
-    lua.load_file(&*full_path)
+    let data = unwrap_or!(FileUtils::get_file_data(&*full_path).ok(), return 0);
+    if data.len() < 10 {
+        return 0;
+    }
+    let mut name = full_path.to_string();
+    let mut short_name = name.clone();
+    let len = name.len();
+    if len > 30 {
+        short_name = name.drain((len - 30)..).collect();
+    }
+
+    let short_name = CString::new(short_name).unwrap();
+    let ret;
+    if data[0] == 0xff && data[1] == 0xfe && data[2] == 0xfd && data.len() > 19 {
+        let mut out: Vec<u8> = repeat(0).take(data.len() - 19).collect();
+        let mut decipher = AesGcm::new(KeySize::KeySize256, &AES_KEY, &AES_IV, &[0;0]);
+        let _result = decipher.decrypt(&data[19..], &mut out[..], &data[3..19]);
+        ret = unsafe { td_rlua::luaL_loadbuffer(lua, out.as_ptr() as *const i8, out.len(), short_name.as_ptr()) };
+    } else {
+        ret = unsafe { td_rlua::luaL_loadbuffer(lua, data.as_ptr() as *const i8, data.len(), short_name.as_ptr()) };
+    }
+    if ret != 0 {
+        let err_msg : String = unwrap_or!(LuaRead::lua_read(lua), return 0);
+        let err_detail = CString::new(format!("error loading from file {} :\n\t{}", full_path, err_msg)).unwrap();
+        unsafe { td_rlua::luaL_error(lua, err_detail.as_ptr()); }
+    }
+    1
 }
 
 impl LuaEngine {
     pub fn instance() -> &'static mut LuaEngine {
         unsafe {
-            if el == 0 as *mut _ {
-                el = Box::into_raw(Box::new(LuaEngine::new(Lua::new())));
+            if EL == 0 as *mut _ {
+                EL = Box::into_raw(Box::new(LuaEngine::new(Lua::new())));
             }
-            &mut *el
+            &mut *EL
         }
     }
 
@@ -93,7 +137,7 @@ impl LuaEngine {
 
     pub fn apply_new_connect(&mut self,
                              cookie: u32,
-                             new_fd: i32,
+                             new_fd: SOCKET,
                              client_ip: String,
                              server_port: u16,
                              websocket: bool) {
@@ -101,7 +145,7 @@ impl LuaEngine {
         self.exec_list.push(LuaElem::NewConnection(cookie, new_fd, client_ip, server_port, websocket));
     }
 
-    pub fn apply_lost_connect(&mut self, lost_fd: i32) {
+    pub fn apply_lost_connect(&mut self, lost_fd: SOCKET) {
         let _guard = self.mutex.lock().unwrap();
         self.exec_list.push(LuaElem::LostConnection(lost_fd));
     }
@@ -120,7 +164,7 @@ impl LuaEngine {
         self.exec_list.push(LuaElem::RedisResult(cookie, result));
     }
 
-    pub fn apply_message(&mut self, fd: i32, net_msg: NetMsg) {
+    pub fn apply_message(&mut self, fd: SOCKET, net_msg: NetMsg) {
         let _guard = self.mutex.lock().unwrap();
         self.exec_list.push(LuaElem::Message(fd, net_msg));
     }
@@ -138,7 +182,7 @@ impl LuaEngine {
 
     pub fn execute_new_connect(&mut self,
                                cookie: u32,
-                               new_fd: i32,
+                               new_fd: SOCKET,
                                client_ip: String,
                                server_port: u16,
                                websocket: bool)
@@ -146,7 +190,7 @@ impl LuaEngine {
         self.lua.exec_func5("cmd_new_connection", cookie, new_fd, client_ip, server_port, websocket)
     }
 
-    pub fn execute_lost_connect(&mut self, lost_fd: i32) -> i32 {
+    pub fn execute_lost_connect(&mut self, lost_fd: SOCKET) -> i32 {
         self.lua.exec_func1("cmd_connection_lost", lost_fd)
     }
 
@@ -188,7 +232,7 @@ impl LuaEngine {
         }
     }
 
-    pub fn execute_message(&mut self, fd: i32, mut net_msg: NetMsg) -> i32 {
+    pub fn execute_message(&mut self, fd: SOCKET, mut net_msg: NetMsg) -> i32 {
         net_msg.set_read_data();
         unwrap_or!(net_msg.read_head().ok(), return -1);
         self.lua.exec_func3("global_dispatch_command",
@@ -202,6 +246,7 @@ impl LuaEngine {
     }
 
     pub fn execute_args_func(&mut self, func: String, args: Vec<String>) -> i32 {
+        // println!("execute func is {}", func);
         match args.len() {
             0 => self.lua.exec_func0(func),
             1 => self.lua.exec_func1(func, &*args[0]),
@@ -240,10 +285,35 @@ impl LuaEngine {
         if let Some(index) = ori.find('\'') {
             if index == 0 {
                 let t: String = ori.drain(1..).collect();
-                return format!("trace(\"%o\", {})", t);
+                return format!("LOG.warn(\"%o\", {})", t);
             }
         }
 
         return ori;
+    }
+
+    pub fn do_hotfix_file(&mut self, path: String) -> i32 {
+        let full_path = unwrap_or!(FileUtils::instance().full_path_for_name(&*path), path);
+        let full_path = full_path.trim_matches('\"');
+        let data = unwrap_or!(FileUtils::get_file_data(&*full_path).ok(), return 0);
+        if data.len() < 10 {
+            return 0;
+        }
+        let mut name = full_path.to_string();
+        let mut short_name = name.clone();
+        let len = name.len();
+        if len > 30 {
+            short_name = name.drain((len - 30)..).collect();
+        }
+
+        let file_data = if data[0] == 0xff && data[1] == 0xfe && data[2] == 0xfd && data.len() > 19 {
+            let mut out: Vec<u8> = repeat(0).take(data.len() - 19).collect();
+            let mut decipher = AesGcm::new(KeySize::KeySize256, &AES_KEY, &AES_IV, &[0;0]);
+            let _result = decipher.decrypt(&data[19..], &mut out[..], &data[3..19]);
+            unwrap_or!(String::from_utf8(out).ok(), return 0)
+        } else {
+            unwrap_or!(String::from_utf8(data).ok(), return 0)
+        };
+        self.lua.exec_func2("hotfix", file_data, short_name)
     }
 }
