@@ -286,7 +286,7 @@ impl EventMgr {
 
     pub fn add_lua_excute(&mut self) {
         self.lua_exec_id = self.event_loop
-                               .add_timer(EventEntry::new_timer(1_000,
+                               .add_timer(EventEntry::new_timer(1,
                                                                 true,
                                                                 Some(Self::lua_exec_callback),
                                                                 None));

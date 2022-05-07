@@ -5,9 +5,6 @@ function update(name)
     name = string.gsub(name, ".lua", "") .. ".lua"
     local full_name = GET_FULL_PATH(name)
     package.loaded[full_name] = false
-    if TRACE then
-        TRACE("update name = %o", name)
-    end
     require(full_name)
     -- 回收垃圾
     collectgarbage("collect")
