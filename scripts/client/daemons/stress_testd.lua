@@ -310,7 +310,7 @@ end
 function create()
 
     -- 加载下属子目录
-    load_folder("client/daemons/stress_test")
+    LOAD_FOLDER("client/daemons/stress_test")
 
     -- 注册玩家心跳回调
     register_heartbeat("PLAYER_TDCLS", heartbeat_handler)

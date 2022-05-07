@@ -68,7 +68,7 @@ impl DbTrait for DbSqlite {
             Ok(mut rows) => {
                 self.error = None;
                 while let Some(row) = rows.next().ok() {
-                    let row = unwrap_or!(row, continue);
+                    let row = unwrap_or!(row, break);
                     let mut hash = HashMap::<Value, Value>::new();
                     
                     for i in 0..column_names.len() {

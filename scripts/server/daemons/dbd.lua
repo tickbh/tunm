@@ -95,13 +95,14 @@ function lua_sync_insert(db_name, sql_cmd, n_dbtype)
 end
 
 function lua_sync_select(db_name, sql_cmd, n_dbtype)
-    -- trace("lua_sync_select sql is %o ", sql_cmd)
+    trace("lua_sync_select sql is %o ", sql_cmd)
     n_dbtype = n_dbtype or get_db_index()
     local err, ret = db_select_sync(db_name, n_dbtype, sql_cmd)
+    trace("lua_sync_select err, ret %o %o ", err, ret)
     if err ~= 0 then
         return err, ret
     end
-    return err, unpack(ret)
+    return err, ret
 end
 
 function convert_table_info(table_struct)
@@ -445,3 +446,4 @@ function create()
 end
 
 create()
+

@@ -81,9 +81,10 @@ function trace(value, ...)
 
     value = format(value, ...)
     lua_print(LOG_TRACE, value)
-    write_log(LOG_TRACE, value)
 end
 
 if _G.trace then
     _G.trace = trace
 end
+
+trace("end!!!!!")

@@ -9,12 +9,12 @@ pub trait EngineProtocol: Sized {
     fn convert_string(lua: *mut td_rlua::lua_State, net_msg: &mut NetMsg) -> NetResult<String>;
 }
 
-mod proto_td;
+mod proto_rt;
 mod proto_json;
 mod proto_bin;
 mod proto_text;
 
-pub use self::proto_td::ProtoTd;
+pub use self::proto_rt::ProtoTd;
 pub use self::proto_json::ProtoJson;
 pub use self::proto_bin::ProtoBin;
 pub use self::proto_text::ProtoText;

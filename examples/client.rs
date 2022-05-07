@@ -6,6 +6,7 @@ use tdengine::{NetConfig, GlobalConfig, LuaEngine, register_custom_func, EventMg
 use std::env;
 
 fn main() {
+    log4rs::init_file("config/log4rs.yml", Default::default()).unwrap();
     let args = env::args();
     for arg in args {
         println!("args {:?}", arg);    

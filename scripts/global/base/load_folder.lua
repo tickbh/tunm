@@ -7,8 +7,8 @@
 --加载path文件夹下的lua文件，arrange指定加载文件的
 --先后关系，如"a:b:c"，将按照a、b、c的顺序加载
 
-function load_folder(path, arrange, ...)
-    local table_file = get_floder_files(path, ...)
+function LOAD_FOLDER(path, arrange, ...)
+    local table_file = GET_FLODER_FILES(path, ...)
     if sizeof(table_file) == 0 then
         trace("找不到目录(%s)下的文件", path);
         return;

@@ -164,8 +164,8 @@ fn http_post_request(cookie: u32, addr: String, url: String, body: String) {
     HttpMgr::instance().http_post_request(cookie, addr, url, body);
 }
 
-fn listen_http(url: String, port: u16) {
-    HttpMgr::instance().start_listen(url, port);
+fn listen_http(url: String) {
+    HttpMgr::instance().start_listen(url);
 }
 
 fn listen_mio_websocket(url: String, port: u16) {
@@ -208,7 +208,7 @@ pub fn register_network_func(lua: &mut Lua) {
     lua.set("http_get_request", td_rlua::function3(http_get_request));
     lua.set("http_post_request", td_rlua::function4(http_post_request));
 
-    lua.set("listen_http", td_rlua::function2(listen_http));
+    lua.set("listen_http", td_rlua::function1(listen_http));
     lua.set("listen_websocket", td_rlua::function2(listen_websocket));
     lua.set("listen_mio_websocket", td_rlua::function2(listen_mio_websocket));
 

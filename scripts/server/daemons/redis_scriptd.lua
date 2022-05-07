@@ -13,18 +13,18 @@ cache_full_path = {}
 script_slot = {}
 
 function load_script(name, slot)
-    local hash_value = load_redis_script(get_full_path(script_folder .. name .. ".lua"), "")
+    local hash_value = load_redis_script(GET_FULL_PATH(script_folder .. name .. ".lua"), "")
     if not hash_value or hash_value == "" then
         return
     end
-    cache_full_path[name] = get_full_path(script_folder .. name .. ".lua")
+    cache_full_path[name] = GET_FULL_PATH(script_folder .. name .. ".lua")
     cache_hashs[name] = hash_value
     script_slot[name] = slot
     return true
 end
 
 function reload_redis_scripts()
-    local files = get_floder_files(script_folder)
+    local files = GET_FLODER_FILES(script_folder)
     for _,v in pairs(files) do
         local name = string.sub(v, string.len(script_folder) + 2)
         load_script(name)

@@ -345,11 +345,11 @@ end
 -- 取得DB的返回值
 function msg_db_result(cookie, ret, result_list)
     -- 通知 DB_D 收到结果
-    if type(result_list) == "table" then
-        DB_D.notify_operation_result(cookie, ret, unpack(result_list))
-    else
-        DB_D.notify_operation_result(cookie, ret, result_list)
-    end
+    DB_D.notify_operation_result(cookie, ret, result_list)
+    -- if type(result_list) == "table" then
+    -- else
+    --     DB_D.notify_operation_result(cookie, ret, result_list)
+    -- end
 end
 
 -- 取得Redis的返回值

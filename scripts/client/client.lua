@@ -3,7 +3,7 @@
 -- 更新一个文件，强制重新载入
 function update(name)
     name = string.gsub(name, ".lua", "") .. ".lua";
-    local full_name = get_full_path(name);
+    local full_name = GET_FULL_PATH(name);
     require(full_name);
     trace("update file name = %o", name)
     -- 回收垃圾
@@ -15,31 +15,31 @@ update("global/base/load_folder");
 trace("??????????????")
 
 local function main()
-    load_folder("global/include");
-    load_folder("global/base", "util");
-    load_folder("global/inherit");
-    load_folder("global/daemons", "importd:dbd:sqld:datad");
-    load_folder("global/clone");
+    LOAD_FOLDER("global/include");
+    LOAD_FOLDER("global/base", "util");
+    LOAD_FOLDER("global/inherit");
+    LOAD_FOLDER("global/daemons", "importd:dbd:sqld:datad");
+    LOAD_FOLDER("global/clone");
     
-    load_folder("etc")
+    LOAD_FOLDER("etc")
 
     local load_table={
         "user",
     }
     set_need_load_data_num(sizeof(load_table) )
 
-    load_folder("share")
+    LOAD_FOLDER("share")
     
-    load_folder("client/global")
-    load_folder("client/clone");
+    LOAD_FOLDER("client/global")
+    LOAD_FOLDER("client/clone");
     update("client/daemons/logind")
     update("client/daemons/med")
     update("client/daemons/stress_testd")
-    -- load_folder("client/daemons", ""); --,"propertyd" 强制加载优先顺序
+    -- LOAD_FOLDER("client/daemons", ""); --,"propertyd" 强制加载优先顺序
 
     -- STRESS_TEST_D.start(500, "CHAT_TESTD")
 
-    load_folder("client/msgs")
+    LOAD_FOLDER("client/msgs")
 
     update("client/command")
 

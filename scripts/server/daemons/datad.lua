@@ -161,6 +161,7 @@ function is_table_exist(tablename, dbname)
         sql = string.format("select name from sqlite_master where type='table' and name = '%s'", tablename)
     end
     local err, ret = DB_D.lua_sync_select(dbname, sql, DB_D.get_db_index())
+    trace("err ret = %o, %o", err, ret)
     if err ~= 0 then
         return false
     end

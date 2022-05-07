@@ -245,9 +245,9 @@ pub fn register_util_func(lua: &mut Lua) {
     lua.set("lua_print", td_rlua::function2(lua_print));
     lua.set("write_log", td_rlua::function2(write_log));
     lua.register("get_next_rid", get_next_rid);
-    lua.set("get_full_path", td_rlua::function1(get_full_path));
-    lua.set("get_file_str", td_rlua::function1(get_file_str));
-    lua.set("get_floder_files", td_rlua::function1(get_floder_files));
+    lua.set("GET_FULL_PATH", td_rlua::function1(get_full_path));
+    lua.set("GET_FILE_STR", td_rlua::function1(get_file_str));
+    lua.set("GET_FLODER_FILES", td_rlua::function1(get_floder_files));
     lua.set("get_msg_type", td_rlua::function1(get_msg_type));
     lua.set("time_ms", td_rlua::function0(time_ms));
     lua.set("block_read", td_rlua::function0(block_read));

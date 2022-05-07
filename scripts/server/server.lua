@@ -3,10 +3,12 @@
 -- 更新一个文件，强制重新载入
 function update(name)
     name = string.gsub(name, ".lua", "") .. ".lua"
-    local full_name = get_full_path(name)
+    local full_name = GET_FULL_PATH(name)
     package.loaded[full_name] = false
+    if trace then
+        trace("update name = %o", name)
+    end
     require(full_name)
-    trace("update %o", name)
     -- 回收垃圾
     collectgarbage("collect")
 end
@@ -18,33 +20,33 @@ update("global/base/load_folder")
 function test_env()
     set_port_map(1, 2)
     trace("get_port_map %o", get_port_map())
-    hotfix_file(get_full_path("test/fix.lua") )
+    hotfix_file(GET_FULL_PATH("test/fix.lua") )
     set_port_map(2, 3)
     trace("get_port_map %o", get_port_map())
 end
 
 local function main()
-    load_folder("global/include")
-    load_folder("global/base", "util")
-    load_folder("global/inherit")
-    load_folder("global/daemons", "importd:dbd:sqld:datad")
-    load_folder("global/clone")
+    LOAD_FOLDER("global/include")
+    LOAD_FOLDER("global/base", "util")
+    LOAD_FOLDER("global/inherit")
+    LOAD_FOLDER("global/daemons", "importd:dbd:sqld:datad")
+    LOAD_FOLDER("global/clone")
 
-    load_folder("etc")
+    LOAD_FOLDER("etc")
 
     local load_table={
         "user",
     }
     set_need_load_data_num(sizeof(load_table) )
     
-    load_folder("share")
+    LOAD_FOLDER("share")
     
-    load_folder("server/clone")
-    load_folder("server/clone/rooms", "room:desk")
-    load_folder("server/daemons", "sqld:dbd:datad:redisd:redis_queued:redis_scriptd") --,"propertyd" 强制加载优先顺序
-    load_folder("server/daemons/poker")
-    load_folder("server/cmds")
-    load_folder("server/msgs")
+    LOAD_FOLDER("server/clone")
+    LOAD_FOLDER("server/clone/rooms", "room:desk")
+    LOAD_FOLDER("server/daemons", "sqld:dbd:datad:redisd:redis_queued:redis_scriptd") --,"propertyd" 强制加载优先顺序
+    LOAD_FOLDER("server/daemons/poker")
+    LOAD_FOLDER("server/cmds")
+    LOAD_FOLDER("server/msgs")
 
     --test_env()
     if not _DEBUG or _DUBUG == "false" then

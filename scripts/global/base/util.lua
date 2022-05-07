@@ -86,7 +86,7 @@ function trace(value,...)
                                                 end)
     end
 
-    lua_print(3, value)
+    lua_print(5, value)
 end
 
 -- 自定义调用栈输出
@@ -1052,7 +1052,7 @@ end
 function get_info_from_file(filename)
     local info_array = {}
     local file_str
-    filename = get_full_path(filename)
+    filename = GET_FULL_PATH(filename)
     local fp = io.open(filename)
     if fp then
         io.input(filename)
@@ -1081,7 +1081,7 @@ function get_info_from_file(filename)
 end
 
 function get_file_json(filename)
-    local filename = get_full_path(filename)
+    local filename = GET_FULL_PATH(filename)
     local fp = io.open(filename)
     local file_str
     if fp then
@@ -1093,7 +1093,7 @@ function get_file_json(filename)
 end
 
 function get_file_content(filename)
-    local filename = get_full_path(filename)
+    local filename = GET_FULL_PATH(filename)
     local fp = io.open(filename)
     local file_str
     if fp then

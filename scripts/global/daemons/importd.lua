@@ -67,7 +67,7 @@ local function readcsv (file)
     local row = {}
     local failed = false
 
-    local fp = io.open(get_full_path(file))
+    local fp = io.open(GET_FULL_PATH(file))
 
     if fp then
         for line in fp:lines() do

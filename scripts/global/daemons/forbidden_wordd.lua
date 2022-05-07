@@ -13,7 +13,7 @@ function get_forbidden_list()
 end
 
 function load_forbidden_word(file)
-    local fp = io.open(get_full_path(file))
+    local fp = io.open(GET_FULL_PATH(file))
     forbidden_table = {}
     if fp then
         for line in fp:lines() do

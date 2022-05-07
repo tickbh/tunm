@@ -214,9 +214,9 @@ extern "C" fn db_select_sync(lua: *mut td_rlua::lua_State) -> libc::c_int {
     let mut db = db.unwrap();
     let mut net_msg = NetMsg::new();
     let result = db.select(&*sql_cmd, &mut net_msg);
+    net_msg.set_read_data();
     let ret = unwrap_or!(result.ok(), db.get_error_code());
     ret.push_to_lua(lua);
-    net_msg.set_read_data();
     if let Ok((_, val)) = rt_proto::decode_proto(net_msg.get_buffer()) {
         LuaWrapperTableValue(val).push_to_lua(lua);
     } else {
