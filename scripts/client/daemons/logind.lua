@@ -11,12 +11,12 @@ local private_key = "wugdGame"
 
 local function connect_callback(agent, arg)
     if not is_object(agent) then
-        trace("连接服务器失败.")
+        TRACE("连接服务器失败.")
         return
     end
 
     ME_D.set_agent(agent)
-    trace("----------------------success connected server-----------------------")
+    TRACE("----------------------success connected server-----------------------")
 
     -- 发送验证信息
     agent:send_message(CMD_INTERNAL_AUTH, 2, tostring(math.random(100000, 999999)), "")
@@ -29,7 +29,7 @@ local function connect_callback(agent, arg)
     login_info["account"] = account
     login_info["device_id"] = arg["device_id"]
     --custom yourself auth func    
-    login_info["password"] = calc_str_md5(password)
+    login_info["password"] = CALC_STR_MD5(password)
     login_info["server_id"] = server_id
     login_info["timestamp"] = os.time()
     login_info["version"] = 1
@@ -61,7 +61,7 @@ function login(account, password, extra_data)
                 })
     if ret ~= 1 then
         -- 连接失败
-        trace("连接服务器(%o:%o)失败。", ip, port)
+        TRACE("连接服务器(%o:%o)失败。", ip, port)
         return false
     end
 

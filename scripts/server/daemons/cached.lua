@@ -30,7 +30,7 @@ function set_cache_data(rid, data)
     data.need_cache = nil
     data.is_db = nil
     
-    cache_data[rid] = {store = os.time(), data=dup(data)}
+    cache_data[rid] = {store = os.time(), data=DUP(data)}
     if need_cache and ENABLE_REDIS_CACHE then
         USER_REDISD.cache_data_to_db(rid, data)
     end
@@ -61,7 +61,7 @@ local function delete_redis_timer(rid)
 end
 
 local function load_user_callback(data)
-    assert(data["rid"] ~= nil, "callback rid must no empty")
+    ASSERT(data["rid"] ~= nil, "callback rid must no empty")
     if data.is_redis then
         delete_redis_timer(data["rid"])
     end
@@ -83,7 +83,7 @@ local function load_user_callback(data)
 end
 
 function get_user_data(rid, callback, callback_arg)
-    assert(callback ~= nil and type(callback) == "function", "callback must not empty")
+    ASSERT(callback ~= nil and type(callback) == "function", "callback must not empty")
     local cache_data = get_cache_data(rid)
     if cache_data then
         callback(deep_dup(cache_data), callback_arg)

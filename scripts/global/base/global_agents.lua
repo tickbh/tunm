@@ -46,13 +46,13 @@ function remove_port_agent(port_no)
     if agent then
         local server_type = agent:get_server_type()
         if server_type == SERVER_TYPE_GATE then
-            for _,ag in pairs(dup(agents)) do
+            for _,ag in pairs(DUP(agents)) do
                 if ag:get_server_type() == SERVER_TYPE_CLIENT then
                     ag:connection_lost()
                 end
             end
         elseif server_type == SERVER_TYPE_LOGIC then
-            for port,_ in pairs(dup(port_map[port_no]) or {}) do
+            for port,_ in pairs(DUP(port_map[port_no]) or {}) do
                 agents[port]:connection_lost()
             end
         else

@@ -8,7 +8,7 @@ ROOM_TDCLS.name = "ROOM_TDCLS"
 
 --构造函数
 function ROOM_TDCLS:create(value)
-    assert(is_table(value), "room:create para not correct")
+    ASSERT(is_table(value), "room:create para not correct")
 
     --记录该场景的基本信息
     self.data = value
@@ -20,7 +20,7 @@ function ROOM_TDCLS:create(value)
 end
 
 function ROOM_TDCLS:destruct()
-    for _,data in pairs(dup(self.room_entity)) do
+    for _,data in pairs(DUP(self.room_entity)) do
         self:entity_destruct(data)
     end
     for _,table in pairs(self.desk_entity) do
@@ -39,13 +39,13 @@ end
 
 -- 生成对象的唯一ID
 function ROOM_TDCLS:get_ob_id()
-    return (string.format("ROOM_TDCLS:%s", save_string(self:get_room_name())))
+    return (string.format("ROOM_TDCLS:%s", SAVE_STRING(self:get_room_name())))
 end
 
 --定义公共接口，按照字母顺序排序
 
 function ROOM_TDCLS:time_update()
-    for _,data in pairs(dup(self.room_entity)) do
+    for _,data in pairs(DUP(self.room_entity)) do
         self:entity_update(data)
     end
 
@@ -75,7 +75,7 @@ function ROOM_TDCLS:broadcast_message(msg, ...)
     local send_raw_message = get_class_func(USER_TDCLS, "send_raw_message")
 
     if not msg_buf then
-        trace("广播消息(%d)打包消息失败。", msg)
+        TRACE("广播消息(%d)打包消息失败。", msg)
         return
     end
 
@@ -164,7 +164,7 @@ function ROOM_TDCLS:entity_leave(user_rid)
         end
 
         self:entity_destruct(user_rid)
-        trace("玩家不在游戏状态，掉线时离开桌子")
+        TRACE("玩家不在游戏状态，掉线时离开桌子")
         return
     end
 
@@ -232,7 +232,7 @@ end
 function ROOM_TDCLS:send_rid_message(user_rid, record, msg, ...)
     local msg_buf = pack_message(get_common_msg_type(), msg, ...)
     if not msg_buf then
-        trace("广播消息(%s)打包消息失败。", msg)
+        TRACE("广播消息(%s)打包消息失败。", msg)
         return
     end
     self:send_rid_raw_message(user_rid, record, msg_buf)
@@ -242,7 +242,7 @@ end
 function ROOM_TDCLS:send_rid_raw_message(user_rid, record, msg_buf)
     local data = self:get_data_by_rid(user_rid)
     if not data or not data.server_id then
-        trace("获取用户%s数据失败", user_rid)
+        TRACE("获取用户%s数据失败", user_rid)
         return
     end
     INTERNAL_COMM_D.send_server_raw_message(data.server_id, user_rid, record or {}, msg_buf:get_data())

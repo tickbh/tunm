@@ -8,8 +8,8 @@ EQUIP_TDCLS.name = "EQUIP_TDCLS"
 
 -- 构造函数
 function EQUIP_TDCLS:create(value)
-    assert(type(value) == "table", "equip::create para not corret")
-    assert(is_int(value["class_id"]))
+    ASSERT(type(value) == "table", "equip::create para not corret")
+    ASSERT(is_int(value["class_id"]))
 
     --装备和装扮默认为1,在基本对象中设置
     value["amount"] = nil
@@ -22,8 +22,8 @@ end
 
 -- 生成对象的唯一ID
 function EQUIP_TDCLS:get_ob_id()
-    return (string.format("EQUIP_TDCLS:%s:%s", save_string(self:query("rid")),
-                         save_string(self:query("class_id"))))
+    return (string.format("EQUIP_TDCLS:%s:%s", SAVE_STRING(self:query("rid")),
+                         SAVE_STRING(self:query("class_id"))))
 end
 
 -- 定义公共接口，按照字母顺序排序

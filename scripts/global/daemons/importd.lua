@@ -24,7 +24,7 @@ local function handle_line(line)
         --去除头尾的"&#"
         line = trim(string.gsub(line,"^(\"?)&#",""))
         line = trim(string.gsub(line,"(\"?)$",""))
-        csv["transformation"] = restore_value(line)]]--
+        csv["transformation"] = RESTORE_VALUE(line)]]--
     else
         line = line .. splitChar
         local linestart = 1
@@ -41,7 +41,7 @@ local function handle_line(line)
             until c ~= "\""
 
             if not i then
-                assert(nil)
+                ASSERT(nil)
                 error("unmatched")
             end
 
@@ -123,7 +123,7 @@ function array_to_mapping(array)
                 elseif fieldtype[j] == "float" and sizeof(array[i][j]) == 0 then
                     row[fieldname[j]] = 0
                 else
-                    row[fieldname[j]] = restore_value(array[i][j])
+                    row[fieldname[j]] = RESTORE_VALUE(array[i][j])
                 end
             end
 
@@ -136,7 +136,7 @@ function array_to_mapping(array)
             elseif fieldtype[1] == "table" and sizeof(array[i][1]) == 0 then
                 row[{}] = row
             else
-                local index = restore_value(array[i][1])
+                local index = RESTORE_VALUE(array[i][1])
                 if not index then
                     print(R.."%o未定义! 配置表结构如下:\n%o\n"..W, array[i][1], fieldname)
                 end
@@ -174,7 +174,7 @@ function array_to_tables(array)
            elseif fieldtype[j] == "float" and sizeof(array[i][j]) == 0  then
                 row[fieldname[j]] = 0
             else
-                row[fieldname[j]] = restore_value(array[i][j])
+                row[fieldname[j]] = RESTORE_VALUE(array[i][j])
             end
         end
 
@@ -227,7 +227,7 @@ function checkkeys(array)
             keys_map[keys[i]] = true
         else
             local error_info = string.format("the %s key repeat, please check", keys[i])
-            assert(false, error_info)
+            ASSERT(false, error_info)
             return nil
         end
     end

@@ -28,24 +28,24 @@ function get_memory_use_ratio()
     mem_info["total"] = mem_info["total"] or 1
     mem_info["free"] = mem_info["free"] or 1
     if mem_info["total"] == 0 then
-        trace("memory get error")
+        TRACE("memory get error")
         return 0
     end
     return mem_info["free"] / mem_info["total"] * 100
 end
 
 function reload_mem_loadavg()
-    load_avg = system_loadavg()
-    proc_total = system_proc_total()
-    mem_info = system_mem_info()
+    load_avg = SYSTEM_LOADAVG()
+    proc_total = SYSTEM_PROC_TOTAL()
+    mem_info = SYSTEM_MEM_INFO()
 end
 
 local function create()
-    cpu_num = system_cpu_num()
-    cpu_speed = system_cpu_speed()
-    os_type = system_os_type()
-    os_release = system_os_release()
-    disk_info = system_disk_info()
+    cpu_num = SYSTEM_CPU_NUM()
+    cpu_speed = SYSTEM_CPU_SPEED()
+    os_type = SYSTEM_OS_TYPE()
+    os_release = SYSTEM_OS_RELEASE()
+    disk_info = SYSTEM_DISK_INFO()
 
     reload_mem_loadavg()
     set_timer(1000 * 60, reload_mem_loadavg, nil, true)

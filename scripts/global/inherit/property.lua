@@ -18,7 +18,7 @@ end
 -- 定义公共接口，按照字母顺序排序
 -- 取得该物件所在的容器对象
 function PROPERTY_TDCLS:get_container()
-    assert(self:query("owner") == self:query_temp("container"));
+    ASSERT(self:query("owner") == self:query_temp("container"));
 
     local owner_rid = self:query("owner");
     if owner_rid then
@@ -28,7 +28,7 @@ end
 
 -- 取得该物件所在的属主对象
 function PROPERTY_TDCLS:get_owner()
-    assert(self:query("owner") == self:query_temp("container"));
+    ASSERT(self:query("owner") == self:query_temp("container"));
 
     local owner_rid = self:query("owner");
     if owner_rid then

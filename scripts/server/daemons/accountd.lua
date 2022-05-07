@@ -38,7 +38,7 @@ local function create_new_account_callback(info, ret, result_list)
 end
 
 function login(agent, account_rid, account_dbase)
-    assert(account_rid == account_dbase["rid"])
+    ASSERT(account_rid == account_dbase["rid"])
     local account = create_account(account_dbase)
     account:accept_relay(agent)
     account:send_message(MSG_LOGIN_NOTIFY_STATUS, {ret = 0})
@@ -70,7 +70,7 @@ function create_new_account(login_info)
 
     -- 检查信息是否合法
     if not is_string(device_id) then
-        trace("创建新角色信息不合法。")
+        TRACE("创建新角色信息不合法。")
         return
     end
 
@@ -85,7 +85,7 @@ function create_new_account(login_info)
         device_id   = device_id,
         password    = login_info["password"],
         switch_time = 0,
-        device_md5  = calc_str_md5(device_id),
+        device_md5  = CALC_STR_MD5(device_id),
     }
     local sql = SQL_D.insert_sql("account", account_dbase)
     account_dbase["account_ob"] = agent
@@ -189,9 +189,9 @@ end
 
 local function read_user_callback(info, args)
     local rid, account = args["rid"], args["account"]
-    assert(rid ~= nil, "rid must not nil")
+    ASSERT(rid ~= nil, "rid must not nil")
     -- local user = find_object_by_rid(rid)
-    -- assert(user ~= nil, "user must not nil")
+    -- ASSERT(user ~= nil, "user must not nil")
     if info.failed then
         return
     end

@@ -30,7 +30,7 @@ end
 local function gate_heartbeat_network()
     local agents = get_all_agents()
     local key = string.format("%s:%s:%d", gate_prefix, CURRENT_IP, GATE_LOGIC_PORT)
-    -- trace("gate_heartbeat_network key %o", key)
+    -- TRACE("gate_heartbeat_network key %o", key)
     REDIS_D.run_command("SET", key, sizeof(agents))
     REDIS_D.run_command("EXPIRE", key, timeout)
 end
@@ -47,7 +47,7 @@ local function logic_connect_callback(agent, arg)
     --     agent:send_message(LOSE_CLIENT, 0)
     -- end
     
-    trace("logic_connect_callback success fd is %o", connect_agent)
+    TRACE("logic_connect_callback success fd is %o", connect_agent)
 end
 
 local function callback_gate_select(data, result_list)
@@ -67,18 +67,18 @@ local function logic_check_connection()
         return
     end
 
-    trace("---------logic_check_connection---------------")
+    TRACE("---------logic_check_connection---------------")
     REDIS_SCRIPTD.eval_script_by_name("gate_select", {redis_gate_prefix, gate_prefix}, callback_gate_select, {})
 end
 
 local function init_network_status()
-    trace("init server %o %o", SERVER_TYPE, STANDALONE)
+    TRACE("init server %o %o", SERVER_TYPE, STANDALONE)
     if SERVER_TYPE == SERVER_GATE or STANDALONE then
         listen_server(GATE_LOGIC_PORT, BIND_IP)
         listen_server(GATE_CLIENT_PORT)
 
-        trace("listen http server:%o", "0.0.0.0:" .. GATE_HTTP_PORT)
-        trace("listen websocket server:%o", "0.0.0.0:" .. GATE_WEBSOCKET_PORT)
+        TRACE("listen http server:%o", "0.0.0.0:" .. GATE_HTTP_PORT)
+        TRACE("listen websocket server:%o", "0.0.0.0:" .. GATE_WEBSOCKET_PORT)
         
         listen_http("0.0.0.0:" .. GATE_HTTP_PORT)
         listen_websocket("0.0.0.0", tonumber(GATE_WEBSOCKET_PORT))
@@ -107,6 +107,6 @@ local function init()
     init_network_status()
 end
 
-trace("fuck!!!!!!")
+TRACE("fuck!!!!!!")
 create()
 register_post_data_init(init)

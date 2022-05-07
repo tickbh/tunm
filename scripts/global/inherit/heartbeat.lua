@@ -30,7 +30,7 @@ function HEARTBEAT_TDCLS:do_heartbeat()
     end
 
     -- 执行心跳回调函数
-    xpcall(post_heartbeat, error_handle, self:get_ob_class(), self);
+    xpcall(post_heartbeat, ERROR_HANDLE, self:get_ob_class(), self);
 end
 
 -- 定义公共接口，按照字母顺序排序
@@ -46,7 +46,7 @@ end
 -- 设置心跳时间
 function HEARTBEAT_TDCLS:set_heartbeat_interval(_interval)
     self:delete_hearbeat()
-    assert(_interval >= 10000);
+    ASSERT(_interval >= 10000);
 
     -- 开始心跳
     self.interval = _interval;

@@ -31,13 +31,13 @@ local function accout_user_callback(data, result_list)
     if not REDIS_D.check_string(result_list) then
         data.failed = true
     else
-        merge(data, decode_json(result_list))
+        MERGE(data, decode_json(result_list))
     end
     check_finish(data)
 end
 
 function load_data_from_db(rid, callback, callback_arg)
-    assert(callback ~= nil and type(callback) == "function", "callback must not empty")
+    ASSERT(callback ~= nil and type(callback) == "function", "callback must not empty")
     local data = { rid = rid, cookie = new_cookie(), readnum = 1, is_redis = true }
     local record = {
         callback     = callback,

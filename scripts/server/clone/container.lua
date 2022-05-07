@@ -37,7 +37,7 @@ function CONTAINER_TDCLS:combine_to_pos(property, dst_pos)
 
     -- 判断是否可以合并
     if not pre_property:can_combine(property) then
-        trace("原道具(%s/%d)无法与道具(%s/%d)进行合并。", pre_property:query("rid"),
+        TRACE("原道具(%s/%d)无法与道具(%s/%d)进行合并。", pre_property:query("rid"),
               pre_property:query("class_id"), property:query("rid"), property:query("class_id"));
         return false;
     end
@@ -45,7 +45,7 @@ function CONTAINER_TDCLS:combine_to_pos(property, dst_pos)
     -- 判断合并数量是否溢出
     if pre_property:query("amount") + property:query("amount") >
         CALC_ITEM_MAX_AMOUNT(property) then
-        trace("原道具(%s/%d)与道具(%s/%d)进行合并后数量超过最大叠加数。", pre_property:query("rid"),
+        TRACE("原道具(%s/%d)与道具(%s/%d)进行合并后数量超过最大叠加数。", pre_property:query("rid"),
               pre_property:query("class_id"), property:query("rid"), property:query("class_id"));
         return false;
     end
@@ -64,7 +64,7 @@ end
 function CONTAINER_TDCLS:drop(property)
     --判断道具对象是否存在
     if not property or not is_object(property) then
-       trace("drop的道具对象不存在");
+       TRACE("drop的道具对象不存在");
        return;
     end
 
@@ -93,7 +93,7 @@ end
 
 -- 取得所有下属物件
 function CONTAINER_TDCLS:get_carry()
-    return (dup(self.carry));
+    return (DUP(self.carry));
 end
 
 -- 根据class_id取得所有class_id对象
@@ -567,8 +567,8 @@ function CONTAINER_TDCLS:get_free_pos_by_region(page, range, idx)
 end
 
 function CONTAINER_TDCLS:init_property(property)
-    assert(property["pos"] and property["class_id"] and property["rid"], "pos class_id rid must be exist")
-    assert(self.carry[property["pos"]] == nil, "carry pos must nil")
+    ASSERT(property["pos"] and property["class_id"] and property["rid"], "pos class_id rid must be exist")
+    ASSERT(self.carry[property["pos"]] == nil, "carry pos must nil")
     property = PROPERTY_D.clone_object_from(property["class_id"], property, true)
     if not property then
         return false
@@ -585,7 +585,7 @@ end
 
 function CONTAINER_TDCLS:recieve_property(info, check_enough)
 
-    assert(info["class_id"] ~= nil, "class_id must no empty")
+    ASSERT(info["class_id"] ~= nil, "class_id must no empty")
     local item_info = PROPERTY_D.get_item_or_equip_info(info["class_id"])
     if not item_info then
         return false;
@@ -634,7 +634,7 @@ function CONTAINER_TDCLS:recieve_property(info, check_enough)
     end
     local result_list = {}
     for _,v in ipairs(gain_list) do
-        local property = PROPERTY_D.clone_object_from(info["class_id"], merge(dup(info), {amount = v.amount}), false)
+        local property = PROPERTY_D.clone_object_from(info["class_id"], MERGE(DUP(info), {amount = v.amount}), false)
         self:load_property(property, v.pos)
         local property = self.carry[v.pos]
         table.insert(result_list, {rid = get_ob_rid(property), class_id = info["class_id"], amount = v.amount, pos = v.pos, ob_type = property:query("ob_type")})

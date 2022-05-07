@@ -11,7 +11,7 @@ setmetatable(server_list_callback_list, { __mode = "v" });
 
 -- 依次调用初始化函数
 function post_init()
-    local temp_post_init = dup(post_init_list);
+    local temp_post_init = DUP(post_init_list);
 
     -- 先清空，避免递归调用
     post_init_list = {};
@@ -32,7 +32,7 @@ function post_server_list_done()
     clean_array(server_list_callback_list);
     for _, f in ipairs(server_list_callback_list) do
         if type(f) == "function" then
-            xpcall(f, error_handle);
+            xpcall(f, ERROR_HANDLE);
         end
     end
 end

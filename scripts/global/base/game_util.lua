@@ -1,7 +1,7 @@
 --游戏相关的方法
 
 function get_ob_rid(ob)
-    assert(is_object(ob), "must be a object")
+    ASSERT(is_object(ob), "must be a object")
     return ob:query("rid")
 end
 
@@ -21,21 +21,21 @@ function is_rid_vaild(rid)
 end
 
 function check_rid_vaild(rid)
-   assert(is_rid_vaild(rid), "rid 必须为12位")
+   ASSERT(is_rid_vaild(rid), "rid 必须为12位")
 end
 
 function set_not_in_db(ob)
-    assert(is_object(ob), "must be an object")
+    ASSERT(is_object(ob), "must be an object")
     ob:set_temp("not_in_db", true)
 end
 
 function del_not_in_db(ob)
-    assert(is_object(ob), "must be an object")
+    ASSERT(is_object(ob), "must be an object")
     ob:delete_temp("not_in_db")
 end
 
 function is_not_in_db(ob)
-    assert(is_object(ob), "must be an object")
+    ASSERT(is_object(ob), "must be an object")
     return ob:query_temp("not_in_db") == true
 end
 
@@ -77,4 +77,4 @@ function READ_MSG_NAME(all)
 end
 
 local test = "[  \"aaaaaafdsgf_fsd\", xxxx]"
-trace("msg name is 111111111111 %o", READ_MSG_NAME(test))
+TRACE("msg name is 111111111111 %o", READ_MSG_NAME(test))

@@ -65,7 +65,7 @@ local function register_by_type(event_struct, listener, event_routines)
             func = info["func"]
             args = info["args"]
         end
-        assert(type(func) == "function")
+        ASSERT(type(func) == "function")
         event_struct[event] = event_struct[event] or {}
         event_struct[event][listener] = {func = func, args = args}
     end
@@ -84,7 +84,7 @@ function register_as_responder(listener, event_routines)
 end
 
 local function remove_by_type(event_struct, listener, events)
-    assert(listener ~= nil, "listener must no nil")
+    ASSERT(listener ~= nil, "listener must no nil")
     if not events then
         for event,node in pairs(event_struct) do
             node[listener] = nil

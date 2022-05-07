@@ -197,7 +197,7 @@ end
 function DDZ_DESK_TDCLS:try_restart_game()
     if self.retry_deal_times > 1 or self:is_someone_offline() then
         self:clear_all_status()
-        trace("重置次数超限或者有人掉线")
+        TRACE("重置次数超限或者有人掉线")
         return
     end
     self.retry_deal_times = self.retry_deal_times + 1
@@ -210,7 +210,7 @@ end
 function DDZ_DESK_TDCLS:start_game()
     get_class_func(DESK_TDCLS, "start_game")(self)
     self:change_cur_step(DDZ_STEP_DEAL)
-    trace("DDZ_DESK_TDCLS:start_game!@!!!")
+    TRACE("DDZ_DESK_TDCLS:start_game!@!!!")
 end
 
 --是否正在玩游戏
@@ -427,7 +427,7 @@ function DDZ_DESK_TDCLS:op_info(user_rid, info)
             return true
         end
         self.wheels[idx].is_ready = 1
-        trace("玩家%s在位置%d已准备", user_rid, idx)
+        TRACE("玩家%s在位置%d已准备", user_rid, idx)
         self:broadcast_message(MSG_ROOM_MESSAGE, "success_user_ready", {rid = user_rid, idx = idx})
         self:check_all_ready()
         return true

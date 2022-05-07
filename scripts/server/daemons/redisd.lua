@@ -86,7 +86,7 @@ end
 local cookie_map = {}
 -- 默认回调函数
 local function default_callback(command, value)
-    trace("command is %o, value is %o", command, value)
+    TRACE("command is %o, value is %o", command, value)
 end
 
 function run_command_sync(...)
@@ -116,7 +116,7 @@ function notify_operation_result(cookie, value)
     local callback     = oper["callback"]
     local callback_arg = oper["callback_arg"]
     local command      = oper["command"]
-    -- trace("callback is %o value is %o", callback, value)
+    -- TRACE("callback is %o value is %o", callback, value)
     -- 若存在回调，则调用之，否则调用默认回调函数
     if type(callback) == "function" then
         -- 若有结果集
@@ -147,7 +147,7 @@ function run_command_with_call(callback, callback_arg, ...)
 end
 
 function run_script(...)
-    assert(#{...} >= 3, "args must >= 3 args")
+    ASSERT(#{...} >= 3, "args must >= 3 args")
     redis_run_script(0, ...)
 end
 
@@ -165,7 +165,7 @@ function run_script_with_call(callback, callback_arg, ...)
         -- 记录该操作
         cookie_map[cookie] = record
     end
-    assert(#{...} >= 3, "args must >= 3 args")
+    ASSERT(#{...} >= 3, "args must >= 3 args")
     redis_run_script(cookie, ...)
 end
 
@@ -204,7 +204,7 @@ function start_psubscribe()
 end
 
 local function create()
-    redis_subs_channel = dup(REDIS_SUBS_REGISTER)
+    redis_subs_channel = DUP(REDIS_SUBS_REGISTER)
 end
 
 create()

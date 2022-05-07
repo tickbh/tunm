@@ -201,7 +201,7 @@ function check_leak_obj_refs(raiser, check_weak)
     -- 获得泄漏的对象表
     local leak_object_list = get_leak_obj_list()
     if sizeof(leak_object_list) == 0 then
-        trace("无内存泄漏\n")
+        TRACE("无内存泄漏\n")
         return
     end
 
@@ -213,15 +213,15 @@ function check_leak_obj_refs(raiser, check_weak)
         -- 检索该对象泄漏的引用
         search_leak(_G, {}, obj, result, parent_path, search_record, check_weak)
         if sizeof(result) > 0 then
-            result["leak"] = watch(obj)
+            result["leak"] = WATCH(obj)
 
             if not raiser then
                 -- 打印出泄漏信息
-                trace("%o", result)
+                TRACE("%o", result)
             else
                 -- 写日志
-                local str_result = string.format("Error: %s", save_string(result))
-                write_log(str_result)
+                local str_result = string.format("Error: %s", SAVE_STRING(result))
+                WRITE_LOG(str_result)
             end
         end
 

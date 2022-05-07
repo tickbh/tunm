@@ -63,7 +63,7 @@ end
 
 -- 连接断开的回调
 function cmd_connection_lost(port_no)
-    trace("断开连接(%d)", port_no)
+    TRACE("断开连接(%d)", port_no)
     -- 取得该端口对应的 agent
     local agent = find_agent_by_port(port_no)
     if agent == nil then
@@ -96,7 +96,7 @@ end
 
 -- 收到新连接
 function cmd_new_connection(cookie, fd, client_ip, server_port, websocket)
-    trace("收到新连接(%d)。端口(%d), 客户端地址(%s), new connect info", fd, server_port, client_ip)
+    TRACE("收到新连接(%d)。端口(%d), 客户端地址(%s), new connect info", fd, server_port, client_ip)
     local f = new_connection_callback[cookie]
     if type(f) == "function" then
         -- 若该连接有回调，则调用之
@@ -120,7 +120,7 @@ function cmd_new_connection(cookie, fd, client_ip, server_port, websocket)
             agent:set_server_type(server_type)
             set_port_map(server_fd, fd)
         else
-            trace("no logic server to accept so close the port")
+            TRACE("no logic server to accept so close the port")
             agent:connection_lost()
         end
 
@@ -159,7 +159,7 @@ function debug_on(flag, rid)
     end
 end
 
--- 发送消息是否输出 trace
+-- 发送消息是否输出 TRACE
 function send_debug_on(flag, rid)
     -- 开启或关闭所有消息
     if not rid or type(rid) ~= "string" then
@@ -219,22 +219,22 @@ function get_message_manage_type(message, server_type)
             return MESSAGE_FORWARD
         end
     else
-        assert(false, "unknow message type")
+        ASSERT(false, "unknow message type")
     end
 end
 
 function oper_message(agent, message, msg_buf)
     local name, args = msg_to_table(msg_buf)
-    -- assert(name == message)
+    -- ASSERT(name == message)
     local flag = get_debug_flag()
     if (type(flag) == "number" and flag == 1) or
            (type(flag) == "table" and self:is_user() and flag[self:get_rid()]) then
-        trace("------------- msg : %s -------------\n%o", message, args)
+        TRACE("------------- msg : %s -------------\n%o", message, args)
     end
     
     local message_handler = _G[message]
     if not message_handler then
-        trace("global_dispatch_command message_handler : %o 未定义消息处理函数!", message)
+        TRACE("global_dispatch_command message_handler : %o 未定义消息处理函数!", message)
         return
     end
 
@@ -248,9 +248,9 @@ function websocket_recalc_name(message, buffer)
         if type(args) ~= "string" then
             return nil
         end
-        trace("args is %o", args)
+        TRACE("args is %o", args)
         message = READ_MSG_NAME(args)
-        trace("message is %o", message)
+        TRACE("message is %o", message)
     end
     return message
 end
@@ -263,9 +263,9 @@ function global_dispatch_command(port_no, message, buffer)
     -- if agent:is_websocket() then
     --     message = websocket_recalc_name(message, buffer)
     -- end
-    trace("message is %o", message)
+    TRACE("message is %o", message)
     if not message then
-        trace("非法连接(%d)\n 传送非法消息(源消息为%o)", port_no, message)
+        TRACE("非法连接(%d)\n 传送非法消息(源消息为%o)", port_no, message)
         if is_object(agent) then
             agent:print_fd_info()
             destruct_object(agent)
@@ -274,13 +274,13 @@ function global_dispatch_command(port_no, message, buffer)
         end
         do return end
     end
-    -- trace("------- my agent = %o ---------", agent)
+    -- TRACE("------- my agent = %o ---------", agent)
     if not agent or
        (not agent:is_authed() and message ~= "cmd_internal_auth") then
         -- 若找不到 agent，且该消息不为验证消息，则认为是非法连接，不处理
-        trace("非法连接(%d)\n 消息为(%o)", port_no, message)
+        TRACE("非法连接(%d)\n 消息为(%o)", port_no, message)
         if not agent then
-            trace("端口绑定的对象不存在")
+            TRACE("端口绑定的对象不存在")
         end
         if is_object(agent) then
             agent:print_fd_info()
@@ -292,17 +292,17 @@ function global_dispatch_command(port_no, message, buffer)
     end
 
 
-    trace(" 11111111111 message is %o", message)
+    TRACE(" 11111111111 message is %o", message)
     local mm_type = get_message_manage_type(message, agent:get_server_type())
     if mm_type == MESSAGE_DISCARD then
-        trace("------------- discard port_no is %o, cmd : %s -------------", port_no, message)
+        TRACE("------------- discard port_no is %o, cmd : %s -------------", port_no, message)
         del_message(buffer)
         return 
     end
 
     if not agent:is_websocket() and agent:get_server_type() == SERVER_TYPE_CLIENT and CHECK_PACK and not agent:check_next_client(buffer:get_seq_fd()) then
-        trace("package check failed %o kick the socket", agent:get_ob_id())
-        trace("agent:get_server_type() = %o ", agent:get_server_type())
+        TRACE("package check failed %o kick the socket", agent:get_ob_id())
+        TRACE("agent:get_server_type() = %o ", agent:get_server_type())
         agent:connection_lost()
         del_message(buffer)
         return
@@ -387,14 +387,14 @@ end
 --query is get data, body is post data
 function http_server_msg_recv(cookie, url, body, remote_host)
     cookie = tonumber(cookie)
-    trace("http_server_msg_recv args is %o", {cookie, route, query, body, remote_host})
+    TRACE("http_server_msg_recv args is %o", {cookie, route, query, body, remote_host})
     http_server_respone(cookie, "hello world from lua")
 end
 
 function http_client_msg_respone(cookie, success, body)
     cookie = tonumber(cookie)
     success = success == "true" or success == "1"
-    trace("http_client_msg_respone args is %o", {cookie, success, body})
+    TRACE("http_client_msg_respone args is %o", {cookie, success, body})
 end
 
 function set_max_online_num(num)

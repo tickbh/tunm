@@ -26,7 +26,7 @@ local function attrib_bonus(attribs, bonus_type)
             ctr_ob = ob:get_owner()
         end
         ctr_ob = ctr_ob or ob
-        trace("ob type is %o", ctr_ob:query("ob_type"))
+        TRACE("ob type is %o", ctr_ob:query("ob_type"))
         --不存在属主，或者ob不是玩家，则不操作
         if ctr_ob and ctr_ob:query("ob_type") == OB_TYPE_USER then
 
@@ -56,7 +56,7 @@ local function attrib_bonus(attribs, bonus_type)
 
                     --记录经验值，并写入日志
                     elseif field == "exp"then
-                        trace("ob is %o ob+type = %o", ob, ob:query("ob_type"))
+                        TRACE("ob is %o ob+type = %o", ob, ob:query("ob_type"))
                         if ob:query("ob_type") == OB_TYPE_USER then
                             USER_D.try_level_up(ob)
                         elseif ob:query("ob_type") == OB_TYPE_HERO then
@@ -80,7 +80,7 @@ local function attrib_bonus(attribs, bonus_type)
                 attrib_list[ctr_rid][ob_rid][field] = attrib_list[ctr_rid][ob_rid][field] + value
             end
         else
-            trace("ERROR: container ob is not a user in BONUS_D.attrib_bonus")
+            TRACE("ERROR: container ob is not a user in BONUS_D.attrib_bonus")
         end
     end
 
@@ -156,7 +156,7 @@ local function property_bonus(propertys, bonus_type)
                 end
             end
         else
-            trace("ERROR: ob is not a user_type in BUNOS_D.property_bonus")
+            TRACE("ERROR: ob is not a user_type in BUNOS_D.property_bonus")
         end
     end
 
@@ -408,7 +408,7 @@ function caculate_bonus_times_limit(user, bonus_type)
 
         INTERNAL_COMM_D.send_message(AAA_ID, CMD_GS_FREEZE_ACCOUNT, user:query("account"))
 
-        local queue_string = save_string(queue)
+        local queue_string = SAVE_STRING(queue)
         INTERNAL_COMM_D.send_message(SPA_ID, CMD_GS_BONUS_EXCEPTION, user:query("account"),
                                     user:query("rid"), bonus_type, queue_string)
         --set_timer(5000,USER_D.user_logout, user)

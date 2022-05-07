@@ -20,13 +20,13 @@ local function format(value, ...)
                                                     if c == "s" then
                                                         return a[i]
                                                     else
-                                                        return (watch(a[i]))
+                                                        return (WATCH(a[i]))
                                                     end
                                                 end)
     end
 
     for idx = i + 1, #a do
-        value = value .. string.format(" args : %d, value : %s", idx, watch(a[idx]))
+        value = value .. string.format(" args : %d, value : %s", idx, WATCH(a[idx]))
     end
     return value
 end
@@ -44,7 +44,7 @@ function err(value, ...)
     end
 
     value = format(value, ...)
-    lua_print(LOG_ERROR, value)
+    LUA_PRINT(LOG_ERROR, value)
 end
 
 function warn(value, ...)
@@ -53,7 +53,7 @@ function warn(value, ...)
     end
 
     value = format(value, ...)
-    lua_print(LOG_WARN, value)
+    LUA_PRINT(LOG_WARN, value)
 end
 
 function info(value, ...)
@@ -62,7 +62,7 @@ function info(value, ...)
     end
 
     value = format(value, ...)
-    lua_print(LOG_INFO, value)
+    LUA_PRINT(LOG_INFO, value)
 end
 
 function debug(value, ...)
@@ -71,20 +71,20 @@ function debug(value, ...)
     end
 
     value = format(value, ...)
-    lua_print(LOG_DEBUG, value)
+    LUA_PRINT(LOG_DEBUG, value)
 end
 
-function trace(value, ...)
+function TRACE(value, ...)
     if get_log_level() < LOG_TRACE then
         return
     end
 
     value = format(value, ...)
-    lua_print(LOG_TRACE, value)
+    LUA_PRINT(LOG_TRACE, value)
 end
 
-if _G.trace then
-    _G.trace = trace
+if _G.TRACE then
+    _G.TRACE = TRACE
 end
 
-trace("end!!!!!")
+TRACE("end!!!!!")

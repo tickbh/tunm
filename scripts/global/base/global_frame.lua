@@ -17,7 +17,7 @@ local function timer_callback(evid, para)
             -- 记录当前的回调函数信息
             callback_info["callback"] = debug.getinfo(callback, 'S');
         end
-        xpcall(callback, error_handle, arg);
+        xpcall(callback, ERROR_HANDLE, arg);
     end
 end
 
@@ -42,11 +42,11 @@ end
 -- 设置定时器
 function set_timer(timeout, callback, arg, is_repeat)
 
-    assert(timeout > 0, "超时时间必须>0");
+    ASSERT(timeout > 0, "超时时间必须>0");
     -- 创建一个新的 timer
     local id = timer_event_set(timeout, is_repeat or false);
     if not id then
-        assert(false, "设置定时器失败。");
+        ASSERT(false, "设置定时器失败。");
     end
 
     local cache_arg;
@@ -59,7 +59,7 @@ function set_timer(timeout, callback, arg, is_repeat)
         is_repeat = is_repeat,
     };
     -- setmetatable(cache_arg, { __mode = "v" });
-    assert(not timer_cache[id]);
+    ASSERT(not timer_cache[id]);
     timer_cache[id] = cache_arg;
     return id;
 end

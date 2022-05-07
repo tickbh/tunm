@@ -71,7 +71,7 @@ end
 
 -- 生成对象的唯一ID
 function AGENT_TDCLS:get_ob_id()
-    return (string.format("AGENT_TDCLS:%s:%s", save_string(self.fport_no), save_string(self.port_no)));
+    return (string.format("AGENT_TDCLS:%s:%s", SAVE_STRING(self.fport_no), SAVE_STRING(self.port_no)));
 end
 
 -- 定义公共接口，按照字母顺序排序
@@ -174,15 +174,15 @@ function AGENT_TDCLS:send_message(msg, ...)
         local flag = get_send_debug_flag();
         if (type(flag) == "number" and flag == 1) or
            (type(flag) == "table" and self:is_user() and flag[self:get_rid()]) then
-            trace("################### cmd : %s ###################\n%o",
+            TRACE("################### cmd : %s ###################\n%o",
                   msg, { ... });
         end
     elseif self:is_user() then
         -- 表示发送缓存区已满，若是玩家直接关闭该连接
         if ret == 2 then
-            trace("玩家 socket 发送缓存区已满，断开该连接。");
+            TRACE("玩家 socket 发送缓存区已满，断开该连接。");
             set_timer(10, self.connection_lost, self);
-            write_log(string.format("Error: socket 发送缓存区已满，断开该连接。玩家(%s),send_message(%s)\n",
+            WRITE_LOG(string.format("Error: socket 发送缓存区已满，断开该连接。玩家(%s),send_message(%s)\n",
                                      self:query("rid"), tostring(msg) ));
         end
     end
@@ -205,14 +205,14 @@ function AGENT_TDCLS:send_raw_message(msg_buf)
         local flag = get_send_debug_flag();
         if (type(flag) == "number" and flag == 1) or
            (type(flag) == "table" and self:is_user() and flag[self:get_rid()]) then
-            trace("################### msg : %d ###################", net_msg:getPackId());
+            TRACE("################### msg : %d ###################", net_msg:getPackId());
         end
     elseif ret == 2 then
         -- 表示发送缓存区已满，若不是玩家，则需要缓存，若是玩家直接关闭该连接
         if self:is_user() then
-            trace("玩家 socket 发送缓存区已满，断开该连接。");
+            TRACE("玩家 socket 发送缓存区已满，断开该连接。");
             set_timer(10, self.connection_lost, self);
-            write_log(string.format("Error: 玩家(%s) send_raw_message 发送缓存区已满，断开该连接。", self:query("rid")));
+            WRITE_LOG(string.format("Error: 玩家(%s) send_raw_message 发送缓存区已满，断开该连接。", self:query("rid")));
         end
     end
     del_message(net_msg)
@@ -251,7 +251,7 @@ function AGENT_TDCLS:set_port_no(port_no)
             remove_port_agent(self.port_no);
 
             -- 关闭该连接
-            trace("set_port_no agent repeat close_port %d and new port_no is %d", self.port_no, port_no);
+            TRACE("set_port_no agent repeat close_port %d and new port_no is %d", self.port_no, port_no);
             close_fd(self.port_no);
         end
 
@@ -323,7 +323,7 @@ end
 function AGENT_TDCLS:send_logic_message(msg, ...)
     local logic_port = get_map_port(self.port_no)
     if logic_port == -1 then
-        trace("no logic server for %o", self.port_no)
+        TRACE("no logic server for %o", self.port_no)
         return
     end
     local net_msg = pack_message(self:get_msg_type(), msg, ...)
@@ -335,7 +335,7 @@ end
 function AGENT_TDCLS:forward_logic_message(net_msg)
     local logic_port = get_map_port(self.port_no)
     if logic_port == -1 then
-        trace("no logic server for %o", self.port_no)
+        TRACE("no logic server for %o", self.port_no)
         return
     end
     net_msg:set_seq_fd(self.port_no)
@@ -343,7 +343,7 @@ function AGENT_TDCLS:forward_logic_message(net_msg)
 end
 
 function AGENT_TDCLS:print_fd_info()
-    trace("____AGENT_TDCLS:print_fd_info()____\n self is %o, fport_no is %o, and bit fport is %o port_no is %o", self, self.fport_no, bit32.band(self.fport_no, 0xFFFF), self.port_no)
+    TRACE("____AGENT_TDCLS:print_fd_info()____\n self is %o, fport_no is %o, and bit fport is %o port_no is %o", self, self.fport_no, bit32.band(self.fport_no, 0xFFFF), self.port_no)
 end
 
 function AGENT_TDCLS:get_msg_type()

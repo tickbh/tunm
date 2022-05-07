@@ -75,7 +75,7 @@ end
 
 
 function load_data_from_db(rid, callback, callback_arg)
-    assert(callback ~= nil and type(callback) == "function", "callback must not empty")
+    ASSERT(callback ~= nil and type(callback) == "function", "callback must not empty")
 
     local table_list={
         {

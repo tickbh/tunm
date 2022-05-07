@@ -174,7 +174,7 @@ function DBASE_TDCLS:query(key, raw)
             if entity then
                 value = entity:query(key, true);
                 if value then
-                    return (dup(value));
+                    return (DUP(value));
                 end
             end
         end
@@ -210,7 +210,7 @@ function DBASE_TDCLS:query_ex(path, raw)
             if entity then
                 value = entity:query_ex(path, true);
                 if value then
-                    return (dup(value));
+                    return (DUP(value));
                 end
             end
         end
@@ -248,13 +248,13 @@ function DBASE_TDCLS:query_temp_ex(path)
 end
 
 function DBASE_TDCLS:replace_dbase(value)
-    assert(type(value) == "table", "dbase must be table!");
+    ASSERT(type(value) == "table", "dbase must be table!");
     self.change_list["all_change"] = true;
     self.dbase = value;
 end
 
 function DBASE_TDCLS:replace_temp_dbase(value)
-    assert(type(value) == "table", "temp_dbase must be table!");
+    ASSERT(type(value) == "table", "temp_dbase must be table!");
     self.temp_dbase = value;
 end
 

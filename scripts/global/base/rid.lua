@@ -20,20 +20,20 @@ end
 -- 取消RID和对象的映射关系
 -- 只有拥有RID对象本身允许进行这个调用
 function remove_rid_object(rid, caller)
-    assert(rid_objects[rid] == caller, "");
+    ASSERT(rid_objects[rid] == caller, "");
     rid_objects[rid] = nil;
 end
 
 -- 增加RID和对象的映射关系
 function set_rid_object(rid, ob)
-    assert(rid_objects[rid] == nil, "");
+    ASSERT(rid_objects[rid] == nil, "");
     rid_objects[rid] = ob;
 end
 
 -- 生成新的RID
 function NEW_RID(flag)
     flag = flag or "1";
-    return (get_next_rid(tonumber(SERVER_ID), flag));
+    return (GET_NEXT_RID(tonumber(SERVER_ID), flag));
 end
 
 -- 快捷访问宏：仅供控制台调试时使用

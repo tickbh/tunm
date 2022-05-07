@@ -58,7 +58,7 @@ end
 
 
 function login(agent, user_rid, user_dbase)
-    assert(user_rid == user_dbase["rid"])
+    ASSERT(user_rid == user_dbase["rid"])
 
     -- 创建玩家对象
     local user = create_user(user_dbase)

@@ -34,7 +34,7 @@ end
 
 -- 设置对象的RID，每个对象的RID只能被设置一次
 function RID_TDCLS:set_rid(rid)
-    assert(not self:query("rid"), "");
+    ASSERT(not self:query("rid"), "");
 
     self:set("rid", rid);
     set_rid_object(rid, self);

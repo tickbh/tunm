@@ -202,12 +202,12 @@ function encode_table_data(table_name, data)
     else
         result.misc = nil
     end
-    --trace("encode_table_data table_name is %o, tabledata is %o, result is %o", table_name, tabledata, result)
+    --TRACE("encode_table_data table_name is %o, tabledata is %o, result is %o", table_name, tabledata, result)
     return result
 end
 
 function decode_table_data(table_name, data) 
-    local result = dup(data)
+    local result = DUP(data)
     result.misc = decode_json(data.misc)
     for k,v in pairs(result.misc) do
         result[k] = v

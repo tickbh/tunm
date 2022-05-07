@@ -9,7 +9,7 @@ function deal_with_reply(reply)
         return
     end
     
-    -- trace("__ REDIS_QUEUED:deal_with_reply() __ is %o ", reply)
+    -- TRACE("__ REDIS_QUEUED:deal_with_reply() __ is %o ", reply)
     if reply.channel == REDIS_CHAT_CHANNEL_WORLD then
         CHAT_D.deal_with_new_chat(decode_json(reply.payload))
     elseif reply.channel == SUBSCRIBE_ROOM_DETAIL_RECEIVE then

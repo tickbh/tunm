@@ -242,29 +242,28 @@ extern "C" fn native_check_hu(lua: *mut lua_State) -> libc::c_int {
 }
 
 pub fn register_util_func(lua: &mut Lua) {
-    lua.set("lua_print", td_rlua::function2(lua_print));
-    lua.set("write_log", td_rlua::function2(write_log));
-    lua.register("get_next_rid", get_next_rid);
+    lua.set("LUA_PRINT", td_rlua::function2(lua_print));
+    lua.set("WRITE_LOG", td_rlua::function2(write_log));
+    lua.register("GET_NEXT_RID", get_next_rid);
     lua.set("GET_FULL_PATH", td_rlua::function1(get_full_path));
     lua.set("GET_FILE_STR", td_rlua::function1(get_file_str));
     lua.set("GET_FLODER_FILES", td_rlua::function1(get_floder_files));
-    lua.set("get_msg_type", td_rlua::function1(get_msg_type));
-    lua.set("time_ms", td_rlua::function0(time_ms));
-    lua.set("block_read", td_rlua::function0(block_read));
-    lua.set("calc_str_md5", td_rlua::function1(calc_str_md5));
-    lua.set("start_command_input",
+    lua.set("TIME_MS", td_rlua::function0(time_ms));
+    lua.set("BLOCK_READ", td_rlua::function0(block_read));
+    lua.set("CALC_STR_MD5", td_rlua::function1(calc_str_md5));
+    lua.set("START_COMMAND_INPUT",
             td_rlua::function0(start_command_input));
-    lua.set("system_cpu_num", td_rlua::function0(system_cpu_num));
-    lua.set("system_cpu_speed", td_rlua::function0(system_cpu_speed));
-    lua.set("system_os_type", td_rlua::function0(system_os_type));
-    lua.set("system_os_release", td_rlua::function0(system_os_release));
-    lua.set("system_proc_total", td_rlua::function0(system_proc_total));
-    lua.set("system_loadavg", td_rlua::function0(system_loadavg));
-    lua.set("system_disk_info", td_rlua::function0(system_disk_info));
-    lua.set("system_mem_info", td_rlua::function0(system_mem_info));
-    lua.set("native_all_socket_size", td_rlua::function0(native_all_socket_size));
-    lua.set("do_hotfix_file", td_rlua::function1(do_hotfix_file));
-    lua.register("native_check_hu", native_check_hu);
-    lua.set("shutdown_server", td_rlua::function0(shutdown_server));
-    lua.set("sleep_ms", td_rlua::function1(sleep_ms));
+    lua.set("SYSTEM_CPU_NUM", td_rlua::function0(system_cpu_num));
+    lua.set("SYSTEM_CPU_SPEED", td_rlua::function0(system_cpu_speed));
+    lua.set("SYSTEM_OS_TYPE", td_rlua::function0(system_os_type));
+    lua.set("SYSTEM_OS_RELEASE", td_rlua::function0(system_os_release));
+    lua.set("SYSTEM_PROC_TOTAL", td_rlua::function0(system_proc_total));
+    lua.set("SYSTEM_LOADAVG", td_rlua::function0(system_loadavg));
+    lua.set("SYSTEM_DISK_INFO", td_rlua::function0(system_disk_info));
+    lua.set("SYSTEM_MEM_INFO", td_rlua::function0(system_mem_info));
+    lua.set("NATIVE_ALL_SOCKET_SIZE", td_rlua::function0(native_all_socket_size));
+    lua.set("DO_HOTFIX_FILE", td_rlua::function1(do_hotfix_file));
+    lua.register("NATIVE_CHECK_HU", native_check_hu);
+    lua.set("SHUTDOWN_SERVER", td_rlua::function0(shutdown_server));
+    lua.set("SLEEP_MS", td_rlua::function1(sleep_ms));
 }

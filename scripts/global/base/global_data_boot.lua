@@ -9,7 +9,7 @@ local need_load_data_num = 0
 
 -- 依次调用初始化函数
 local function post_data_init()
-    local temp_post_init = dup(post_data_init_list);
+    local temp_post_init = DUP(post_data_init_list);
 
     -- 先清空，避免递归调用
     post_data_init_list = {};

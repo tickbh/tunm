@@ -6,7 +6,7 @@ PLAYER_TDCLS = tdcls(DBASE_TDCLS, RID_TDCLS, AGENT_TDCLS, HEARTBEAT_TDCLS, ATTRI
 PLAYER_TDCLS.name = "PLAYER_TDCLS";
 
 function PLAYER_TDCLS:create(value)
-    assert(type(value) == "table", "player::create para not corret");
+    ASSERT(type(value) == "table", "player::create para not corret");
     self:replace_dbase(value);
     self:set("ob_type", OB_TYPE_USER);
     self:freeze_dbase()
@@ -21,8 +21,8 @@ end
 
 -- 生成对象的唯一ID
 function PLAYER_TDCLS:get_ob_id()
-    return (string.format("PLAYER_TDCLS:%s:%s", save_string(self:query("rid")),
-                         save_string(self:query("account_rid"))));
+    return (string.format("PLAYER_TDCLS:%s:%s", SAVE_STRING(self:query("rid")),
+                         SAVE_STRING(self:query("account_rid"))));
 end
 
 -- 定义公共接口，按照字母顺序排序
@@ -37,8 +37,8 @@ end
 -- 玩家进入世界
 function PLAYER_TDCLS:enter_world()
     self:set_temp("entered_world", true)
-    trace("玩家(%o/%s)进入游戏世界。", self:query("name"), get_ob_rid(self));
-    trace("玩家等级: %d\r\n玩家金币: %d\r\n玩家钻石: %d", self:query("lv"), self:query("gold"), self:query("stone"))
+    TRACE("玩家(%o/%s)进入游戏世界。", self:query("name"), get_ob_rid(self));
+    TRACE("玩家等级: %d\r\n玩家金币: %d\r\n玩家钻石: %d", self:query("lv"), self:query("gold"), self:query("stone"))
 end
 
 -- 取得对象类

@@ -49,7 +49,7 @@ function check_system()
     local online_number = online_number()
 
     -- 打印信息
-    trace("\nprocess memory : %o MB\nlogin  number  : %o\nonline number  : %o",
+    TRACE("\nprocess memory : %o MB\nlogin  number  : %o\nonline number  : %o",
            memory, login_number, online_number)
 
     -- 判断系统资源占用是否过多
@@ -64,7 +64,7 @@ function check_system()
         -- 系统空闲
         is_system_busy = false
 
-        trace("Console is Working...")
+        TRACE("Console is Working...")
     end
 end
 
@@ -121,7 +121,7 @@ function heartbeat_handler(player)
                     -- 调用子模块的统一接口
                     child_module.operation(player)
                 else
-                    trace("找不到压力测试子模块(%o) 或者 该子模块未定义'operation'接口!", test_module)
+                    TRACE("找不到压力测试子模块(%o) 或者 该子模块未定义'operation'接口!", test_module)
                     test_modules[test_module] = nil
                 end
 
@@ -129,7 +129,7 @@ function heartbeat_handler(player)
                 accumulate[test_module] = 0
             end
         else
-            trace("要求测试的压力子模块(%o)并未定义!", test_module)
+            TRACE("要求测试的压力子模块(%o)并未定义!", test_module)
             test_modules[test_module] = nil
         end
     end
@@ -271,7 +271,7 @@ end
 -- 登陆成功 事件处理
 function func_login_ok(player)
 
-    trace("%o登陆成功！", player)
+    TRACE("%o登陆成功！", player)
 
     local extra_data   = player:query_temp("extra_data") or {}
     local test_modules = extra_data.test_modules

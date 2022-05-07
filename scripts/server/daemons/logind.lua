@@ -18,7 +18,7 @@ local wait_login_list = {}
 local function check_account_callback(login_info, ret, result_list)
     local agent = login_info["agent"]
     if type(result_list) ~= "table" or #result_list == 0 then
-        -- trace("create new ACCOUNT_D!! ret = %o, result_list is = %o", ret, result_list)
+        -- TRACE("create new ACCOUNT_D!! ret = %o, result_list is = %o", ret, result_list)
         -- 创建新角色
         ACCOUNT_D.create_new_account(login_info)
         return
@@ -39,7 +39,7 @@ local function check_account_callback(login_info, ret, result_list)
     --     local account_ob = find_object_by_rid(rid)
     --     if is_object(account_ob) then
     --         if account_ob:query("device_id") ~= device_id then
-    --             trace("玩家(%o)登录传入的设备ID(%o)与内存中的玩家设备ID(%o)不符。\n",
+    --             TRACE("玩家(%o)登录传入的设备ID(%o)与内存中的玩家设备ID(%o)不符。\n",
     --                    account_ob, device_id, account_ob:query("device_id"))
     --             wait_account_login(agent, data["rid"], data)
     --         else
@@ -127,12 +127,12 @@ function login(agent, login_info)
     local device_id = login_info["device_id"]
 
     if not device_id then
-        trace("玩家(%s ,设备%o)登录没有传入设备ID.", account, device_id)
+        TRACE("玩家(%s ,设备%o)登录没有传入设备ID.", account, device_id)
         return
     end
 
     if not server_id then
-        trace("玩家(%s ,设备%o)登录没有传入服务器ID.", account, device_id)
+        TRACE("玩家(%s ,设备%o)登录没有传入服务器ID.", account, device_id)
         return
     end
 

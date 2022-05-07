@@ -25,8 +25,8 @@ local function load_item_table()
     local name
     for class_id, info in pairs(item_table) do
 
-        assert(class_id ~= 0,"item表中有class_id为0的道具")
-        info = dup(info)
+        ASSERT(class_id ~= 0,"item表中有class_id为0的道具")
+        info = DUP(info)
         -- 创建道具基本对象
         if not info["ob_type"] then
             info["ob_type"] = OB_TYPE_ITEM
@@ -55,8 +55,8 @@ local function load_equip_table()
     local name
     for class_id, info in pairs(equip_table) do
 
-        assert(class_id ~= 0,"equip表中有class_id为0的道具")
-        info = dup(info)
+        ASSERT(class_id ~= 0,"equip表中有class_id为0的道具")
+        info = DUP(info)
         -- 创建装备基本对象
         if not info["ob_type"] then
             info["ob_type"] = OB_TYPE_EQUIP
@@ -91,7 +91,7 @@ function clone_object_from(class_id, property_info, from_db)
     end
 
     -- 保存原来信息
-    local ori_property_info = dup(property_info)
+    local ori_property_info = DUP(property_info)
 
     if not property_info["rid"] then
         -- 新道具，生成RID
@@ -169,7 +169,7 @@ function get_equip_table(class_id)
 end
 
 function get_item_or_equip_info(class_id)
-    assert(class_id and class_id > 0," class_id must > 0")
+    ASSERT(class_id and class_id > 0," class_id must > 0")
     if item_table[class_id] then
         return item_table[class_id]
     else

@@ -42,7 +42,7 @@ end
 
 -- 默认回调函数
 local function default_callback(sql_cmd, ret, result_list)
-    trace("default_callback sql_cmd(%o) failed. error : '%o'", sql_cmd, ret)
+    TRACE("default_callback sql_cmd(%o) failed. error : '%o'", sql_cmd, ret)
 end
 
 -- 定义公共接口，按照字母顺序排序
@@ -88,17 +88,17 @@ function get_db_index()
 end
 
 function lua_sync_insert(db_name, sql_cmd, n_dbtype)
-    -- trace("lua_sync_insert sql is %o ", sql_cmd)
+    -- TRACE("lua_sync_insert sql is %o ", sql_cmd)
     n_dbtype = n_dbtype or get_db_index()
     local err, ret = db_insert_sync(db_name, sql_cmd, n_dbtype)
     return err, ret
 end
 
 function lua_sync_select(db_name, sql_cmd, n_dbtype)
-    trace("lua_sync_select sql is %o ", sql_cmd)
+    TRACE("lua_sync_select sql is %o ", sql_cmd)
     n_dbtype = n_dbtype or get_db_index()
     local err, ret = db_select_sync(db_name, n_dbtype, sql_cmd)
-    trace("lua_sync_select err, ret %o %o ", err, ret)
+    TRACE("lua_sync_select err, ret %o %o ", err, ret)
     if err ~= 0 then
         return err, ret
     end
@@ -293,7 +293,7 @@ function batch_execute_db(table_name, sql_cmd_list, callback, callback_arg)
 end
 
 function sync_insert_db(table_name, sql_cmd)
-    -- trace("sync_insert_db sql is %o ", sql_cmd)
+    -- TRACE("sync_insert_db sql is %o ", sql_cmd)
     local db_name = DATA_D.get_db_name(table_name)
     return lua_sync_insert(db_name, sql_cmd)
 end
@@ -409,20 +409,20 @@ function add_cloumn(db_name, table_name, cloumn)
     if get_db_type() ~= "sqlite" then
         sql = sql .. gen_cloumn_after(cloumn)
     end
-    trace("add_cloumn sql is %o", sql)
+    TRACE("add_cloumn sql is %o", sql)
     return lua_sync_select(db_name, sql)
 end
 
 function del_cloumn(db_name, table_name, cloumn)
     local sql = string.format("ALTER TABLE `%s` DROP COLUMN `%s`", table_name, cloumn["field"])
-    trace("del_cloumn sql is %o", sql)
+    TRACE("del_cloumn sql is %o", sql)
     return lua_sync_select(db_name, sql)
 end
 
 function mod_cloumn(db_name, table_name, cloumn)
     local sql = string.format("ALTER TABLE `%s` MODIFY COLUMN `%s` %s", table_name, cloumn["field"], cloumn["type"])
     sql = sql .. gen_cloumn_ext(cloumn)
-    trace("mod_cloumn sql is %o", sql)
+    TRACE("mod_cloumn sql is %o", sql)
     return lua_sync_select(db_name, sql)
 end
 

@@ -6,7 +6,7 @@ USER_TDCLS = tdcls(DBASE_TDCLS, RID_TDCLS, AGENT_TDCLS, HEARTBEAT_TDCLS, ATTRIB_
 USER_TDCLS.name = "USER_TDCLS"
 
 function USER_TDCLS:create(value)
-    assert(type(value) == "table", "user::create para not corret")
+    ASSERT(type(value) == "table", "user::create para not corret")
     self:replace_dbase(value)
     self:set("ob_type", OB_TYPE_USER)
     self:freeze_dbase()
@@ -40,8 +40,8 @@ end
 
 -- 生成对象的唯一ID
 function USER_TDCLS:get_ob_id()
-    return (string.format("USER_TDCLS:%s:%s", save_string(self:query("rid")),
-                         save_string(self:query("account_rid"))))
+    return (string.format("USER_TDCLS:%s:%s", SAVE_STRING(self:query("rid")),
+                         SAVE_STRING(self:query("account_rid"))))
 end
 
 function USER_TDCLS:delete_logout_timer()
@@ -96,7 +96,7 @@ function USER_TDCLS:enter_world()
     -- 发送开始游戏的消息
     self:set_temp("entered_world", true)
     raise_issue(EVENT_USER_LOGIN, self)
-    trace("玩家(%o  %s/%s)进入游戏世界。", self:query("name"), get_ob_rid(self), self:query("account_rid"))
+    TRACE("玩家(%o  %s/%s)进入游戏世界。", self:query("name"), get_ob_rid(self), self:query("account_rid"))
    
     local data = {
         user = self:query(), 
@@ -127,7 +127,7 @@ end
 function USER_TDCLS:leave_world()
     self:delete_hearbeat()
     raise_issue(EVENT_USER_LOGOUT, self)
-    trace("玩家(%s/%s)离开游戏世界。", get_ob_rid(self), self:query("account_rid"))
+    TRACE("玩家(%s/%s)离开游戏世界。", get_ob_rid(self), self:query("account_rid"))
     self:delete_temp("entered_world")
 
     local value = {rid=get_ob_rid(self), online=0}
@@ -172,7 +172,7 @@ end
 function USER_TDCLS:save_sub_content(callback, arg)
     -- 取得玩家容器中的所有物件的保存信息
     for pos, ob in pairs(self:get_container():get_carry()) do
-        assert(is_object(ob))
+        ASSERT(is_object(ob))
         if is_object(ob) then
             -- 取得该物件需要保存的 dbase
             local dbase, is_part = ob:save_to_mapping()
@@ -186,7 +186,7 @@ function USER_TDCLS:save_sub_content(callback, arg)
                 elseif oper == "update" then
                     sql = SQL_D.update_sql(table_name, dbase, {rid = primary})
                 else
-                    assert(false, "unknow op")
+                    ASSERT(false, "unknow op")
                 end
                 arg.sql_count = arg.sql_count + 1
                 DB_D.execute_db(table_name, sql, callback, arg)

@@ -5,14 +5,14 @@ function update(name)
     name = string.gsub(name, ".lua", "") .. ".lua";
     local full_name = GET_FULL_PATH(name);
     require(full_name);
-    trace("update file name = %o", name)
+    TRACE("update file name = %o", name)
     -- 回收垃圾
     collectgarbage("collect");
 end
 
 update("global/base/util");
 update("global/base/load_folder");
-trace("??????????????")
+TRACE("??????????????")
 
 local function main()
     LOAD_FOLDER("global/include");
@@ -46,12 +46,12 @@ local function main()
     send_debug_on(0)
     debug_on(0)
     post_init()
-    start_command_input()
+    START_COMMAND_INPUT()
     print("------------------welcome to rust lua game client------------------")
 end
 
 
-local status, msg = xpcall(main, error_handle)
+local status, msg = xpcall(main, ERROR_HANDLE)
 if not status then
     print(msg)
 end

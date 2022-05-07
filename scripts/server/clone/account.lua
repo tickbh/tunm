@@ -6,7 +6,7 @@ ACCOUNT_TDCLS = tdcls(DBASE_TDCLS, RID_TDCLS, AGENT_TDCLS, HEARTBEAT_TDCLS, ATTR
 ACCOUNT_TDCLS.name = "ACCOUNT_TDCLS";
 
 function ACCOUNT_TDCLS:create(value)
-    assert(type(value) == "table", "account::create para not corret");
+    ASSERT(type(value) == "table", "account::create para not corret");
     self:replace_dbase(value);
     self:freeze_dbase()
     self:set("ob_type", OB_TYPE_ACCOUNT);
@@ -22,8 +22,8 @@ end
 
 -- 生成对象的唯一ID
 function ACCOUNT_TDCLS:get_ob_id()
-    return (string.format("ACCOUNT_TDCLS:%s:%s", save_string(self:query("rid")),
-                         save_string(self:query("account"))));
+    return (string.format("ACCOUNT_TDCLS:%s:%s", SAVE_STRING(self:query("rid")),
+                         SAVE_STRING(self:query("account"))));
 end
 
 function ACCOUNT_TDCLS:accept_relay(agent)

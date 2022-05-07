@@ -5,8 +5,8 @@ function update(name)
     name = string.gsub(name, ".lua", "") .. ".lua"
     local full_name = GET_FULL_PATH(name)
     package.loaded[full_name] = false
-    if trace then
-        trace("update name = %o", name)
+    if TRACE then
+        TRACE("update name = %o", name)
     end
     require(full_name)
     -- 回收垃圾
@@ -19,10 +19,10 @@ update("global/base/load_folder")
 
 function test_env()
     set_port_map(1, 2)
-    trace("get_port_map %o", get_port_map())
+    TRACE("get_port_map %o", get_port_map())
     hotfix_file(GET_FULL_PATH("test/fix.lua") )
     set_port_map(2, 3)
-    trace("get_port_map %o", get_port_map())
+    TRACE("get_port_map %o", get_port_map())
 end
 
 local function main()
@@ -55,16 +55,16 @@ local function main()
     end
 
     post_init()
-    start_command_input()
-    trace("------------------welcome to rust lua game server------------------")
+    START_COMMAND_INPUT()
+    TRACE("------------------welcome to rust lua game server------------------")
 
     -- local msg = pack_message(MSG_TYPE_JSON, "aaaaaaaa", {a="1111", c="xxxxxxxxxx", d= {a="xxxx"}}, {b="xxxxxxxxxxx"})
     -- local name, un = msg_to_table(msg)
-    -- trace("name = %o un = %o", name, un)
+    -- TRACE("name = %o un = %o", name, un)
 end
 
 
-local status, msg = xpcall(main, error_handle)
+local status, msg = xpcall(main, ERROR_HANDLE)
 if not status then
     print(msg)
 end

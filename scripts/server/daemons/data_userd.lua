@@ -15,7 +15,7 @@ user_name_data = {}
 auto_user_rid_data = {}
 
 local function callback_load_user_data(startPos, ret, result_list)
-    assert(ret == 0, "load user data failed")
+    ASSERT(ret == 0, "load user data failed")
     for _,value in ipairs(result_list) do
         user_rid_data[value.rid] = value
         user_name_data[value.name] = value
@@ -29,7 +29,7 @@ end
 
 function user_info_change(rid, data)
     local value = user_rid_data[rid]
-    merge(value, data)
+    MERGE(value, data)
 end
 
 function load_user_data_from_db(startPos)    
@@ -46,14 +46,14 @@ function user_data_changed(info)
     end
     local data = get_data_by_rid( rid )
     if not data then
-        data = dup(info)
+        data = DUP(info)
         user_rid_data[rid] = info
     end
     if info.name then
         user_name_data[data.name] = nil
         user_name_data[info.name] = data
     end
-    merge(data, info)
+    MERGE(data, info)
 end
 
 function is_rid_online(rid)

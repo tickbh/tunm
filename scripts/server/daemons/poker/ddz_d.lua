@@ -77,7 +77,7 @@ end
 function get_card_logic_value(card)
     local color = get_card_color(card)
     local value = get_card_value(card)
-    assert(value > 0 and value < 16)
+    ASSERT(value > 0 and value < 16)
     if color == 0x40 then
         return value + 2
     elseif value <= 2 then
@@ -354,11 +354,11 @@ end
 -- end
 
 function is_contain(poker_list, sub_poker_list)
-    return is_sub_array(poker_list, sub_poker_list)
+    return IS_SUB_ARRAY(poker_list, sub_poker_list)
 end
 
 function sub_poker(poker_list, sub_poker_list)
-    local success, new_poker_list = sub_array(poker_list, sub_poker_list)
+    local success, new_poker_list = SUB_ARRAY(poker_list, sub_poker_list)
     if not success then
         return false
     end
@@ -706,22 +706,22 @@ function calc_pea_change(pea_amount_list, idx, lord_idx, multi_num, is_win)
             local per_max_add = lord_pea / 2
             for i=1,3 do
                 if i ~= lord_idx then
-                    sum = sum + calc_table_min({base_pea, per_max_add, math.max(pea_amount_list[i] - one_cost, 0)})
+                    sum = sum + CALC_TABLE_MIN({base_pea, per_max_add, math.max(pea_amount_list[i] - one_cost, 0)})
                 end
             end
         else
             local per_max_add = (lord_pea - one_cost) / 2
-            sum = sum + calc_table_min({base_pea, per_max_add, math.max(pea_amount_list[idx], 0)})
+            sum = sum + CALC_TABLE_MIN({base_pea, per_max_add, math.max(pea_amount_list[idx], 0)})
         end
     else
         if is_lord then
             for i=1,3 do
                 if i ~= lord_idx then
-                    sum = sum - calc_table_min({base_pea, (lord_pea - one_cost) / 2, math.max(pea_amount_list[i], 0)})
+                    sum = sum - CALC_TABLE_MIN({base_pea, (lord_pea - one_cost) / 2, math.max(pea_amount_list[i], 0)})
                 end
             end
         else
-            sum = - calc_table_min({base_pea, lord_pea / 2, math.max(pea_amount_list[idx] - one_cost, 0)})
+            sum = - CALC_TABLE_MIN({base_pea, lord_pea / 2, math.max(pea_amount_list[idx] - one_cost, 0)})
         end
     end
     sum = sum - one_cost
@@ -740,7 +740,7 @@ end
 local function test_pea_change()
     local function check_pea_change(pea_amount_list, idx, lord_idx, multi_num, is_win, result)
         local ret = calc_pea_change(pea_amount_list, idx, lord_idx, multi_num, is_win)
-        assert(ret == result)    
+        ASSERT(ret == result)    
     end
     
     check_pea_change({1000, 1000, 1000}, 1, 1, 15, 1, 80)
@@ -759,7 +759,7 @@ end
 local function check_poker_type(poker_list, poker_type)
     table.sort(poker_list, sort_card)
     local real_type = get_card_type(poker_list)
-    assert(real_type == poker_type)
+    ASSERT(real_type == poker_type)
 end
 
 local function test_get_type()
@@ -838,7 +838,7 @@ local function test_get_type()
     local function check_contain(poker_list, sub_poker_list)
         table.sort(poker_list, sort_card)
         table.sort(sub_poker_list, sort_card)
-        assert(is_contain(poker_list, sub_poker_list) == true)
+        ASSERT(is_contain(poker_list, sub_poker_list) == true)
     end
     check_contain({0x03, 0x14, 0x16}, {0x03, 0x16})
 
@@ -848,7 +848,7 @@ local function test_get_type()
         table.sort(result_poker_list, sort_card)
 
         local success, new_poker_list = sub_poker(poker_list, sub_poker_list)
-        assert(success, "must is sub poker")
+        ASSERT(success, "must is sub poker")
         assert_eq(new_poker_list, result_poker_list)
     end
 
@@ -859,7 +859,7 @@ local function test_get_type()
         table.sort(first_poker_list, sort_card)
         table.sort(next_poker_list, sort_card)
 
-        assert(compare_card(first_poker_list, next_poker_list) == true)
+        ASSERT(compare_card(first_poker_list, next_poker_list) == true)
     end
 
     check_compare_card({0x03}, {0x04})

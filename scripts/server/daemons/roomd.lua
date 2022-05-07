@@ -51,9 +51,9 @@ end
 --创建一个场景
 function create_room(roomdata)
     local room_tdcls = _G[roomdata.room_tdcls]
-    assert(room_tdcls ~= nil, "场景配置必须存在")
+    ASSERT(room_tdcls ~= nil, "场景配置必须存在")
     local room = clone_object(room_tdcls, roomdata)
-    assert(room_list[room:get_room_name()] == nil, "重复配置房间")
+    ASSERT(room_list[room:get_room_name()] == nil, "重复配置房间")
     room_list[room:get_room_name()] = room 
     REDIS_D.add_subscribe_channel(room:get_listen_channel())
     REDIS_D.add_subscribe_channel(room:get_respone_channel())
@@ -177,14 +177,14 @@ end
 function cmd_room_message(room_name, user_rid, cookie, oper, info)
     local room = room_list[room_name]
     if not room then
-        trace("房间:%o不存在", room_name)
+        TRACE("房间:%o不存在", room_name)
         return
     end
     local data = room:get_data_by_rid(user_rid)
     local ret = 0
     local server_id = remove_get(info, "server_id")
     if oper == "enter_room" then
-        assert(is_int(server_id), "server_id must exist")
+        ASSERT(is_int(server_id), "server_id must exist")
         ret = room:entity_enter(server_id, user_rid, info)
     elseif oper == "leave_room" then
         ret = room:entity_leave(user_rid, info)
@@ -204,7 +204,7 @@ function cmd_room_message(room_name, user_rid, cookie, oper, info)
         if not data then
             ret = -1
         else
-            merge(data, info)
+            MERGE(data, info)
         end
     end
 
@@ -272,7 +272,7 @@ local function user_login(user_rid, server_id)
 end
 
 local function user_logout(user_rid)
-    trace("玩家登出 %o", user_rid)
+    TRACE("玩家登出 %o", user_rid)
     for _, room in pairs(room_list) do
         local data = room:get_data_by_rid(user_rid)
         if data then

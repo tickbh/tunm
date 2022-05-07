@@ -97,7 +97,7 @@ function cmd_enter_room(user, info)
     end
 
     --get room type, user base info, room game data
-    local base_info = dup(user:query())
+    local base_info = DUP(user:query())
     if room.game_type == "ddz" then
         base_info.ddz_info = user:get_ddz_dbase():query()
     end
@@ -113,7 +113,7 @@ function cmd_leave_room(user, info)
     end
 
     local function leave_room_callback(args, ext)
-        trace("leave_room_callback!!!")
+        TRACE("leave_room_callback!!!")
         if not is_object(user) then
             return
         end
@@ -142,7 +142,7 @@ function cmd_room_oper(user, oper, info)
     elseif oper == "leave_room" then
         cmd_leave_room(user, info)
     elseif oper == "detail_room" then
-        local detail = table_value_to_array(ROOM_D.get_room_detail())
+        local detail = TABLE_VALUE_TO_ARRAY(ROOM_D.get_room_detail())
         user:send_message(MSG_ROOM_OPER, oper, {map_list = detail})
     else
     end

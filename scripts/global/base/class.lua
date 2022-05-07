@@ -62,7 +62,7 @@ function tdcls(...)
 
     -- 类对象创建函数
     class_type.new=function(...)
-        --trace("____class_type.new=function(...)_____")
+        --TRACE("____class_type.new=function(...)_____")
         local obj={ is_clone = true, destructed = false }
 
         -- 这一句被我提前了，解决构造函数里不能调成员函数的问题
@@ -144,10 +144,10 @@ function tdcls(...)
                 if c.destruct then
                     local status, e = pcall(c.destruct, obj)
                     if not status then
-                        error_handle(tostring(e))
-                        --[[trace("Error:")
-                        trace(tostring(e))
-                        traceback()    ]]
+                        ERROR_HANDLE(tostring(e))
+                        --[[TRACE("Error:")
+                        TRACE(tostring(e))
+                        TRACEBACK()    ]]
                     end
                 end
 
@@ -233,16 +233,16 @@ end
 base_type=tdcls()               -- 定义一个基类 base_type
 
 function base_type:create(x)      -- 定义 base_type 的构造函数
-        trace("base_type create")
+        TRACE("base_type create")
         self.x=x
 end
 
 function base_type:print_x()    -- 定义一个成员函数 base_type:print_x
-        trace(self.x)
+        TRACE(self.x)
 end
 
 function base_type:hello()      -- 定义另一个成员函数 base_type:hello
-        trace("hello base_type")
+        TRACE("hello base_type")
 end
 
 以上是基本的 tdcls 定义的语法，完全兼容 lua 的编程习惯。我增加了一个叫做 ctor 的词，作为构造函数的名字。
@@ -251,11 +251,11 @@ end
 test=tdcls(base_type)   -- 定义一个类 test 继承于 base_type
 
 function test:create()    -- 定义 test 的构造函数
-        trace("test create")
+        TRACE("test create")
 end
 
 function test:hello()   -- 重载 base_type:hello 为 test:hello
-        trace("hello test")
+        TRACE("hello test")
 end
 
 现在可以试一下了：

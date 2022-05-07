@@ -176,7 +176,7 @@ end
 function set_online_limit(num)
 
     if not is_int(num) then
-        trace("%o不为数字", num)
+        TRACE("%o不为数字", num)
         return
     end
 

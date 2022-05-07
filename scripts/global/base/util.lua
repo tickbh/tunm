@@ -20,7 +20,7 @@ P = "\27[35m"
 --白色
 W = "\27[37m"
 
-function table_maxn(value)
+function TABLE_MAXN(value)
     local result = 0
     for k,_ in pairs(value) do
         if type(k) == "number" and k > result then
@@ -30,7 +30,7 @@ function table_maxn(value)
     return result
 end
 
-function calc_table_max(value)
+function CALC_TABLE_MAX(value)
     local result = 0
     for _,v in pairs(value) do
         if type(v) == "number" and v > result then
@@ -40,7 +40,7 @@ function calc_table_max(value)
     return result
 end
 
-function calc_table_min(value)
+function CALC_TABLE_MIN(value)
     local result = 99999999
     for _,v in pairs(value) do
         if type(v) == "number" and v < result then
@@ -51,15 +51,15 @@ function calc_table_min(value)
 end
 
 if not table.maxn then
-    table.maxn = table_maxn
+    table.maxn = TABLE_MAXN
 end
 
-function table_len(value)
+function TABLE_LEN(value)
     return #value
 end
 
 if not table.getn then
-   table.getn = table_len
+   table.getn = TABLE_LEN
 end
 
 if not unpack then
@@ -72,7 +72,7 @@ if os.getenv( "windir" ) then
 end
 
 -- 打印信息
-function trace(value,...)
+function TRACE(value,...)
     local a = {...}
     local i = 0
     if(type(value) == "string") then
@@ -81,16 +81,16 @@ function trace(value,...)
                                                     if c == "s" then
                                                         return a[i]
                                                     else
-                                                        return (watch(a[i]))
+                                                        return (WATCH(a[i]))
                                                     end
                                                 end)
     end
 
-    lua_print(5, value)
+    LUA_PRINT(5, value)
 end
 
 -- 自定义调用栈输出
-function traceback(log_to_file)
+function TRACEBACK(log_to_file)
     local result = { "stack traceback:\n", }
 
     local i = 3
@@ -123,7 +123,7 @@ function traceback(log_to_file)
                 if var and not string.find(var, "%b()") then
                     if value then
                         table.insert(result, string.format("\t\t%s : %s\n", tostring(var),
-                                                           watch(value, "\t\t", 1)))
+                                                           WATCH(value, "\t\t", 1)))
                     else
                         table.insert(result, string.format("\t\t%s : <nil>\n", tostring(var)))
                     end
@@ -137,42 +137,40 @@ function traceback(log_to_file)
     until not source_info
 
     local str = table.concat(result, "")
-    trace(str)
+    TRACE(str)
     return str
 end
 
 -- 重新定义assert函数，打印调用栈
-function assert(e, msg)
+function ASSERT(e, msg)
     if not e then
         local err = string.format("Assert Failed: %s\n", tostring(msg))
         error(err)
-        -- trace(err)
-        -- traceback(true)
     end
 end
 
 -- 异常处理函数，打印调用栈
-function error_handle(...)
+function ERROR_HANDLE(...)
     local err_msg = ...
     if is_table(err_msg) then
         err_msg = err_msg[1]
     end
 
     err_msg = string.format( "Error:\n%s\n", err_msg)
-    trace( "%s", err_msg )
-    traceback(true)
+    TRACE( "%s", err_msg )
+    TRACEBACK(true)
     return ""
 end
 
-__G__TRACKBACK__ = error_handle
+__G__TRACKBACK__ = ERROR_HANDLE
 
-function tdcall(f, ...)
+function TDCALL(f, ...)
     local args = {...}
-    return xpcall(function() return f(unpack(args)) end, error_handle)
+    return xpcall(function() return f(unpack(args)) end, ERROR_HANDLE)
 end
 
 --合并一个table
-function merge(src, t)
+function MERGE(src, t)
     if type(src) ~= "table" or type(t) ~= "table" then
         return src
     end
@@ -182,7 +180,7 @@ function merge(src, t)
     return src
 end
 
-function overload_same(src, t)
+function OVERLOAD_SAME(src, t)
     if type(src) ~= "table" or type(t) ~= "table" then
         return src
     end
@@ -195,7 +193,7 @@ function overload_same(src, t)
 end
 
 -- 复制一个table
-function dup(t)
+function DUP(t)
     if (type(t) ~= "table") then
         return t
     end
@@ -209,7 +207,7 @@ end
 
 --筛选两个数组中的不同元素
 local function get_diffent_array(array, array_compare)
-    local result, array2 = dup(array), dup(array_compare)
+    local result, array2 = DUP(array), DUP(array_compare)
     for i,v in pairs(result) do
         for j, k in pairs(array2) do
             if v == k then
@@ -223,7 +221,7 @@ end
 -- 将table用string表示，此结果可以用restore_value还原
 -- 注意：本函数只处理一级，为防止死循环。此函数多用在通信中，多级的情况应很少见，如需多级，自行处理。
 -- table_record 是用来记录内嵌的 table，防止死循环
-function table_to_string(t, table_record)
+function TABLE_TO_STRING(t, table_record)
     if (type(t) ~= "table") then
         return (tostring(t))
     end
@@ -253,10 +251,10 @@ function table_to_string(t, table_record)
                 value = "\"" .. v .. "\""
             end
         elseif type(v) == "table" and not tr[v] then
-            value = table_to_string(v, tr)
+            value = TABLE_TO_STRING(v, tr)
         elseif type(v) == "table" then
             -- 存在嵌套 table
-            assert(false, "table overflow!")
+            ASSERT(false, "table overflow!")
             return
         elseif type(is_buffer) == "function" and is_buffer(v) then
             -- 存在buffer
@@ -271,7 +269,7 @@ function table_to_string(t, table_record)
 end
 
 -- 将array类型的table用string表示，此结果可以用restore_value还原
-function array_to_string(t)
+function ARRAY_TO_STRING(t)
     if (type(t) ~= "table") then
         return (tostring(t))
     end
@@ -316,26 +314,26 @@ function table.key_to_str ( k )
   if "string" == type( k ) and string.match( k, "^[_%a][_%a%d]*$" ) then
     return k
   else
-    return (string.format("[%s]", save_string( k )))
+    return (string.format("[%s]", SAVE_STRING( k )))
   end
 end
 
 function table.tostring( tbl )
   local result, done = {}, {}
   for k, v in ipairs( tbl ) do
-    table.insert( result, save_string( v ) )
+    table.insert( result, SAVE_STRING( v ) )
     done[ k ] = true
   end
   for k, v in pairs( tbl ) do
     if not done[ k ] then
       table.insert( result,
-        string.format("%s=%s", table.key_to_str( k ), save_string( v ) ))
+        string.format("%s=%s", table.key_to_str( k ), SAVE_STRING( v ) ))
     end
   end
   return (string.format("{%s}", table.concat( result, "," )))
 end
 
-function table_kv_to_array(t)
+function TABLE_KV_TO_ARRAY(t)
     local result = {}
     for k,v in pairs(t) do
         table.insert(result, k)
@@ -344,7 +342,7 @@ function table_kv_to_array(t)
     return result
 end
 
-function table_key_to_array(t)
+function TABLE_KEY_TO_ARRAY(t)
     local result = {}
     for k,v in pairs(t) do
         table.insert(result, k)
@@ -352,7 +350,7 @@ function table_key_to_array(t)
     return result
 end
 
-function table_value_to_array(t)
+function TABLE_VALUE_TO_ARRAY(t)
     local result = {}
     for k,v in pairs(t) do
         table.insert(result, v)
@@ -360,7 +358,7 @@ function table_value_to_array(t)
     return result
 end
 
-function table_get_key_value(t, keys)
+function TABLE_GET_KEY_VALUE(t, keys)
     local result = {}
     for _,key in ipairs(keys) do
         result[key] = t[key]
@@ -368,7 +366,7 @@ function table_get_key_value(t, keys)
     return result
 end
 
-function array_to_table(t)
+function ARRAY_TO_TABLE(t)
     local result = {}
     for _,key in ipairs(t) do
         result[key] = true
@@ -376,8 +374,8 @@ function array_to_table(t)
     return result
 end
 
-function is_sub_array(array, sub_array)
-    local src_table = array_to_table(array)
+function IS_SUB_ARRAY(array, sub_array)
+    local src_table = ARRAY_TO_TABLE(array)
     for _,v in ipairs(sub_array) do
         if not src_table[v] then
             return false
@@ -387,19 +385,19 @@ function is_sub_array(array, sub_array)
 end
 
 --一旦发现未识别节点则返回失败
-function sub_array(array, sub_array)
-    local src_table = array_to_table(array)
+function SUB_ARRAY(array, sub_array)
+    local src_table = ARRAY_TO_TABLE(array)
     for _,v in ipairs(sub_array) do
         if not src_table[v] then
             return false
         end
         src_table[v] = nil
     end
-    return true, table_key_to_array(src_table)
+    return true, TABLE_KEY_TO_ARRAY(src_table)
 end
 
 -- 保存成 string
-function save_string(t)
+function SAVE_STRING(t)
     if (type(t) == "number") then
         return (tostring(t))
     elseif (type(t) == "string") then
@@ -427,8 +425,8 @@ function save_string(t)
 end
 
 -- 将字符串表示的变量还原
-function restore_value(s, ignore_buffer)
-    assert(type(s) == "string", "restore_value arg error")
+function RESTORE_VALUE(s, ignore_buffer)
+    ASSERT(type(s) == "string", "RESTORE_VALUE arg error")
 
     if ignore_buffer then
         -- 替换buffer
@@ -439,29 +437,29 @@ function restore_value(s, ignore_buffer)
     if f then
         return (f())
     else
-        assert(false, string.format("restore_value: %s \r\nExeption: %s", s, tostring(e)))
+        ASSERT(false, string.format("RESTORE_VALUE: %s \r\nExeption: %s", s, tostring(e)))
     end
 end
 
 -- 执行字符串命令
 function do_command(s)
-    assert(type(s) == "string", "do_command arg error: " .. s)
+    ASSERT(type(s) == "string", "do_command arg error: " .. s)
 
     -- 如果第一个字符为"'"
     if string.find(s, "'") == 1 then
-        s = "watch(" .. string.sub(s, 2) .. ")"
+        s = "WATCH(" .. string.sub(s, 2) .. ")"
     end
 
     local f, e = loadstring(string.format("%s", s))
     if f then
         return (f())
     else
-        assert(false, "do_command: " .. s .. "\r\nExeption: " .. tostring(e))
+        ASSERT(false, "do_command: " .. s .. "\r\nExeption: " .. tostring(e))
     end
 end
 
 -- 查看变量
-function watch(s, prefix, stack)
+function WATCH(s, prefix, stack)
     local result = ""
     local sign = true
 
@@ -483,7 +481,7 @@ function watch(s, prefix, stack)
                 result = string.format("object(%s)", ob_id)
             end
         else
-            result = string.format("object(%s)", save_string(s.class_type))
+            result = string.format("object(%s)", SAVE_STRING(s.class_type))
         end
 
     elseif (type(s) == "table") then
@@ -507,14 +505,14 @@ function watch(s, prefix, stack)
 
                     if (string.len(key) > 0) and (string.sub(key, 1, 1) == '_') then
                         table.insert(str_list, string.format("%s\t%s: <table hide>,\r\n",
-                                     prefix, watch(i, prefix .. "\t", stack + 1)))
+                                     prefix, WATCH(i, prefix .. "\t", stack + 1)))
                         sign = false
                     end
                 end
 
                 if sign then
                     table.insert(str_list, string.format("%s\t%s:%s,\r\n", prefix,
-                                 watch(i, prefix .. "\t", stack + 1), watch(v, prefix .. "\t", stack + 1)))
+                                 WATCH(i, prefix .. "\t", stack + 1), WATCH(v, prefix .. "\t", stack + 1)))
                 end
 
                 times = times + 1
@@ -654,7 +652,7 @@ function info_object(ob)
         info = ob
     end
 
-    -- 若有 is_clone 字段，则 watch 会显示一个 ob_id
+    -- 若有 is_clone 字段，则 WATCH 会显示一个 ob_id
     if info["is_clone"] then
         info["is_clone"] = nil
     end
@@ -892,7 +890,7 @@ function index_in_array(value, array)
 end
 
 function restore_json(s)
-    assert(type(s) == "string", "restore_json arg error")
+    ASSERT(type(s) == "string", "restore_json arg error")
     if sizeof(s) == 0 then
         return {}
     end
@@ -900,12 +898,12 @@ function restore_json(s)
     if success then
         return ret
     else
-        assert(false, string.format("restore_json: %s \r\nExeption: %s", s, tostring(e)))
+        ASSERT(false, string.format("restore_json: %s \r\nExeption: %s", s, tostring(e)))
     end
 end
 
 function decode_json(s)
-    assert(type(s) == "string", "decode_json arg error")
+    ASSERT(type(s) == "string", "decode_json arg error")
     if sizeof(s) == 0 then
         return {}
     end
@@ -921,7 +919,7 @@ function decode_json(s)
 end
 
 function encode_json(s)
-    assert(type(s) == "table", "encode_json arg error")
+    ASSERT(type(s) == "table", "encode_json arg error")
     local success, ret = pcall(cjson.encode, s)
     if success then
         return ret
@@ -931,7 +929,7 @@ function encode_json(s)
 end
 
 function decode_json_check(s)
-    assert(type(s) == "string", "decode_json_check arg error")
+    ASSERT(type(s) == "string", "decode_json_check arg error")
     if sizeof(s) == 0 then
         return {}
     end
@@ -947,7 +945,7 @@ function decode_json_check(s)
 end
 
 function encode_json_check(s)
-    assert(type(s) == "table", "encode_json_check arg error")
+    ASSERT(type(s) == "table", "encode_json_check arg error")
     local success, ret = pcall(cjson.encode, s)
     if success then
         return ret, success
@@ -957,7 +955,7 @@ function encode_json_check(s)
 end
 
 function get_rid(serverid)
-    return get_next_rid(serverid or 1)
+    return GET_NEXT_RID(serverid or 1)
 end
 
 function get_first_key_value(t)
@@ -1037,7 +1035,7 @@ end
 --随机排列数组
 function rand_sort_array(array)
     local size = #array
-    local result = dup(array)
+    local result = DUP(array)
     local rand,temp
     for i = 1, size do
         rand = math.random(1, size)
@@ -1105,7 +1103,7 @@ function get_file_content(filename)
 end
 
 function is_absolute_path(path)
-    assert(type(path) == "string", "is_absolute_path arg error")
+    ASSERT(type(path) == "string", "is_absolute_path arg error")
     if string.len(path) == 0 then
         return false
     end
@@ -1160,12 +1158,12 @@ function check_sql_param_vailed(value)
 end
 
 function run_string(str)
-    assert(type(str) == "string", "str must string")
+    ASSERT(type(str) == "string", "str must string")
     local f, e = loadstring(str)
     if f then
         return (f())
     else
-        assert(false, string.format("run_string: %s \r\nExeption: %s", s, tostring(e)))
+        ASSERT(false, string.format("run_string: %s \r\nExeption: %s", s, tostring(e)))
     end
 end
 
@@ -1178,11 +1176,11 @@ function check_table_sql_vailed(t, fields)
     return true
 end
 
-assert(check_sql_param_vailed("1 or 1") == false)
-assert(check_sql_param_vailed("1=1") == false)
-assert(check_sql_param_vailed("1+1") == false)
-assert(check_sql_param_vailed("1*1") == false)
-assert(check_sql_param_vailed("1%1") == false)
+ASSERT(check_sql_param_vailed("1 or 1") == false)
+ASSERT(check_sql_param_vailed("1=1") == false)
+ASSERT(check_sql_param_vailed("1+1") == false)
+ASSERT(check_sql_param_vailed("1*1") == false)
+ASSERT(check_sql_param_vailed("1%1") == false)
 
 
 function memory_use()
@@ -1197,31 +1195,31 @@ end
 
 function assert_eq(a, b, msg)
     if type(a) ~= type(b) then
-        assert(false, msg)
+        ASSERT(false, msg)
     elseif type(a) == "table" then
-        assert(sizeof(a) == sizeof(b), msg)
+        ASSERT(sizeof(a) == sizeof(b), msg)
         for k,v in pairs(a) do
-            assert(v == b[k], msg)
+            ASSERT(v == b[k], msg)
         end
     else
-        assert(a == b, msg)
+        ASSERT(a == b, msg)
     end
 end
 
 function arg_to_encode(...)
-    trace("xxx %o", {...})
+    TRACE("xxx %o", {...})
 
-    trace("after encode is %o", encode_json({...}))
+    TRACE("after encode is %o", encode_json({...}))
     return encode_json({...})
 end
 
 function msg_to_table(net_msg)
     local msg_type = net_msg:get_msg_type()
     local name, args = net_msg:msg_to_table()
-    trace("msg_type is %o", msg_type)
+    TRACE("msg_type is %o", msg_type)
     
-    trace("name is %o", name)
-    trace("args is %o", args)
+    TRACE("name is %o", name)
+    TRACE("args is %o", args)
     if (msg_type == MSG_TYPE_JSON or msg_type == MSG_TYPE_TEXT) and type(args) == 'string' then
         --json format first arg is protocol name, repeat so remove
         args = decode_json(args)

@@ -8,7 +8,7 @@ DDZ_ROOM_TDCLS.name = "DDZ_ROOM_TDCLS"
 
 --构造函数
 function DDZ_ROOM_TDCLS:create(value)
-    assert(is_table(value), "room:create para not correct")
+    ASSERT(is_table(value), "room:create para not correct")
 end
 
 --获取房间类型
@@ -17,7 +17,7 @@ function DDZ_ROOM_TDCLS:get_game_type()
 end
 
 function ROOM_TDCLS:get_ob_id()
-    return (string.format("DDZ_ROOM_TDCLS:%s", save_string(self:get_room_name())))
+    return (string.format("DDZ_ROOM_TDCLS:%s", SAVE_STRING(self:get_room_name())))
 end
 
 function DDZ_ROOM_TDCLS:entity_update(entity)

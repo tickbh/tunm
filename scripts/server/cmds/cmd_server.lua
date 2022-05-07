@@ -7,13 +7,13 @@ function lose_client(agent, fd)
         local client_agent = find_agent_by_port(fd)
         if client_agent then
             client_agent:connection_lost()
-            assert(find_agent_by_port(fd) == nil, "client is must nil") 
+            ASSERT(find_agent_by_port(fd) == nil, "client is must nil") 
         end
 
         local client_agent = find_agent_by_port(fd + 0x10000)
         if client_agent then
             client_agent:connection_lost()
-            assert(find_agent_by_port(fd) == nil, "client is must nil") 
+            ASSERT(find_agent_by_port(fd) == nil, "client is must nil") 
         end
     else
         if SERVER_TYPE == "logic" then
@@ -22,7 +22,7 @@ function lose_client(agent, fd)
         local client_agent = find_agent_by_port(fd)
         if client_agent then
             client_agent:connection_lost()
-            assert(find_agent_by_port(fd) == nil, "client is must nil") 
+            ASSERT(find_agent_by_port(fd) == nil, "client is must nil") 
         end
     end
 

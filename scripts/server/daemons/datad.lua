@@ -79,16 +79,16 @@ function generate_index_map(tablejson)
     local result = {}
     for _ , value in ipairs(tablejson["fields"]) do
         if value["key"] == "index" then
-            value = dup(value)
+            value = DUP(value)
             result[value["name"]] = value
         elseif value["key"] == "UNI" then
-            value = dup(value)
+            value = DUP(value)
             value["name"] = value["field"]
             value["indexs"] = value["field"]
             value["uni"] = true
             result[value["name"]] = value
         elseif value["key"] == "PRI" then
-            value = dup(value)
+            value = DUP(value)
             value["name"] = "PRIMARY"
             value["indexs"] = value["field"]
             result[value["name"]] = value
@@ -153,7 +153,7 @@ end
 function is_table_exist(tablename, dbname)
     dbname = dbname or DATA_D.get_db_name(tablename)
     if dbname == nil then
-        trace("unknow table %o in which db ", tablename)
+        TRACE("unknow table %o in which db ", tablename)
         return false
     end
     local sql = string.format("SHOW TABLES LIKE '%s'", tablename)
@@ -161,7 +161,7 @@ function is_table_exist(tablename, dbname)
         sql = string.format("select name from sqlite_master where type='table' and name = '%s'", tablename)
     end
     local err, ret = DB_D.lua_sync_select(dbname, sql, DB_D.get_db_index())
-    trace("err ret = %o, %o", err, ret)
+    TRACE("err ret = %o, %o", err, ret)
     if err ~= 0 then
         return false
     end
@@ -178,7 +178,7 @@ end
 function ensure_exist_table(tablename, dbname)
     dbname = dbname or DATA_D.get_db_name(tablename)
     if dbname == nil then
-        trace("unknow table %o in which db ", tablename)
+        TRACE("unknow table %o in which db ", tablename)
         return false
     end
 
@@ -194,7 +194,7 @@ function get_pk(table_info)
     local pk = nil
     for field, value in pairs(table_info) do
         if value["key"] == "PRI" then
-            assert(pk == nil, "一个表里只能拥有一个主键")
+            ASSERT(pk == nil, "一个表里只能拥有一个主键")
             pk = field
         end
     end
@@ -205,7 +205,7 @@ function get_pk_from_index(table_info)
     local pk = nil
     for name, value in pairs(table_info) do
         if name == "PRIMARY" then
-            assert(pk == nil, "一个表里只能拥有一个主键")
+            ASSERT(pk == nil, "一个表里只能拥有一个主键")
             pk = value["indexs"]
         end
     end
@@ -289,12 +289,12 @@ function check_table_right(tinfo)
         for _,value in ipairs(need_modify_cloumn) do
             local confirm = true
             if value["field"] ~= test_cloumn then
-                trace("sql_cmd dbname  is %o, modify tablename is %o is %o, 确认执行(Y/N)", dbname, tablename, value)
-                local read = block_read()
+                TRACE("sql_cmd dbname  is %o, modify tablename is %o is %o, 确认执行(Y/N)", dbname, tablename, value)
+                local read = BLOCK_READ()
                 if read ~= "y" and read ~= "Y" then
                     confirm = false
                 end
-                trace("read is %o, confirm is %o", read, confirm)
+                TRACE("read is %o, confirm is %o", read, confirm)
             end
 
             if confirm then
@@ -309,12 +309,12 @@ function check_table_right(tinfo)
         for _,value in ipairs(need_del_cloumn) do
             local confirm = true
             if value["field"] ~= test_cloumn then
-                trace("sql_cmd dbname  is %o, delete  tablename is %o is %o, 确认执行(Y/N)", dbname, tablename, value)
-                local read = block_read()
+                TRACE("sql_cmd dbname  is %o, delete  tablename is %o is %o, 确认执行(Y/N)", dbname, tablename, value)
+                local read = BLOCK_READ()
                 if read ~= "y" and read ~= "Y" then
                     confirm = false
                 end
-                trace("read is %o, confirm is %o", read, confirm)
+                TRACE("read is %o, confirm is %o", read, confirm)
             end
             if confirm then
                 DB_D.del_cloumn(dbname, tablename, value)

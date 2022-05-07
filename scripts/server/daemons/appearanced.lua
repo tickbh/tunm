@@ -119,7 +119,7 @@ function get_appearance_fields_by_ob_type(ob_type, group)
     end
 
     local apprance_fields = appearance_table[ob_type][group] or {}
-    return (dup(apprance_fields))
+    return (DUP(apprance_fields))
 end
 
 function get_appearance_table()

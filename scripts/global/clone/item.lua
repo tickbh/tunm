@@ -8,8 +8,8 @@ ITEM_TDCLS.name = "ITEM_TDCLS"
 
 -- 构造函数
 function ITEM_TDCLS:create(value)
-    assert(type(value) == "table", "item::create para not corret")
-    assert(is_int(value["class_id"]))
+    ASSERT(type(value) == "table", "item::create para not corret")
+    ASSERT(is_int(value["class_id"]))
 
     self:replace_dbase(value)
 
@@ -19,7 +19,7 @@ function ITEM_TDCLS:create(value)
     else
         local max_count = CALC_ITEM_MAX_AMOUNT(self)
         if value["amount"] > max_count then
-            trace("创建道具(%s/%d)的数量(%d)超过最大可叠加数(%d)，请检查。",
+            TRACE("创建道具(%s/%d)的数量(%d)超过最大可叠加数(%d)，请检查。",
                   self:query("rid"), self:query("class_id"), value["amount"], max_count)
         end
     end
@@ -31,8 +31,8 @@ end
 
 -- 生成对象的唯一ID
 function ITEM_TDCLS:get_ob_id()
-    return (string.format("ITEM_TDCLS:%s:%s", save_string(self:query("rid")),
-                         save_string(self:query("class_id"))))
+    return (string.format("ITEM_TDCLS:%s:%s", SAVE_STRING(self:query("rid")),
+                         SAVE_STRING(self:query("class_id"))))
 end
 
 -- 定义公共接口，按照字母顺序排序
@@ -53,7 +53,7 @@ function ITEM_TDCLS:add_amount(count)
     amount = amount + count
 
     if amount > CALC_ITEM_MAX_AMOUNT(self) then
-        trace("增加道具数量(%d)超过该物品的最大可叠加数。", amount)
+        TRACE("增加道具数量(%d)超过该物品的最大可叠加数。", amount)
         return
     end
 
