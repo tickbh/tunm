@@ -34,7 +34,7 @@ good_poker_data = {
     0x3A,0x3B,0x3C,0x3D
 }
 
-set_table_read_only(good_poker_data)
+SET_TABLE_READ_ONLY(good_poker_data)
 
 local function sort_card(card_a, card_b)
     local card_logic_a = get_card_logic_value(card_a)
@@ -48,7 +48,7 @@ end
 
 --分牌，得出底牌，和排序
 function get_new_game_poker()
-    local new_poker_data = rand_sort_array(POKER_D.get_poker_data())
+    local new_poker_data = RAND_SORT_ARRAY(POKER_D.get_poker_data())
     local user_pokers = {}
     for i = 1, 51 do
         local index = i % 3
@@ -630,7 +630,7 @@ local function calc_tip_poker(poker_list, pre_poker_list)
                 local success, has_poker_list = sub_poker(poker_list, out_list)
                 local double_list = get_double_count(has_poker_list, need_three_num)
                 if #double_list > 0 then
-                    append_to_array(out_list, double_list)
+                    APPEND_TO_ARRAY(out_list, double_list)
                     return out_list
                 end
             end
@@ -673,7 +673,7 @@ local function calc_tip_poker(poker_list, pre_poker_list)
             local success, has_poker_list = sub_poker(poker_list, out_list)
             local double_list = get_double_count(has_poker_list, 2)
             if #double_list > 0 then
-                append_to_array(out_list, double_list)
+                APPEND_TO_ARRAY(out_list, double_list)
                 return out_list
             end
         end
@@ -734,7 +734,7 @@ end
 local function test_sort()
     local card_ori = {0x0B, 0x01, 0x08, 0x02, 0x4E}
     table.sort(card_ori, sort_card)
-    assert_eq(card_ori, {0x4E, 0x02, 0x01, 0x0B, 0x08}, "array error")
+    ASSERT_EQ(card_ori, {0x4E, 0x02, 0x01, 0x0B, 0x08}, "array error")
 end
 
 local function test_pea_change()
@@ -849,7 +849,7 @@ local function test_get_type()
 
         local success, new_poker_list = sub_poker(poker_list, sub_poker_list)
         ASSERT(success, "must is sub poker")
-        assert_eq(new_poker_list, result_poker_list)
+        ASSERT_EQ(new_poker_list, result_poker_list)
     end
 
     check_sub({0x03, 0x14, 0x16}, {0x03, 0x16}, {0x14})
@@ -872,7 +872,7 @@ local function test_get_type()
         table.sort(result_list, sort_card)
         
         local out_list = sort_calc_tip_poker(poker_list, pre_poker_list)
-        assert_eq(out_list, result_list, "check_calc_tip_poker error")
+        ASSERT_EQ(out_list, result_list, "check_calc_tip_poker error")
     end
 
 

@@ -25,7 +25,7 @@ function DESK_TDCLS:is_full_user()
 end
 
 function DESK_TDCLS:get_user_count()
-    return sizeof(self.users)
+    return SIZEOF(self.users)
 end
 
 function DESK_TDCLS:get_empty_wheel()
@@ -103,7 +103,7 @@ end
 -- 广播消息
 function DESK_TDCLS:broadcast_message(msg, ...)
 
-    local size = sizeof(self.users)
+    local size = SIZEOF(self.users)
     local msg_buf = pack_message(get_common_msg_type(), msg, ...)
 
     if not msg_buf then

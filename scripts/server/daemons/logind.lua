@@ -35,9 +35,9 @@ local function check_account_callback(login_info, ret, result_list)
     local rid = data["rid"]
     local device_id = login_info["device_id"]
     -- 若传入 rid，则判断本服务器上是否存在该玩家对象
-    -- if sizeof(rid) > 0 then
+    -- if SIZEOF(rid) > 0 then
     --     local account_ob = find_object_by_rid(rid)
-    --     if is_object(account_ob) then
+    --     if IS_OBJECT(account_ob) then
     --         if account_ob:query("device_id") ~= device_id then
     --             TRACE("玩家(%o)登录传入的设备ID(%o)与内存中的玩家设备ID(%o)不符。\n",
     --                    account_ob, device_id, account_ob:query("device_id"))
@@ -170,7 +170,7 @@ local function check_account_login(account_rid)
     if not wait_info then
         return
     end
-    if not is_object(wait_info.agent) then
+    if not IS_OBJECT(wait_info.agent) then
         REDIS_D.run_publish(REDIS_ACCOUNT_CANCEL_WAIT_LOGIN, wait_info.account_rid)
         return
     end
@@ -189,7 +189,7 @@ local function time_handle()
     for rid,_ in pairs(need_op) do
         local info = remove_get(wait_login_list, rid)
         REDIS_D.run_publish(REDIS_ACCOUNT_CANCEL_WAIT_LOGIN, info.account_rid)
-        if is_object(info.agent) then
+        if IS_OBJECT(info.agent) then
             info.agent:connection_lost()
             return
         end

@@ -31,7 +31,7 @@ local function accout_user_callback(data, result_list)
     if not REDIS_D.check_string(result_list) then
         data.failed = true
     else
-        MERGE(data, decode_json(result_list))
+        MERGE(data, DECODE_JSON(result_list))
     end
     check_finish(data)
 end
@@ -50,7 +50,7 @@ function load_data_from_db(rid, callback, callback_arg)
 end
 
 function cache_data_to_db(rid, data)
-    local ser = encode_json(data)
+    local ser = ENCODE_JSON(data)
     REDIS_D.run_command("SET", rid, ser)
     REDIS_D.run_command("EXPIRE", rid, CACHE_EXPIRE_TIME_REDIS)
 end

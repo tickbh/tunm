@@ -311,7 +311,7 @@ function DDZ_DESK_TDCLS:win_by_idx(idx)
                 lord_idx = self.lord_idx,
                 room_name = self.room:get_room_name(),
                 game_type = self.room:get_game_type(), 
-                is_escape = (is_int(user_data.last_logout_time) and 1 or 0),
+                is_escape = (IS_INT(user_data.last_logout_time) and 1 or 0),
                 multi_num = self.multi_num,
                 pea_amount_list = pea_amount_list,
             })

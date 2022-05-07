@@ -9,7 +9,7 @@ local _ENV = CHAT_TESTD
 
 -- 达到每个玩家的该模块间隔时间，则调用该函数
 function operation(player)
-    if not is_object(player) then
+    if not IS_OBJECT(player) then
         return
     end
     local content = player:query("name") .. "__" .. tostring(math.random(10000, 99999))

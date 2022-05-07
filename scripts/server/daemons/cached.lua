@@ -54,7 +54,7 @@ local function delete_redis_timer(rid)
     if map_info == nil then
         return
     end
-    if is_valid_timer(map_info["timer_id"]) then
+    if IS_VALID_TIMER(map_info["timer_id"]) then
         delete_timer(map_info["timer_id"])
     end
     timer_map[rid] = nil
@@ -86,7 +86,7 @@ function get_user_data(rid, callback, callback_arg)
     ASSERT(callback ~= nil and type(callback) == "function", "callback must not empty")
     local cache_data = get_cache_data(rid)
     if cache_data then
-        callback(deep_dup(cache_data), callback_arg)
+        callback(DEEP_DUP(cache_data), callback_arg)
         return
     end
 

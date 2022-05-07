@@ -9,7 +9,7 @@ ITEM_TDCLS.name = "ITEM_TDCLS"
 -- 构造函数
 function ITEM_TDCLS:create(value)
     ASSERT(type(value) == "table", "item::create para not corret")
-    ASSERT(is_int(value["class_id"]))
+    ASSERT(IS_INT(value["class_id"]))
 
     self:replace_dbase(value)
 
@@ -62,7 +62,7 @@ function ITEM_TDCLS:add_amount(count)
     self:notify_fields_updated({"amount"})
 
     local memo = string.format("add:%d|remain:%d", count, self:query("amount"))
-    LOG_D.to_log(LOG_TYPE_ADD_AMOUNT, self:query("owner"), self:get_rid(),
+    LOG_D.to_log(LOG_TYPE_ADD_AMOUNT, self:query("owner"), self:GET_RID(),
                  tostring(self:query("class_id")), memo, find_object_by_rid(self:query("owner")):query_log_channel())
 end
 
@@ -105,7 +105,7 @@ function ITEM_TDCLS:cost_amount(count)
     self:notify_fields_updated({"amount"})
 
     local memo = string.format("cost:%d|remain:%d", count, self:query("amount"))
-    LOG_D.to_log(LOG_TYPE_COST_AMOUNT, self:query("owner"), self:get_rid(),
+    LOG_D.to_log(LOG_TYPE_COST_AMOUNT, self:query("owner"), self:GET_RID(),
                  tostring(self:query("class_id")), memo, owner:query_log_channel() )
     return count
 end
@@ -149,7 +149,7 @@ function ITEM_TDCLS:save_to_mapping()
         end 
     end
 
-    if sizeof(data) == 0 then
+    if SIZEOF(data) == 0 then
         return
     end
 

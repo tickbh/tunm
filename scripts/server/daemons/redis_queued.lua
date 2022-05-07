@@ -5,15 +5,15 @@ setmetatable(REDIS_QUEUED, {__index = _G})
 local _ENV = REDIS_QUEUED
 
 function deal_with_reply(reply)
-    if not is_table(reply) then
+    if not IS_TABLE(reply) then
         return
     end
     
     -- TRACE("__ REDIS_QUEUED:deal_with_reply() __ is %o ", reply)
     if reply.channel == REDIS_CHAT_CHANNEL_WORLD then
-        CHAT_D.deal_with_new_chat(decode_json(reply.payload))
+        CHAT_D.deal_with_new_chat(DECODE_JSON(reply.payload))
     elseif reply.channel == SUBSCRIBE_ROOM_DETAIL_RECEIVE then
-        ROOM_D.redis_room_detail(decode_json(reply.payload))
+        ROOM_D.redis_room_detail(DECODE_JSON(reply.payload))
     elseif reply.channel == REDIS_ACCOUNT_START_HIBERNATE then
         if not is_rid_vaild(reply.payload) then
             return
@@ -45,7 +45,7 @@ function deal_with_reply(reply)
         end
         raise_issue(EVENT_ACCOUNT_WAIT_LOGIN, reply.payload)
     elseif reply.channel == REDIS_USER_ENTER_WORLD then
-        local data = decode_json(reply.payload)
+        local data = DECODE_JSON(reply.payload)
         if not is_rid_vaild(data.rid) then
             return
         end

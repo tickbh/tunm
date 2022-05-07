@@ -100,7 +100,7 @@ function load_data_from_db(rid, callback, callback_arg)
         }
     } 
 
-    local num = sizeof(table_list)
+    local num = SIZEOF(table_list)
     local data = { rid = rid, cookie = new_cookie(), readnum = num, is_db = true }
     local record = {
         callback     = callback,

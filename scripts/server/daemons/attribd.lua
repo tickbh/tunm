@@ -37,7 +37,7 @@ end
 
 --执行属性增加操作
 function add_attrib(ob, field, value)
-    if not is_object(ob) or value == 0  then
+    if not IS_OBJECT(ob) or value == 0  then
         return false
     end
 
@@ -82,7 +82,7 @@ end
 
 --执行属性消耗操作
 function cost_attrib(ob, field, value)
-    if not is_object(ob) then
+    if not IS_OBJECT(ob) then
         return false
     end
 
@@ -131,7 +131,7 @@ function create()
         info["ob_type"] = _G[info["ob_type"]]
         ob_type = info["ob_type"]
 
-        if not is_mapping(attrib_formula[ob_type]) then
+        if not IS_MAPPING(attrib_formula[ob_type]) then
             attrib_formula[ob_type] = {}
         end
 

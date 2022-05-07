@@ -16,7 +16,7 @@ end
 function get_all_destructed_obs()
     local list = {}
     for _, ob in pairs(all_cloned_obs) do
-        if is_table(ob) and ob.destructed == true then
+        if IS_TABLE(ob) and ob.destructed == true then
             table.insert(list, ob)
         end
     end
@@ -135,7 +135,7 @@ function tdcls(...)
     })
 
     -- 类对象析构函数
-    vtbl.destruct_object=function(obj)
+    vtbl.DESTRUCT_OBJECT=function(obj)
         do
             local _destruct
 

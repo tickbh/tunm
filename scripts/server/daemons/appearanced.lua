@@ -17,7 +17,7 @@ function build_object_info(ob, fields_list, extra_data)
     local query_attrib_func = ATTRIB_D.query_attrib
     local query_func        = ob.query
     local query_temp_func   = ob.query_temp
-    local is_table = is_table
+    local IS_TABLE = IS_TABLE
     local buffer_to_string = buffer_to_string
 
     if not fields_list then
@@ -45,7 +45,7 @@ function build_object_info(ob, fields_list, extra_data)
 
             if not value then
                 value = query_temp_func(ob, field)
-                if not value and is_table(extra_data) then
+                if not value and IS_TABLE(extra_data) then
                     value = extra_data[field]
                 end
             end
@@ -62,7 +62,7 @@ function get_appearance(entity_or_rid, group)
 
     --如果传入的为rid号，则获取实体对象
     local entity
-    if is_string(entity_or_rid) then
+    if IS_STRING(entity_or_rid) then
         entity = find_object_by_rid(entity_or_rid)
     else
         entity = entity_or_rid
@@ -77,7 +77,7 @@ function get_appearance(entity_or_rid, group)
     local properties = {}
     local page, x, y
     local read_pos = READ_POS
-    local is_in_array = is_in_array
+    local IS_IN_ARRAY = IS_IN_ARRAY
     local type = type
     for i, field in ipairs(appearance_fields) do
 
@@ -88,7 +88,7 @@ function get_appearance(entity_or_rid, group)
             for pos, ob in pairs(entity.carry) do
                 x, y = read_pos(pos)
 
-                if is_in_array(x, field) then
+                if IS_IN_ARRAY(x, field) then
                     -- 取得该物件的外观
                     properties[#properties + 1] = get_appearance(ob, group)
                 end
@@ -98,12 +98,12 @@ function get_appearance(entity_or_rid, group)
         end
     end
 
-    clean_array(appearance_fields)
+    CLEAN_ARRAY(appearance_fields)
 
     -- 构建对象外观信息
     appearance = build_object_info(entity, appearance_fields)
 
-    if sizeof(properties) ~= 0 then
+    if SIZEOF(properties) ~= 0 then
         -- 记录在 properties 字段下
         appearance["properties"] = properties
     end
@@ -210,13 +210,13 @@ local function load_appearance_csv(filename)
             for field, _ in pairs(field_table) do
                 page = string.match(field, "(%d*)%-%*")
                 if page then
-                    page_list[#page_list + 1] = to_int(page)
+                    page_list[#page_list + 1] = TO_INT(page)
                 else
                     appearance_table[ob_type][group][#appearance_table[ob_type][group] + 1] = field
                 end
             end
 
-            if sizeof(page_list) > 0 then
+            if SIZEOF(page_list) > 0 then
                 appearance_table[ob_type][group][#appearance_table[ob_type][group] + 1] = page_list
             end
         end

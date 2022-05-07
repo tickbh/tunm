@@ -64,12 +64,12 @@ function create_new_account(login_info)
     local agent = login_info["agent"]
     local device_id = login_info["device_id"]
 
-    if not is_object(agent) then
+    if not IS_OBJECT(agent) then
         return
     end
 
     -- 检查信息是否合法
-    if not is_string(device_id) then
+    if not IS_STRING(device_id) then
         TRACE("创建新角色信息不合法。")
         return
     end
@@ -97,10 +97,10 @@ function get_account_list()
 end
 
 function account_logout(account)
-    if not is_object(account) then
+    if not IS_OBJECT(account) then
         return
     end
-    destruct_object(account)
+    DESTRUCT_OBJECT(account)
 end
 
 local function callback_get_user_list(account, ret, result_list)
@@ -112,7 +112,7 @@ local function callback_get_user_list(account, ret, result_list)
     end
     account:set("user_list", user_list)
     if IS_SINGLE then
-        local rid, value = get_first_key_value(user_list)
+        local rid, value = GET_FIRST_KEY_VALUE(user_list)
         if value and value.ban_flag and value.ban_flag ~= 0 then
             account:send_message(MSG_LOGIN_NOTIFY_STATUS, {ret = -1, err_msg = "账号被冻结"})
             account:connection_lost(true)
@@ -140,7 +140,7 @@ local function create_new_user_callback(info, ret, result_list)
     info["account_ob"] = nil
     if ret ~= 0 then
         account_ob:send_message(MSG_CREATE_USER, {status=1})
-        destruct_object(account_ob)
+        DESTRUCT_OBJECT(account_ob)
         do return end
     end
     account_ob:send_message(MSG_CREATE_USER, {status=0})
@@ -196,10 +196,10 @@ local function read_user_callback(info, args)
         return
     end
 
-    local user = remove_get(info, "user")
-    local item = remove_get(info, "item")
-    local equip = remove_get(info, "equip")
-    local ddz_info = remove_get(info, "ddz_info")
+    local user = REMOVE_GET(info, "user")
+    local item = REMOVE_GET(info, "item")
+    local equip = REMOVE_GET(info, "equip")
+    local ddz_info = REMOVE_GET(info, "ddz_info")
     for key, value in pairs(user or {}) do
         info[key] = value
     end
@@ -300,7 +300,7 @@ function create()
     register_as_audience("ACCOUNT_D", {EVENT_ACCOUNT_OBJECT_DESTRUCT = remove_account_online})
     register_as_audience("ACCOUNT_D", {EVENT_NOTIFY_ACCOUNT_OBJECT_DESTRUCT = function(rid)
         local ob = find_object_by_rid(rid)
-        if not is_object(ob) then
+        if not IS_OBJECT(ob) then
             return
         end
         ob:connection_lost(true)   

@@ -10,7 +10,7 @@ local _ENV = LOGIN_D
 local private_key = "wugdGame"
 
 local function connect_callback(agent, arg)
-    if not is_object(agent) then
+    if not IS_OBJECT(agent) then
         TRACE("连接服务器失败.")
         return
     end

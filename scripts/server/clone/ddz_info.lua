@@ -11,7 +11,7 @@ end
 
 function DDZ_INFO_TDCLS:init_with_data(owner, value)
     self.owner = owner
-    if not value or is_empty_table(value) then
+    if not value or IS_EMPTY_TABLE(value) then
         value = {
             owner = self.owner,
             pea_amount = 0,
@@ -103,7 +103,7 @@ function DDZ_INFO_TDCLS:set_change_to_db(callback, arg)
         return
     end
     local dbase = self:save_to_mapping()
-    if is_empty_table(dbase) then
+    if IS_EMPTY_TABLE(dbase) then
         callback(arg, 0, {})
         return
     end

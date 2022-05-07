@@ -22,7 +22,7 @@ end
 
 function msg_object_updated(user, rid, info)
     local object = find_object_by_rid(rid)
-    if not is_object(object) then
+    if not IS_OBJECT(object) then
         TRACE("物件:%s不存在", rid)
         return
     end

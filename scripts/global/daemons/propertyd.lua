@@ -31,7 +31,7 @@ local function load_item_table()
         if not info["ob_type"] then
             info["ob_type"] = OB_TYPE_ITEM
         end
-        item_basic_ob = clone_object(ITEM_TDCLS, info)
+        item_basic_ob = CLONE_OBJECT(ITEM_TDCLS, info)
 
         set_class_basic_object(class_id, item_basic_ob)
         name = info["name"]
@@ -44,7 +44,7 @@ local function load_item_table()
         for _, f in ipairs(property_callback) do
             f(info)
         end
-        item_table[class_id] = set_table_read_only(info)
+        item_table[class_id] = SET_TABLE_READ_ONLY(info)
     end
 end
 
@@ -61,7 +61,7 @@ local function load_equip_table()
         if not info["ob_type"] then
             info["ob_type"] = OB_TYPE_EQUIP
         end
-        equip_basic_ob = clone_object(EQUIP_TDCLS, info)
+        equip_basic_ob = CLONE_OBJECT(EQUIP_TDCLS, info)
         equip_basic_ob:set("amount", 1)
 
         set_class_basic_object(class_id, equip_basic_ob)
@@ -75,7 +75,7 @@ local function load_equip_table()
         for _, f in ipairs(property_callback) do
             f(info)
         end
-        equip_table[class_id] = set_table_read_only(info)
+        equip_table[class_id] = SET_TABLE_READ_ONLY(info)
     end
 end
 
@@ -113,9 +113,9 @@ function clone_object_from(class_id, property_info, from_db)
     local property_ob
     if ob_type == OB_TYPE_ITEM then
         -- 创建道具对象
-        property_ob = clone_object(ITEM_TDCLS, property_info)
+        property_ob = CLONE_OBJECT(ITEM_TDCLS, property_info)
     elseif ob_type == OB_TYPE_EQUIP then
-        property_ob = clone_object(EQUIP_TDCLS, property_info)
+        property_ob = CLONE_OBJECT(EQUIP_TDCLS, property_info)
         ori_property_info["amount"] = nil
         if not property_ob:query("lv") then
             property_ob:set("lv", 0)
@@ -128,7 +128,7 @@ function clone_object_from(class_id, property_info, from_db)
     if from_db ~= true then
         -- 物件不再数据库中，执行物件初始化脚本
         -- local init_script = property_ob:query("init_script")
-        -- if (is_int(init_script) and init_script > 0) then
+        -- if (IS_INT(init_script) and init_script > 0) then
         --     INVOKE_SCRIPT(init_script, property_ob, property_ob:query("init_arg"), instance_id)
         -- end
 

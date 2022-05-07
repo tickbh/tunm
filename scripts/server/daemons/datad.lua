@@ -98,7 +98,7 @@ function generate_index_map(tablejson)
 end
 
 function load_database( path )
-    local json_table = get_file_json(path)
+    local json_table = GET_FILE_JSON(path)
     for database_name, tablearray in pairs(json_table) do
         database_name = database_name .. (DB_SUFFIX or "")
         db_infos[database_name] = db_infos[database_name] or {}
@@ -239,8 +239,8 @@ end
 function is_default_change(default_config, default_db)
     default_config = default_config == nil and "" or default_config
     default_db = default_db == nil and "" or default_db
-    default_config = trim_reg(default_config, '[\']')
-    default_db = trim_reg(default_db, '[\']')
+    default_config = TRIM_REG(default_config, '[\']')
+    default_db = TRIM_REG(default_db, '[\']')
     return default_db ~= default_config
 end
 

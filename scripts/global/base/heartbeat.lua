@@ -23,7 +23,7 @@ end
 
 -- 注册心跳回调函数
 function register_heartbeat(ob_class, f)
-    if not is_table(heartbeat_funcs[ob_class]) then
+    if not IS_TABLE(heartbeat_funcs[ob_class]) then
         heartbeat_funcs[ob_class] = {};
     end
 

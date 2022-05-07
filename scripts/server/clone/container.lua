@@ -17,7 +17,7 @@ end
 function CONTAINER_TDCLS:destruct()
     -- 析构玩家容器
     for _, ob in pairs(self.carry) do
-        destruct_object(ob);
+        DESTRUCT_OBJECT(ob);
     end
 end
 
@@ -26,11 +26,11 @@ end
 -- 合并道具
 function CONTAINER_TDCLS:combine_to_pos(property, dst_pos)
     local pre_property = dst_pos;
-    if not is_object(pre_property) then
+    if not IS_OBJECT(pre_property) then
 
         -- 取得目前位置对象
         pre_property = self:get_pos_carry(dst_pos);
-        if not is_object(pre_property) then
+        if not IS_OBJECT(pre_property) then
             return (self:load_property(property, dst_pos));
         end
     end
@@ -63,7 +63,7 @@ end
 
 function CONTAINER_TDCLS:drop(property)
     --判断道具对象是否存在
-    if not property or not is_object(property) then
+    if not property or not IS_OBJECT(property) then
        TRACE("drop的道具对象不存在");
        return;
     end
@@ -75,7 +75,7 @@ function CONTAINER_TDCLS:drop(property)
     if is_not_in_db(property) then        
         -- 该道具未在数据库中，不需要执行删除数据库记录的操作
         self:unload_property(property, not_auto_notify);
-        destruct_object(property);        
+        DESTRUCT_OBJECT(property);        
         return;
     end
 
@@ -86,9 +86,9 @@ function CONTAINER_TDCLS:drop(property)
     local sql = SQL_D.delete_sql(table_name, {rid = property:query("rid")})
     DB_D.execute_db(table_name, sql)
 
-    LOG_D.to_log(LOG_TYPE_DESTRUCT_PROPERTY, self.owner, property:get_rid(), tostring(property:query("class_id")), tostring(property:query("amount")), self:get_owner():query_log_channel());
+    LOG_D.to_log(LOG_TYPE_DESTRUCT_PROPERTY, self.owner, property:GET_RID(), tostring(property:query("class_id")), tostring(property:query("amount")), self:get_owner():query_log_channel());
     self:unload_property(property, not_auto_notify);
-    destruct_object(property);
+    DESTRUCT_OBJECT(property);
 end
 
 -- 取得所有下属物件
@@ -213,7 +213,7 @@ function CONTAINER_TDCLS:cost_property(class_id, amount, bonus_type)
     for _, ob in pairs(self.carry) do
         if ob:query("class_id") == class_id then
 
-            ob_rid = ob:get_rid();
+            ob_rid = ob:GET_RID();
             deduct_amount = ob:cost_amount(amount, bonus_type);
             amount = amount - deduct_amount;
             if amount <= 0 then
@@ -273,7 +273,7 @@ function CONTAINER_TDCLS:get_free_pos(property, can_combine)
 
             -- 取得该位置的对象
             ob = self:get_pos_carry(pos);
-            if is_object(ob) then
+            if IS_OBJECT(ob) then
                 -- 只对位置上存在的可叠加对象，进行判断
                 if ob:can_combine(property) then
                     return pos;
@@ -656,7 +656,7 @@ function CONTAINER_TDCLS:load_property(property, dst_pos, not_auto_notify, not_a
     end
     local owner_rid = self.owner
     local owner_ob = self:get_owner()
-    LOG_D.to_log(LOG_TYPE_CREATE_PROPERTY, self.owner, property:get_rid(), tostring(property:query("class_id")), tostring(property:query("amount")), self:get_owner():query_log_channel());
+    LOG_D.to_log(LOG_TYPE_CREATE_PROPERTY, self.owner, property:GET_RID(), tostring(property:query("class_id")), tostring(property:query("amount")), self:get_owner():query_log_channel());
     -- 记录物件的位置
     property:set("pos", dst_pos);
 
@@ -667,7 +667,7 @@ function CONTAINER_TDCLS:load_property(property, dst_pos, not_auto_notify, not_a
     -- 记录物件的位置索引
     self.carry[dst_pos] = property;
     -- 通知物件加载
-    self:get_owner():notify_property_loaded(property:get_rid())
+    self:get_owner():notify_property_loaded(property:GET_RID())
 
     return true;
 end
@@ -693,7 +693,7 @@ end
 
 -- 判断位置是否已被占用
 function CONTAINER_TDCLS:is_pos_occuppied(pos)
-    return (is_object(self.carry[pos]));
+    return (IS_OBJECT(self.carry[pos]));
 end
 
 -- 取得容器实际的容量,否则取定义的容量大小
@@ -719,13 +719,13 @@ function CONTAINER_TDCLS:switch_pos(src_pos, dst_pos)
     self.carry[src_pos] = nil;
     self.carry[dst_pos] = nil;
 
-    if is_object(src_ob) then
+    if IS_OBJECT(src_ob) then
         src_ob:set("pos", dst_pos);
         self.carry[dst_pos] = src_ob;
         src_ob:notify_fields_updated("pos");
     end
 
-    if is_object(dst_ob) then
+    if IS_OBJECT(dst_ob) then
         dst_ob:set("pos", src_pos);
         self.carry[src_pos] = dst_ob;
         dst_ob:notify_fields_updated("pos");

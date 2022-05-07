@@ -15,7 +15,7 @@ poker_data = {
     0x4E,0x4F,
 }
 
-set_table_read_only(poker_data)
+SET_TABLE_READ_ONLY(poker_data)
 
 function get_poker_data()
     return poker_data

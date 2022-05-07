@@ -26,7 +26,7 @@ setmetatable(login_list, { __mode = "v" })
 local function get_login_list_size()
     local login_size = 0
     for _, agent in pairs(login_list) do
-        if is_object(agent) then
+        if IS_OBJECT(agent) then
             login_size = login_size + 1
         end
     end
@@ -175,7 +175,7 @@ end
 
 function set_online_limit(num)
 
-    if not is_int(num) then
+    if not IS_INT(num) then
         TRACE("%o不为数字", num)
         return
     end
@@ -192,7 +192,7 @@ end
 -- 模块的入口执行
 function create()
     -- 初始化登录队列
-    login_queue = clone_object(QUEUE_TDCLS)
+    login_queue = CLONE_OBJECT(QUEUE_TDCLS)
 
     -- 响应gs队列中的登录请求
     register_post_init(respond_login)

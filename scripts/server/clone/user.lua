@@ -11,7 +11,7 @@ function USER_TDCLS:create(value)
     self:set("ob_type", OB_TYPE_USER)
     self:freeze_dbase()
 
-    self:set_temp("container", clone_object(CONTAINER_TDCLS, {rid = get_ob_rid(self)}))
+    self:set_temp("container", CLONE_OBJECT(CONTAINER_TDCLS, {rid = get_ob_rid(self)}))
 
 end
 
@@ -28,12 +28,12 @@ function USER_TDCLS:destruct()
     end
 
     local account_ob = find_object_by_rid(self:query("account_rid"))
-    if is_object(account_ob) then
-        destruct_object(account_ob)
+    if IS_OBJECT(account_ob) then
+        DESTRUCT_OBJECT(account_ob)
     end
 
-    destruct_object(self:get_container())
-    destruct_object(self:get_ddz_dbase())
+    DESTRUCT_OBJECT(self:get_container())
+    DESTRUCT_OBJECT(self:get_ddz_dbase())
 
     self:delete_logout_timer()
 end
@@ -115,7 +115,7 @@ function USER_TDCLS:enter_world()
     -- 日志记录玩家登录
     LOG_D.to_log(LOG_TYPE_LOGIN_RECORD, get_ob_rid(self), tostring(self:query("account_rid")), "", "")
 
-    REDIS_D.run_publish(REDIS_USER_ENTER_WORLD, encode_json({rid = get_ob_rid(self), server_id = tonumber(SERVER_ID)}))
+    REDIS_D.run_publish(REDIS_USER_ENTER_WORLD, ENCODE_JSON({rid = get_ob_rid(self), server_id = tonumber(SERVER_ID)}))
 end
 
 -- 取得对象类
@@ -158,7 +158,7 @@ end
 function USER_TDCLS:set_change_to_db(callback, arg)
     local dbase = self:save_to_mapping()
     arg.sql_count = arg.sql_count + 1
-    if is_empty_table(dbase) then
+    if IS_EMPTY_TABLE(dbase) then
         if callback then callback(arg, 0, {}) end
     else
         local table_name, condition = self:get_save_oper()
@@ -172,8 +172,8 @@ end
 function USER_TDCLS:save_sub_content(callback, arg)
     -- 取得玩家容器中的所有物件的保存信息
     for pos, ob in pairs(self:get_container():get_carry()) do
-        ASSERT(is_object(ob))
-        if is_object(ob) then
+        ASSERT(IS_OBJECT(ob))
+        if IS_OBJECT(ob) then
             -- 取得该物件需要保存的 dbase
             local dbase, is_part = ob:save_to_mapping()
             if dbase then
@@ -198,7 +198,7 @@ function USER_TDCLS:save_sub_content(callback, arg)
 end
 
 function USER_TDCLS:save_obj_content(ob, callback, arg)
-    if is_object(ob) then
+    if IS_OBJECT(ob) then
         ob:set_change_to_db(callback, arg)
     end
 end
@@ -236,7 +236,7 @@ end
 
 -- 通知物件删除
 function USER_TDCLS:notify_property_delete(rids)
-    if is_string(rids) then
+    if IS_STRING(rids) then
         rids = { rids }
     end
  
@@ -245,7 +245,7 @@ end
 
 -- 通知玩家物件字段变更
 function USER_TDCLS:notify_property_updated(rid, field_names)
-    if is_string(field_names) then
+    if IS_STRING(field_names) then
         field_names = { field_names }
     end
 
@@ -284,7 +284,7 @@ function USER_TDCLS:get_container()
 end
 
 function USER_TDCLS:set_ddz_dbase( ddz_info )
-    self:set_temp("ddz_info", clone_object(DDZ_INFO_TDCLS, get_ob_rid(self), ddz_info))
+    self:set_temp("ddz_info", CLONE_OBJECT(DDZ_INFO_TDCLS, get_ob_rid(self), ddz_info))
 end
 
 function USER_TDCLS:get_ddz_dbase()

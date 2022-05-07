@@ -86,7 +86,7 @@ end
 function hiberate(user, save_callback)
     local arg = {
         user          = user,
-        user_rid      = user:get_rid(),
+        user_rid      = user:GET_RID(),
         account_rid   = user:query("account_rid"),
         save_callback = save_callback,
         sql_count     = 0,
@@ -143,16 +143,16 @@ end
 
 function publish_user_attr_update(data)
     DATA_USERD.user_data_changed(data)
-    REDIS_D.run_command("PUBLISH", REDIS_ROLE_ATTR_UPDATE, encode_json(data))
+    REDIS_D.run_command("PUBLISH", REDIS_ROLE_ATTR_UPDATE, ENCODE_JSON(data))
 end
 
 -- 玩家登出处理
 function user_logout(user)
-    if not is_object(user) then
+    if not IS_OBJECT(user) then
         return
     end
     
-    destruct_object(user)
+    DESTRUCT_OBJECT(user)
 end
 
 --是否升级

@@ -46,14 +46,14 @@ function DBASE_TDCLS:add(key, val)
 
     if not v then
         self:set(key, val);
-    elseif is_int(val)  and is_int(v) then
+    elseif IS_INT(val)  and IS_INT(v) then
         self.dbase[key] = v + val;
-    elseif is_mapping(v) and is_mapping(val) then
+    elseif IS_MAPPING(v) and IS_MAPPING(val) then
         -- mapping 处理
         for key, value in pairs(val) do
             v[key] = value;
         end
-    elseif is_array(v) then
+    elseif IS_ARRAY(v) then
         -- array 处理
         table.insert(v, val);
     else
@@ -67,14 +67,14 @@ function DBASE_TDCLS:add_temp(key, val)
 
     if not v then
         self:set_temp(key, val);
-    elseif is_int(val)  and is_int(v) then
+    elseif IS_INT(val)  and IS_INT(v) then
         self.temp_dbase[key] = v + val;
-    elseif is_mapping(v) and is_mapping(val) then
+    elseif IS_MAPPING(v) and IS_MAPPING(val) then
         -- mapping 处理
         for key, value in pairs(val) do
             v[key] = value;
         end
-    elseif is_array(v) then
+    elseif IS_ARRAY(v) then
         -- array 处理
         table.insert(v, val);
     else
@@ -112,7 +112,7 @@ end
 
 function DBASE_TDCLS:delete_ex(path)
     if express_query(path, self.dbase) then
-        local keys = explode(path, "/");
+        local keys = EXPLODE(path, "/");
         self.change_list[keys[1]] = true;
 
     end
@@ -145,7 +145,7 @@ end
 -- 判断 dbase 是否冻结中
 function DBASE_TDCLS:is_dbase_freezed()
 
-    if sizeof(self.change_list) == 0 then
+    if SIZEOF(self.change_list) == 0 then
         return true;
     end
 end
@@ -224,7 +224,7 @@ function DBASE_TDCLS:query_sub_temp(key, sub_value)
         return
     end
     local value = self.temp_dbase[key]
-    if is_int(value) then
+    if IS_INT(value) then
         value = value - (sub_value or 1);
         self.temp_dbase[key] = value
     end
@@ -276,7 +276,7 @@ function DBASE_TDCLS:set_ex(path, value)
 
     if path_value ~= value or type(path_value) == "table"
         or type(path_value) == "cdata" then
-        local keys = explode(path, "/");
+        local keys = EXPLODE(path, "/");
         self.change_list[keys[1]] = true;
     end
 

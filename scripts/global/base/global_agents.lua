@@ -89,7 +89,7 @@ function remove_port_map(port_no)
         if port_map[no] then
             port_map[no][port_no] = nil
         end
-        if is_empty_table(port_map[no]) then
+        if IS_EMPTY_TABLE(port_map[no]) then
             port_map[no] = nil
         end
     end
@@ -115,7 +115,7 @@ function get_logic_fd()
     local resultfd = -1
     local max = -1
     for fd,_ in pairs(logic_fds) do
-        local size = sizeof(port_map[fd])
+        local size = SIZEOF(port_map[fd])
         if max < size then
             resultfd = fd
             max = size

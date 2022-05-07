@@ -17,7 +17,7 @@ end
 
 local function command_send_message(...)
     local user = ME_D.get_user()
-    if not is_object(user) then
+    if not IS_OBJECT(user) then
         TRACE("请先登陆游戏")
         return
     end
@@ -59,7 +59,7 @@ end
 
 function show_items()
     local user = ME_D.get_user()
-    if not is_object(user) then
+    if not IS_OBJECT(user) then
         TRACE("请先登陆游戏")
         return
     end
@@ -81,7 +81,7 @@ end
 
 function show_equips()
     local user = ME_D.get_user()
-    if not is_object(user) then
+    if not IS_OBJECT(user) then
         TRACE("请先登陆游戏")
         return
     end

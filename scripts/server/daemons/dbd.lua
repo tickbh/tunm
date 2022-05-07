@@ -67,7 +67,7 @@ function get_db_type()
     end
 
     db_type = get_config_value("DB_TYPE")
-    if sizeof(db_type) == 0 and STANDALONE then
+    if SIZEOF(db_type) == 0 and STANDALONE then
         db_type = "sqlite"
     end
 
@@ -183,7 +183,7 @@ end
 
 --判断cookie_map是否为空
 function is_cookie_map_nil()
-    if sizeof(cookie_map) == 0 then
+    if SIZEOF(cookie_map) == 0 then
         return true
     end
     return false
@@ -347,7 +347,7 @@ end
 function gen_cloumn_ext(cloumn)
     local sql = ""
     local has_default = false
-    if cloumn["default"] and sizeof(cloumn["default"]) > 0 then
+    if cloumn["default"] and SIZEOF(cloumn["default"]) > 0 then
         sql = sql .. string.format(" DEFAULT '%s' ", cloumn["default"])
         has_default = true
     end
@@ -365,7 +365,7 @@ end
 
 function gen_cloumn_after(cloumn)
     local sql = ""
-    if cloumn["pre_field"] and sizeof(cloumn["pre_field"]) > 0 then
+    if cloumn["pre_field"] and SIZEOF(cloumn["pre_field"]) > 0 then
         sql = sql .. string.format(" AFTER `%s` ", cloumn["pre_field"])
     end
     return sql
@@ -388,7 +388,7 @@ function gen_unique_ext(cloumn)
 end
 
 function del_primary_key(db_name, table_name, key)
-    if key == nil or sizeof(key) == 0 then
+    if key == nil or SIZEOF(key) == 0 then
         return true
     end
     local sql = string.format("ALTER TABLE `%s` DROP PRIMARY KEY", table_name)
@@ -396,7 +396,7 @@ function del_primary_key(db_name, table_name, key)
 end
 
 function add_primary_key(db_name, table_name, key)
-    if key == nil or sizeof(key) == 0 then
+    if key == nil or SIZEOF(key) == 0 then
         return true
     end
     local sql = string.format("ALTER TABLE `%s` ADD PRIMARY KEY (%s)", table_name, key)

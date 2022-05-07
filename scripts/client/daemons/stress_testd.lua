@@ -73,7 +73,7 @@ function online_number()
 
     local player_list = child_objects(PLAYER_TDCLS)
 
-    return (sizeof(player_list))
+    return (SIZEOF(player_list))
 end
 
 -- 玩家心跳函数(负责玩家所有测试子模块的操作)
@@ -84,7 +84,7 @@ function heartbeat_handler(player)
     end
 
     -- 玩家已析构
-    if not is_object(player) then
+    if not IS_OBJECT(player) then
         return 
     end
 
@@ -163,7 +163,7 @@ function logout(number)
 
     for i, player in ipairs(player_list) do
         -- 析构玩家
-        destruct_object(player)
+        DESTRUCT_OBJECT(player)
 
         if number and i >= number then
             break
@@ -184,7 +184,7 @@ function start(number, modules_str)
     -- 要测试的子模块列表
     local test_modules = {}
     if modules_str then
-        local temp = explode(string.gsub(modules_str, " ", ""), ",")
+        local temp = EXPLODE(string.gsub(modules_str, " ", ""), ",")
         for _, start_module in ipairs(temp) do
             test_modules[start_module] = true
         end
@@ -220,7 +220,7 @@ function stop(modules_str)
         end
     -- 停止指定子模块的测试
     else
-        local stop_modules = explode(string.gsub(modules_str, " ", ""), ",")
+        local stop_modules = EXPLODE(string.gsub(modules_str, " ", ""), ",")
         for _, player in ipairs(player_list) do
 
             local test_modules = player:query("test_modules") or {}
@@ -235,7 +235,7 @@ end
 function add_module(player, modules_str)
     modules_str = modules_str or ""
 
-    local start_modules = explode(string.gsub(modules_str, " ", ""), ",")
+    local start_modules = EXPLODE(string.gsub(modules_str, " ", ""), ",")
     local test_modules  = player:query("test_modules") or {}
     for _, start_module in ipairs(start_modules) do
         test_modules[start_module] = true
@@ -249,7 +249,7 @@ function del_module(player, modules_str)
     if not modules_str then
         player:set("test_modules", {})
     else
-        local stop_modules = explode(string.gsub(modules_str, " ", ""), ",")
+        local stop_modules = EXPLODE(string.gsub(modules_str, " ", ""), ",")
         local test_modules = player:query("test_modules") or {}
         for _, stop_module in ipairs(stop_modules) do
             test_modules[stop_module] = nil

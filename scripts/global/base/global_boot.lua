@@ -29,7 +29,7 @@ function register_server_list_done(f)
 end
 
 function post_server_list_done()
-    clean_array(server_list_callback_list);
+    CLEAN_ARRAY(server_list_callback_list);
     for _, f in ipairs(server_list_callback_list) do
         if type(f) == "function" then
             xpcall(f, ERROR_HANDLE);

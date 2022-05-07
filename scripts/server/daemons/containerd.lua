@@ -12,7 +12,7 @@ local _ENV = CONTAINER_D
 -- 取得物件对应的格子页面
 function get_page(ob)
     local ob_type
-    if is_object(ob) then
+    if IS_OBJECT(ob) then
         ob_type = ob:query("ob_type")
         if ob_type == OB_TYPE_ITEM  or ob_type == OB_TYPE_EQUIP then
             -- 若为道具，则 ob_type 即为页面号

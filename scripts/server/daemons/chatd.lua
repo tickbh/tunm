@@ -28,11 +28,11 @@ end
 function send_system_chat(content, ext_data)
     local data = {chat_channel = CHAT_CHANNEL_WORLD, send_rid = GLOABL_RID, send_name = "TDEngine", send_rid = GLOABL_RID, chat_info = {send_content = content, send_time = os.time()}}
     MERGE(data.chat_info, ext_data or {})
-    REDIS_D.run_command("PUBLISH", REDIS_CHAT_CHANNEL_WORLD, encode_json(data))
+    REDIS_D.run_command("PUBLISH", REDIS_CHAT_CHANNEL_WORLD, ENCODE_JSON(data))
 end
 
 function send_system_private_chat( rid, content, ext_data )
     local data = {chat_channel = CHAT_CHANNEL_PRIVATE, send_rid = GLOABL_RID, recv_rid = rid, send_name = "TDEngine", send_rid = GLOABL_RID, chat_info = {send_content = content, send_time = os.time()}}
     MERGE(data.chat_info, ext_data or {})
-    REDIS_D.run_command("PUBLISH", string.format(CREATE_CHAT_CHANNEL_PRIVATE, rid), encode_json(data))
+    REDIS_D.run_command("PUBLISH", string.format(CREATE_CHAT_CHANNEL_PRIVATE, rid), ENCODE_JSON(data))
 end

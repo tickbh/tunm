@@ -40,9 +40,9 @@ local sql_table = {
 }
 
 function convert_db_key( value )
-    if is_string(value) then
+    if IS_STRING(value) then
         return string.format("`%s`", value)
-    elseif is_int(value) then
+    elseif IS_INT(value) then
         return tostring(value)
     else
         return value
@@ -50,9 +50,9 @@ function convert_db_key( value )
 end
 
 function convert_to_sql(value)
-    if is_string(value) then
+    if IS_STRING(value) then
         return "'" .. value .. "'"
-    elseif is_int(value) then
+    elseif IS_INT(value) then
         return tostring(value)
     else
         return value
@@ -66,13 +66,13 @@ function piece_one_condition( key, condition)
     local result = ""
     local convert_key = convert_db_key(key)
     local convert_val
-    if not is_table(condition) then
+    if not IS_TABLE(condition) then
         result = convert_key .. "=" .. convert_to_sql(condition)
     else
         local defaultLink = condition[_ACT] or _AND
         for k,val in pairs(condition) do
             convert_val = convert_to_sql(val)
-            if sizeof(result) > 0 then
+            if SIZEOF(result) > 0 then
                 result = result .. " " .. sql_table[defaultLink] .. " "
             end
             if k == _LT or k == _LTE or k == _GT or k == _GTE or k == _NE or k == _LIKE then
@@ -102,17 +102,17 @@ function piece_where_condition( table_name, condition )
     local defaultLinkValue = sql_table[condition[_ACT] or _AND]
     local where_condition = condition[_WHERE]
     local result = ""
-    if is_array(where_condition) then
+    if IS_ARRAY(where_condition) then
         for _,val in ipairs(where_condition) do
-            if sizeof(result) > 0 then
+            if SIZEOF(result) > 0 then
                 result = result .. " " .. defaultLinkValue .. " "
             end
             result = result .. piece_single_where(val)
         end
-    elseif is_table(where_condition) then 
+    elseif IS_TABLE(where_condition) then 
         result = piece_single_where(where_condition)
     end
-    if sizeof(result) > 0 then
+    if SIZEOF(result) > 0 then
         return " where " .. result .. " " 
     end
     return ""
@@ -128,7 +128,7 @@ function piece_select_fields(table_name, condition)
     else
         local result = ""
         for _,v in ipairs(fields) do
-            if sizeof(result) > 0 then
+            if SIZEOF(result) > 0 then
                 result = result .. ","
             end
             result = result .. string.format("`%s`", v)
@@ -153,7 +153,7 @@ function piece_select_order( table_name, condition )
         return ""
     end
     local order = condition[_ORDER]
-    if not order or not is_table(order) then
+    if not order or not IS_TABLE(order) then
         return ""
     end
     local key, value = nil, nil
@@ -198,7 +198,7 @@ function encode_table_data(table_name, data)
         end
     end
     if tabledata.misc then
-        result.misc = encode_json(result.misc)
+        result.misc = ENCODE_JSON(result.misc)
     else
         result.misc = nil
     end
@@ -208,7 +208,7 @@ end
 
 function decode_table_data(table_name, data) 
     local result = DUP(data)
-    result.misc = decode_json(data.misc)
+    result.misc = DECODE_JSON(data.misc)
     for k,v in pairs(result.misc) do
         result[k] = v
     end
@@ -221,7 +221,7 @@ function piece_insert_sql( table_name, data )
     local field_key = ""
     local field_val = ""
     for k,v in pairs(data) do
-        if sizeof(field_key) > 0 then
+        if SIZEOF(field_key) > 0 then
             field_key = field_key .. ","
             field_val = field_val .. ","
         end
@@ -243,7 +243,7 @@ function piece_update_sql(table_name, data)
     end
     local result = ""
     for k,v in pairs(data) do
-        if sizeof(result) > 0 then
+        if SIZEOF(result) > 0 then
             result = result .. ","
         end
         result = result .. " `" .. k .. "` = " .. convert_to_sql(v)
@@ -275,9 +275,9 @@ end
 
 
 
--- 'is_array({[1]=2,[2]=3,act="and"})
+-- 'IS_ARRAY({[1]=2,[2]=3,act="and"})
 
--- 'is_array({[1]=2,[2]=3})
+-- 'IS_ARRAY({[1]=2,[2]=3})
 
 -- SQL_D.select_sql("author", {_FIELDS={"me","you","he"}, _WHERE={he=21}, _LIMIT=2, _OFFSET=3})
 -- 'SQL_D.select_sql("author", {_FIELDS={"me","you","he"}, _WHERE={he={_LT=2}}, _LIMIT=2, _OFFSET=3})

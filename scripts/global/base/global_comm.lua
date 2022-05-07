@@ -29,7 +29,7 @@ local function socket_connect_callback(cookie, fd, client_ip)
 
     local agent = fd
     if fd ~= -1 then
-        agent = clone_object(AGENT_TDCLS)
+        agent = CLONE_OBJECT(AGENT_TDCLS)
         -- 设置验证
         agent:set_authed(true)
         -- 设置端口与 agent 的映射关系
@@ -104,7 +104,7 @@ function cmd_new_connection(cookie, fd, client_ip, server_port, websocket)
         return
     end
 
-    local agent = clone_object(AGENT_TDCLS)
+    local agent = CLONE_OBJECT(AGENT_TDCLS)
     -- 设置端口与 agent 的映射关系
     agent:set_port_no(fd)
     agent:set_client_ip(client_ip)
@@ -146,7 +146,7 @@ function debug_on(flag, rid)
         if not flag or flag == 0 then
             if type(debug_flag) == "table" then
                 debug_flag[rid] = nil
-                if sizeof(debug_flag) <= 0 then
+                if SIZEOF(debug_flag) <= 0 then
                     debug_flag  = 0
                 end
             end
@@ -174,7 +174,7 @@ function send_debug_on(flag, rid)
         if not flag or flag == 0 then
             if type(send_debug_flag) == "table" then
                 send_debug_flag[rid] = nil
-                if sizeof(send_debug_flag) <= 0 then
+                if SIZEOF(send_debug_flag) <= 0 then
                     send_debug_flag  = 0
                 end
             end
@@ -228,7 +228,7 @@ function oper_message(agent, message, msg_buf)
     -- ASSERT(name == message)
     local flag = get_debug_flag()
     if (type(flag) == "number" and flag == 1) or
-           (type(flag) == "table" and self:is_user() and flag[self:get_rid()]) then
+           (type(flag) == "table" and self:is_user() and flag[self:GET_RID()]) then
         TRACE("------------- msg : %s -------------\n%o", message, args)
     end
     
@@ -266,9 +266,9 @@ function global_dispatch_command(port_no, message, buffer)
     TRACE("message is %o", message)
     if not message then
         TRACE("非法连接(%d)\n 传送非法消息(源消息为%o)", port_no, message)
-        if is_object(agent) then
+        if IS_OBJECT(agent) then
             agent:print_fd_info()
-            destruct_object(agent)
+            DESTRUCT_OBJECT(agent)
         else 
             close_fd(port_no)
         end
@@ -282,9 +282,9 @@ function global_dispatch_command(port_no, message, buffer)
         if not agent then
             TRACE("端口绑定的对象不存在")
         end
-        if is_object(agent) then
+        if IS_OBJECT(agent) then
             agent:print_fd_info()
-            destruct_object(agent)
+            DESTRUCT_OBJECT(agent)
         else 
             close_fd(port_no)
         end
@@ -325,7 +325,7 @@ function global_dispatch_command(port_no, message, buffer)
         end
     end
 
-    if is_function(msg_filter[message]) then
+    if IS_FUNCTION(msg_filter[message]) then
         msg_filter[message](agent, buffer)
         del_message(buffer)
         return

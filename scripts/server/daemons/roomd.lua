@@ -52,7 +52,7 @@ end
 function create_room(roomdata)
     local room_tdcls = _G[roomdata.room_tdcls]
     ASSERT(room_tdcls ~= nil, "场景配置必须存在")
-    local room = clone_object(room_tdcls, roomdata)
+    local room = CLONE_OBJECT(room_tdcls, roomdata)
     ASSERT(room_list[room:get_room_name()] == nil, "重复配置房间")
     room_list[room:get_room_name()] = room 
     REDIS_D.add_subscribe_channel(room:get_listen_channel())
@@ -88,7 +88,7 @@ end
 -- 根据rid获取room_name
 function get_room_name_by_rid(rid)
     local rid_ob = find_object_by_rid(rid)
-    if not is_object(rid_ob) then
+    if not IS_OBJECT(rid_ob) then
         return
     end
     return (rid_ob:query_temp("room"))
@@ -108,7 +108,7 @@ function get_room_entity_list(room_name)
 
             if info.ob_type == OB_TYPE_USER then
                 user = find_object_by_rid(rid)
-                if is_object(user) then
+                if IS_OBJECT(user) then
                     if not query_func then
                         query_func = user.query
                     end
@@ -184,7 +184,7 @@ function cmd_room_message(room_name, user_rid, cookie, oper, info)
     local ret = 0
     local server_id = remove_get(info, "server_id")
     if oper == "enter_room" then
-        ASSERT(is_int(server_id), "server_id must exist")
+        ASSERT(IS_INT(server_id), "server_id must exist")
         ret = room:entity_enter(server_id, user_rid, info)
     elseif oper == "leave_room" then
         ret = room:entity_leave(user_rid, info)
@@ -214,13 +214,13 @@ function cmd_room_message(room_name, user_rid, cookie, oper, info)
     cookie = tonumber(cookie)
     if server_id and cookie and cookie ~= 0 then
         local channel = string.format(CREATE_RESPONE_SERVER_INFO, server_id, cookie)
-        REDIS_D.run_publish(channel, encode_json({ret = ret}))
+        REDIS_D.run_publish(channel, ENCODE_JSON({ret = ret}))
     end
 end
 
 function redis_dispatch_message(room_name, user_rid, cookie, msg_buf)
     local room = room_list[room_name]
-    if not is_object(room) then
+    if not IS_OBJECT(room) then
         LOG.err("房间'%s'信息不存在", room_name)
         return
     end
@@ -230,7 +230,7 @@ function redis_dispatch_message(room_name, user_rid, cookie, msg_buf)
         return
     end
 
-    local name, args = msg_to_table(net_msg)
+    local name, args = MSG_TO_TABLE(net_msg)
     if name and args and ROOM_D[name] then
         ROOM_D[name](room_name, user_rid, cookie, unpack(args))
     end
@@ -243,7 +243,7 @@ end
 
 local function logic_cmd_room_message(user, buffer)
     local room_name = user:query_temp("room_name")
-    if sizeof(room_name) == 0 then
+    if SIZEOF(room_name) == 0 then
         return
     end
 
@@ -254,9 +254,9 @@ local function publish_room_detail()
     local result = {}
     for room_name,room in pairs(room_list) do
         local room_entity = room:get_room_entity()
-        result[room_name] = { amount = sizeof(room_entity), game_type = room:get_game_type() }
+        result[room_name] = { amount = SIZEOF(room_entity), game_type = room:get_game_type() }
     end
-    REDIS_D.run_publish(SUBSCRIBE_ROOM_DETAIL_RECEIVE, encode_json(result))
+    REDIS_D.run_publish(SUBSCRIBE_ROOM_DETAIL_RECEIVE, ENCODE_JSON(result))
 end
 
 local function user_login(user_rid, server_id)

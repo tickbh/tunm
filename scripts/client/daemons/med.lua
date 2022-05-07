@@ -41,7 +41,7 @@ function me_updated(agent, data)
     me_agent = user
 end
 
-function get_rid()
+function GET_RID()
     return me_rid
 end
 
@@ -50,7 +50,7 @@ function get_user()
 end
 
 function get_agent()
-    if not is_object(me_agent) then
+    if not IS_OBJECT(me_agent) then
         me_agent = nil
         _enter_game = false
     end
@@ -58,7 +58,7 @@ function get_agent()
 end
 
 function close_agent()
-    if is_object(me_agent) then
+    if IS_OBJECT(me_agent) then
         me_agent:connection_lost()
         me_agent = nil
     end

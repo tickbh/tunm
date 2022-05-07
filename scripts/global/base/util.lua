@@ -152,7 +152,7 @@ end
 -- 异常处理函数，打印调用栈
 function ERROR_HANDLE(...)
     local err_msg = ...
-    if is_table(err_msg) then
+    if IS_TABLE(err_msg) then
         err_msg = err_msg[1]
     end
 
@@ -474,7 +474,7 @@ function WATCH(s, prefix, stack)
     elseif (type(s) == "table") and type(s.is_clone) == "boolean" then
         -- 对象，不希望打印出所有的 table 信息
         local ob_id = s.get_ob_id and s:get_ob_id()
-        if is_string(ob_id) then
+        if IS_STRING(ob_id) then
             if s.destructed == true then
                 result = string.format("object(%s<destructed>)", ob_id)
             else
@@ -485,7 +485,7 @@ function WATCH(s, prefix, stack)
         end
 
     elseif (type(s) == "table") then
-        local size = sizeof(s)
+        local size = SIZEOF(s)
         --栈的深度设为3，避免循环
         if stack > 3 then
             return string.format("%s\tsize is %d,\r\n", prefix, size)
@@ -572,10 +572,10 @@ function __LINE__(level)
     return currentline
 end
 
-function deep_dup(object)
+function DEEP_DUP(object)
     local lookup_table = {}
     local function _copy(object)
-        if type(object) ~= "table" or is_object(object) then
+        if type(object) ~= "table" or IS_OBJECT(object) then
             return object
         elseif lookup_table[object] then
             return lookup_table[object]
@@ -591,26 +591,26 @@ function deep_dup(object)
 end
 
 -- 创建对象
-function clone_object(ob, ...)
+function CLONE_OBJECT(ob, ...)
     return (ob.new(...))
 end
 
 -- 析构对象
-function destruct_object(ob)
+function DESTRUCT_OBJECT(ob)
     if ob and type(ob.destructing) ~= "boolean" and ob.destructed ~= true then
         ob.destructing = true
         if ob.destruct ~= nil_func then
             ob.destruct()
-        elseif ob.destruct_object ~= nil_func then
-            ob:destruct_object()
+        elseif ob.DESTRUCT_OBJECT ~= nil_func then
+            ob:DESTRUCT_OBJECT()
         end
         ob.destructed = true
     end
 end
 
 -- 查看脚本对象信息
-function info_object(ob)
-    if not is_table(ob) and type(ob) ~= "userdata" then
+function INFO_OBJECT(ob)
+    if not IS_TABLE(ob) and type(ob) ~= "userdata" then
         return
     end
 
@@ -660,7 +660,7 @@ function info_object(ob)
     -- 遍历信息，对方法和变量进行排序分类
     local methods, variables = {}, {}
     for name, value in pairs(info) do
-        if is_function(value) then
+        if IS_FUNCTION(value) then
             methods[#methods + 1] = name
         else
             variables[#variables + 1] = name
@@ -678,7 +678,7 @@ function info_object(ob)
 end
 
 -- 判断对象是否有效
-function is_object(ob)
+function IS_OBJECT(ob)
     if type(ob) == "table" and
        ob.destructed == false then
         return true
@@ -688,7 +688,7 @@ function is_object(ob)
 end
 
 -- 判断是否为整数
-function is_int(v)
+function IS_INT(v)
     if type(v) == "number" then
         return true
     else
@@ -697,7 +697,7 @@ function is_int(v)
 end
 
 -- 判断是否为字符串
-function is_string(v)
+function IS_STRING(v)
     if type(v) == "string" then
         return true
     else
@@ -706,7 +706,7 @@ function is_string(v)
 end
 
 -- 判断是否为 table
-function is_table(v)
+function IS_TABLE(v)
     if type(v) == "table" then
         return true
     else
@@ -715,7 +715,7 @@ function is_table(v)
 end
 
 -- 判断是否为 array
-function is_array(v)
+function IS_ARRAY(v)
     if type(v) ~= "table" then
         return false
     elseif table.getn(v) == 0 then
@@ -727,7 +727,7 @@ end
 
 -- 判断是否为 mapping
 -- mapping 不允许存在 int 型的 key，有 int 型的key 被认为是 array
-function is_mapping(v)
+function IS_MAPPING(v)
     if type(v) ~= "table" then
         return false
     elseif table.getn(v) == 0 then
@@ -738,7 +738,7 @@ function is_mapping(v)
 end
 
 -- 判断是否为 function
-function is_function(v)
+function IS_FUNCTION(v)
     if type(v) == "function" then
         return true
     else
@@ -747,17 +747,17 @@ function is_function(v)
 end
 
 -- 将变量转换成整数
-function to_int(v)
-    if is_int(v) then
+function TO_INT(v)
+    if IS_INT(v) then
         return v
-    elseif not is_string(v) then
+    elseif not IS_STRING(v) then
         return 0
     else
         return (tonumber(v))
     end
 end
 
-function sizeof(t)
+function SIZEOF(t)
     local n = 0
     if type(t) == "table" then
         -- 遍历 table，累加元素个数
@@ -771,7 +771,7 @@ function sizeof(t)
     return n
 end
 
-function is_empty_table(t)
+function IS_EMPTY_TABLE(t)
     if type(t) ~= "table" then
         return false
     end
@@ -784,7 +784,7 @@ function is_empty_table(t)
 end
 
 -- 整理数组
-function clean_array(t)
+function CLEAN_ARRAY(t)
     if not t then
         return
     end
@@ -792,13 +792,13 @@ function clean_array(t)
     local n = 1
     local p, max
     local type = type
-    local is_object = is_object
+    local IS_OBJECT = IS_OBJECT
 
     local tmp = {}
     for _,v in pairs(t) do
         p = type(v)
         if p ~= "nil" and
-           (p ~= "table" or not v.is_clone or is_object(v)) then
+           (p ~= "table" or not v.is_clone or IS_OBJECT(v)) then
             -- 需要重新整理数组
             tmp[n] = v
             n = n + 1
@@ -808,16 +808,16 @@ function clean_array(t)
     return t, n - 1
 end
 
-function trim(s)
+function TRIM(s)
   return (string.gsub(s, "^%s*(.-)%s*$", "%1"))
 end
 
-function trim_reg(s, reg)
+function TRIM_REG(s, reg)
     return (string.gsub(s, "^".. reg .."*(.-)".. reg .."*$", "%1"))
 end
 
 -- 将字符串根据标识符打断，组成 array
-function explode(str, flag)
+function EXPLODE(str, flag)
     local t, ll
     t = {}
     ll = 0
@@ -855,8 +855,8 @@ function explode(str, flag)
 end
 
 
-function explode_tonumber(str, flag)
-    local t = explode(str, flag)
+function EXPLODE_TONUMBER(str, flag)
+    local t = EXPLODE(str, flag)
     local result = {}
     for _,v in ipairs(t) do
         result[#result + 1] = tonumber(v)
@@ -865,9 +865,9 @@ function explode_tonumber(str, flag)
 end
 
 --判断某个值是否在数组中
-function is_in_array(value, array)
+function IS_IN_ARRAY(value, array)
 
-    if not is_array(array) then
+    if not IS_ARRAY(array) then
         return
     end
 
@@ -880,7 +880,7 @@ function is_in_array(value, array)
     return nil
 end
 
-function index_in_array(value, array)
+function INDEX_IN_ARRAY(value, array)
     for id,v in ipairs(array) do
         if v == value then
             return id
@@ -889,22 +889,22 @@ function index_in_array(value, array)
     return nil
 end
 
-function restore_json(s)
-    ASSERT(type(s) == "string", "restore_json arg error")
-    if sizeof(s) == 0 then
+function RESTORE_JSON(s)
+    ASSERT(type(s) == "string", "RESTORE_JSON arg error")
+    if SIZEOF(s) == 0 then
         return {}
     end
     local success, ret = pcall(json.decode, s)
     if success then
         return ret
     else
-        ASSERT(false, string.format("restore_json: %s \r\nExeption: %s", s, tostring(e)))
+        ASSERT(false, string.format("RESTORE_JSON: %s \r\nExeption: %s", s, tostring(e)))
     end
 end
 
-function decode_json(s)
-    ASSERT(type(s) == "string", "decode_json arg error")
-    if sizeof(s) == 0 then
+function DECODE_JSON(s)
+    ASSERT(type(s) == "string", "DECODE_JSON arg error")
+    if SIZEOF(s) == 0 then
         return {}
     end
     local success, ret = pcall(cjson.decode, s)
@@ -918,8 +918,8 @@ function decode_json(s)
     end
 end
 
-function encode_json(s)
-    ASSERT(type(s) == "table", "encode_json arg error")
+function ENCODE_JSON(s)
+    ASSERT(type(s) == "table", "ENCODE_JSON arg error")
     local success, ret = pcall(cjson.encode, s)
     if success then
         return ret
@@ -928,9 +928,9 @@ function encode_json(s)
     end
 end
 
-function decode_json_check(s)
-    ASSERT(type(s) == "string", "decode_json_check arg error")
-    if sizeof(s) == 0 then
+function DECODE_JSON_CHECK(s)
+    ASSERT(type(s) == "string", "DECODE_JSON_CHECK arg error")
+    if SIZEOF(s) == 0 then
         return {}
     end
     local success, ret = pcall(cjson.decode, s)
@@ -944,8 +944,8 @@ function decode_json_check(s)
     end
 end
 
-function encode_json_check(s)
-    ASSERT(type(s) == "table", "encode_json_check arg error")
+function ENCODE_JSON_CHECK(s)
+    ASSERT(type(s) == "table", "ENCODE_JSON_CHECK arg error")
     local success, ret = pcall(cjson.encode, s)
     if success then
         return ret, success
@@ -954,11 +954,11 @@ function encode_json_check(s)
     end
 end
 
-function get_rid(serverid)
+function GET_RID(serverid)
     return GET_NEXT_RID(serverid or 1)
 end
 
-function get_first_key_value(t)
+function GET_FIRST_KEY_VALUE(t)
     if type(t) ~= "table" then
         return nil, nil
     end
@@ -968,7 +968,7 @@ function get_first_key_value(t)
     return nil, nil
 end
 
-function call_func(f, tab, ...)
+function CALL_FUNC(f, tab, ...)
     local a, b, c, d, e = unpack(tab or {})
     if e ~= nil then
         return f(a, b, c, d, e, ...)
@@ -985,13 +985,13 @@ function call_func(f, tab, ...)
     end
 end
 
-function remove_get(t, key)
+function REMOVE_GET(t, key)
     local value = t[key]
     t[key] = nil
     return value
 end
 
-function array_sub(array, pos_start, pos_end)
+function ARRAY_SUB(array, pos_start, pos_end)
     local result = {}
     for i = pos_start, pos_end do
         result[#result + 1] = array[i]
@@ -1000,7 +1000,7 @@ function array_sub(array, pos_start, pos_end)
 end
 
 -- 随机从数组array中取number个元素
-function array_get_rand(array, number, filter_func, arg)
+function ARRAY_GET_RAND(array, number, filter_func, arg)
     -- 保存array数组下标
     local result = {}
     for i, data in pairs(array) do
@@ -1029,11 +1029,11 @@ function array_get_rand(array, number, filter_func, arg)
     end
 
     -- result的前number个元素就是数组array随机取值的下标
-    return array_sub(result, 1, number), number
+    return ARRAY_SUB(result, 1, number), number
 end
 
 --随机排列数组
-function rand_sort_array(array)
+function RAND_SORT_ARRAY(array)
     local size = #array
     local result = DUP(array)
     local rand,temp
@@ -1047,7 +1047,7 @@ function rand_sort_array(array)
 end
 
 -- 从文本文件中按行获取信息，读入一个array
-function get_info_from_file(filename)
+function GET_INFO_FROM_FILE(filename)
     local info_array = {}
     local file_str
     filename = GET_FULL_PATH(filename)
@@ -1062,23 +1062,23 @@ function get_info_from_file(filename)
 
     -- 兼容windows、unix格式
     file_str = string.gsub(file_str, "\r\n", "\n")
-    info_array = explode(file_str, "\n")
+    info_array = EXPLODE(file_str, "\n")
 
     -- 去掉空白行
     for i, line in ipairs(info_array) do
-        line = trim(line)
+        line = TRIM(line)
         if line == "" then
             info_array[i] = nil
         else
             info_array[i] = line
         end
     end
-    clean_array(info_array)
+    CLEAN_ARRAY(info_array)
 
     return info_array
 end
 
-function get_file_json(filename)
+function GET_FILE_JSON(filename)
     local filename = GET_FULL_PATH(filename)
     local fp = io.open(filename)
     local file_str
@@ -1087,10 +1087,10 @@ function get_file_json(filename)
         file_str   = io.read("*all")
         io.close(fp)
     end
-    return decode_json(file_str)
+    return DECODE_JSON(file_str)
 end
 
-function get_file_content(filename)
+function GET_FILE_CONTENT(filename)
     local filename = GET_FULL_PATH(filename)
     local fp = io.open(filename)
     local file_str
@@ -1102,8 +1102,8 @@ function get_file_content(filename)
     return file_str
 end
 
-function is_absolute_path(path)
-    ASSERT(type(path) == "string", "is_absolute_path arg error")
+function IS_ABSOLUTE_PATH(path)
+    ASSERT(type(path) == "string", "IS_ABSOLUTE_PATH arg error")
     if string.len(path) == 0 then
         return false
     end
@@ -1122,11 +1122,11 @@ function is_absolute_path(path)
 end
 
 
-function is_valid_timer(timer_id)
-    return is_int(timer_id) and timer_id > 0
+function IS_VALID_TIMER(timer_id)
+    return IS_INT(timer_id) and timer_id > 0
 end
 
-function append_to_array(src, data)
+function APPEND_TO_ARRAY(src, data)
     if not src then
         return data
     end
@@ -1136,7 +1136,7 @@ function append_to_array(src, data)
     return src
 end
 
-function set_table_read_only(t)
+function SET_TABLE_READ_ONLY(t)
     local mt = {
         __newindex = function(t, k, v)
             error("attempt to update a read-only table!")
@@ -1147,7 +1147,7 @@ function set_table_read_only(t)
 end
 
 
-function check_sql_param_vailed(value)
+function CHECK_SQL_PARAM_VAILED(value)
     if not value then
         return true
     end
@@ -1157,47 +1157,47 @@ function check_sql_param_vailed(value)
     return true
 end
 
-function run_string(str)
+function RUN_STRING(str)
     ASSERT(type(str) == "string", "str must string")
     local f, e = loadstring(str)
     if f then
         return (f())
     else
-        ASSERT(false, string.format("run_string: %s \r\nExeption: %s", s, tostring(e)))
+        ASSERT(false, string.format("RUN_STRING: %s \r\nExeption: %s", s, tostring(e)))
     end
 end
 
-function check_table_sql_vailed(t, fields)
+function CHECK_TABLE_SQL_VAILED(t, fields)
     for _,field in ipairs(fields) do
-        if not check_sql_param_vailed(t[field]) then
+        if not CHECK_SQL_PARAM_VAILED(t[field]) then
             return false, t[field]
         end
     end
     return true
 end
 
-ASSERT(check_sql_param_vailed("1 or 1") == false)
-ASSERT(check_sql_param_vailed("1=1") == false)
-ASSERT(check_sql_param_vailed("1+1") == false)
-ASSERT(check_sql_param_vailed("1*1") == false)
-ASSERT(check_sql_param_vailed("1%1") == false)
+ASSERT(CHECK_SQL_PARAM_VAILED("1 or 1") == false)
+ASSERT(CHECK_SQL_PARAM_VAILED("1=1") == false)
+ASSERT(CHECK_SQL_PARAM_VAILED("1+1") == false)
+ASSERT(CHECK_SQL_PARAM_VAILED("1*1") == false)
+ASSERT(CHECK_SQL_PARAM_VAILED("1%1") == false)
 
 
-function memory_use()
+function MEMORY_USE()
     return collectgarbage("count")
 end
 
 -- 取得类的所有克隆对象
-function child_objects(c)
-    clean_array(c.ob_list)
+function CHILD_OBJECTS(c)
+    CLEAN_ARRAY(c.ob_list)
     return c.ob_list
 end
 
-function assert_eq(a, b, msg)
+function ASSERT_EQ(a, b, msg)
     if type(a) ~= type(b) then
         ASSERT(false, msg)
     elseif type(a) == "table" then
-        ASSERT(sizeof(a) == sizeof(b), msg)
+        ASSERT(SIZEOF(a) == SIZEOF(b), msg)
         for k,v in pairs(a) do
             ASSERT(v == b[k], msg)
         end
@@ -1206,14 +1206,7 @@ function assert_eq(a, b, msg)
     end
 end
 
-function arg_to_encode(...)
-    TRACE("xxx %o", {...})
-
-    TRACE("after encode is %o", encode_json({...}))
-    return encode_json({...})
-end
-
-function msg_to_table(net_msg)
+function MSG_TO_TABLE(net_msg)
     local msg_type = net_msg:get_msg_type()
     local name, args = net_msg:msg_to_table()
     TRACE("msg_type is %o", msg_type)
@@ -1222,7 +1215,7 @@ function msg_to_table(net_msg)
     TRACE("args is %o", args)
     if (msg_type == MSG_TYPE_JSON or msg_type == MSG_TYPE_TEXT) and type(args) == 'string' then
         --json format first arg is protocol name, repeat so remove
-        args = decode_json(args)
+        args = DECODE_JSON(args)
         table.remove(args, 1)
     end
     return name, args

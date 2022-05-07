@@ -9,7 +9,7 @@ EQUIP_TDCLS.name = "EQUIP_TDCLS"
 -- 构造函数
 function EQUIP_TDCLS:create(value)
     ASSERT(type(value) == "table", "equip::create para not corret")
-    ASSERT(is_int(value["class_id"]))
+    ASSERT(IS_INT(value["class_id"]))
 
     --装备和装扮默认为1,在基本对象中设置
     value["amount"] = nil
@@ -90,7 +90,7 @@ function EQUIP_TDCLS:save_to_mapping()
         end
     end
 
-    if sizeof(data) == 0 then
+    if SIZEOF(data) == 0 then
         return
     end
 

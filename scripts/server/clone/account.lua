@@ -39,8 +39,8 @@ function ACCOUNT_TDCLS:set_login_user(user_ob, is_reconnect)
         pre_ob:connection_lost(true)
     end
     user_ob:accept_relay(self, is_reconnect)
-    user_ob:set("account_rid", self:get_rid())
-    self:set("user_rid", user_ob:get_rid())
+    user_ob:set("account_rid", self:GET_RID())
+    self:set("user_rid", user_ob:GET_RID())
 end
 
 function ACCOUNT_TDCLS:get_user_ob()
@@ -51,10 +51,10 @@ end
 function ACCOUNT_TDCLS:connection_lost()
     -- 如果存在user对象，则用户由user管理 
     local user_ob = find_object_by_rid(self:query("user_rid"))
-    if is_object(user_ob) then
+    if IS_OBJECT(user_ob) then
         user_ob:connection_lost(true)
     else
-        destruct_object(self)
+        DESTRUCT_OBJECT(self)
     end
 end
 

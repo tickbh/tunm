@@ -8,7 +8,7 @@ DDZ_ROOM_TDCLS.name = "DDZ_ROOM_TDCLS"
 
 --构造函数
 function DDZ_ROOM_TDCLS:create(value)
-    ASSERT(is_table(value), "room:create para not correct")
+    ASSERT(IS_TABLE(value), "room:create para not correct")
 end
 
 --获取房间类型

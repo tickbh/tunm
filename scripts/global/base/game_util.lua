@@ -1,7 +1,7 @@
 --游戏相关的方法
 
 function get_ob_rid(ob)
-    ASSERT(is_object(ob), "must be a object")
+    ASSERT(IS_OBJECT(ob), "must be a object")
     return ob:query("rid")
 end
 
@@ -25,35 +25,35 @@ function check_rid_vaild(rid)
 end
 
 function set_not_in_db(ob)
-    ASSERT(is_object(ob), "must be an object")
+    ASSERT(IS_OBJECT(ob), "must be an object")
     ob:set_temp("not_in_db", true)
 end
 
 function del_not_in_db(ob)
-    ASSERT(is_object(ob), "must be an object")
+    ASSERT(IS_OBJECT(ob), "must be an object")
     ob:delete_temp("not_in_db")
 end
 
 function is_not_in_db(ob)
-    ASSERT(is_object(ob), "must be an object")
+    ASSERT(IS_OBJECT(ob), "must be an object")
     return ob:query_temp("not_in_db") == true
 end
 
 function get_owner(ob)
-    if is_object(ob) then
+    if IS_OBJECT(ob) then
         --如果没有属主，就返回自己
-        return find_object_by_rid(ob:query("owner") or ob:get_rid())
-    elseif is_table(ob) then
+        return find_object_by_rid(ob:query("owner") or ob:GET_RID())
+    elseif IS_TABLE(ob) then
         return find_object_by_rid(ob["owner"] or "")
     end
     return nil
 end
 
 function get_owner_rid(ob)
-    if is_object(ob) then
+    if IS_OBJECT(ob) then
         --如果没有属主，就返回自己
         return ob:query("owner")
-    elseif is_table(ob) then
+    elseif IS_TABLE(ob) then
         return ob["owner"]
     end
     return nil

@@ -64,7 +64,7 @@ end
 function send_room_raw_message(room_name, user_rid, record, net_data)
     --如果有回调函数，则产生一个cookie，默认cookie为该消息的第一个参数
     local cookie = 0
-    if is_table(record) and sizeof(record) ~= 0 then
+    if IS_TABLE(record) and SIZEOF(record) ~= 0 then
         cookie = new_cookie()
         local new_record = { begin_time = os.time(), callback = record[1], arg = record[2] }
         cookie_map[tostring(cookie)] = new_record
@@ -88,7 +88,7 @@ end
 function send_server_raw_message(server_id, user_rid, record, net_data)
     --如果有回调函数，则产生一个cookie，默认cookie为该消息的第一个参数
     local cookie = 0
-    if is_table(record) and sizeof(record) ~= 0 then
+    if IS_TABLE(record) and SIZEOF(record) ~= 0 then
         cookie = new_cookie()
         local new_record = { begin_time = os.time(), callback = record[1], arg = record[2] }
         cookie_map[tostring(cookie)] = new_record

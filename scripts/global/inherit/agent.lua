@@ -63,7 +63,7 @@ end
 -- 析造函数
 function AGENT_TDCLS:destruct()
     self:close_agent()
-    if is_valid_timer(self.timer_id) then
+    if IS_VALID_TIMER(self.timer_id) then
         delete_timer(self.timer_id);
         self.timer_id = -1;
     end
@@ -78,7 +78,7 @@ end
 
 -- 连接断开
 function AGENT_TDCLS:connection_lost()
-    destruct_object(self)
+    DESTRUCT_OBJECT(self)
 end
 
 -- 获取数据
@@ -173,7 +173,7 @@ function AGENT_TDCLS:send_message(msg, ...)
         -- 发送成功
         local flag = get_send_debug_flag();
         if (type(flag) == "number" and flag == 1) or
-           (type(flag) == "table" and self:is_user() and flag[self:get_rid()]) then
+           (type(flag) == "table" and self:is_user() and flag[self:GET_RID()]) then
             TRACE("################### cmd : %s ###################\n%o",
                   msg, { ... });
         end
@@ -204,7 +204,7 @@ function AGENT_TDCLS:send_raw_message(msg_buf)
         -- 发送成功
         local flag = get_send_debug_flag();
         if (type(flag) == "number" and flag == 1) or
-           (type(flag) == "table" and self:is_user() and flag[self:get_rid()]) then
+           (type(flag) == "table" and self:is_user() and flag[self:GET_RID()]) then
             TRACE("################### msg : %d ###################", net_msg:getPackId());
         end
     elseif ret == 2 then
@@ -223,7 +223,7 @@ function AGENT_TDCLS:set_authed(flag)
     self.authed = flag;
     if flag then
         -- 该 agent 通过验证，则需要删除析构的定时器
-        if is_int(self.timer_id) and self.timer_id > 0 then
+        if IS_INT(self.timer_id) and self.timer_id > 0 then
             delete_timer(self.timer_id);
             self.timer_id = -1;
         end
@@ -232,7 +232,7 @@ end
 
 -- 析构agent并写日志
 function AGENT_TDCLS:destruct_not_verify()
-    destruct_object(self);
+    DESTRUCT_OBJECT(self);
 end
 
 function AGENT_TDCLS:set_all_port_no(fport_no, port_no)

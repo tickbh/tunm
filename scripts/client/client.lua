@@ -26,7 +26,7 @@ local function main()
     local load_table={
         "user",
     }
-    set_need_load_data_num(sizeof(load_table) )
+    set_need_load_data_num(SIZEOF(load_table) )
 
     LOAD_FOLDER("share")
     

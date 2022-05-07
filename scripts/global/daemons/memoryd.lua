@@ -93,7 +93,7 @@ local function search_leak(node, parent, obj, result, parent_path, search_record
                 end
             end
 
-        elseif is_string(k) or is_int(k) then
+        elseif IS_STRING(k) or IS_INT(k) then
             current_path =  parent_path .. "/" .. k
         else
             current_path =  parent_path .. "/other type"
@@ -200,7 +200,7 @@ end
 function check_leak_obj_refs(raiser, check_weak)
     -- 获得泄漏的对象表
     local leak_object_list = get_leak_obj_list()
-    if sizeof(leak_object_list) == 0 then
+    if SIZEOF(leak_object_list) == 0 then
         TRACE("无内存泄漏\n")
         return
     end
@@ -212,7 +212,7 @@ function check_leak_obj_refs(raiser, check_weak)
 
         -- 检索该对象泄漏的引用
         search_leak(_G, {}, obj, result, parent_path, search_record, check_weak)
-        if sizeof(result) > 0 then
+        if SIZEOF(result) > 0 then
             result["leak"] = WATCH(obj)
 
             if not raiser then
@@ -255,7 +255,7 @@ function resume_timer(a, b)
             cur_times = 0
 
             -- 执行回调
-            if is_function(callback) and is_table(callback_arg) then
+            if IS_FUNCTION(callback) and IS_TABLE(callback_arg) then
                 callback(callback_arg[1], callback_arg[2])
             end
             return

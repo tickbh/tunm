@@ -30,8 +30,8 @@ local function attrib_bonus(attribs, bonus_type)
         --不存在属主，或者ob不是玩家，则不操作
         if ctr_ob and ctr_ob:query("ob_type") == OB_TYPE_USER then
 
-            local ctr_rid = ctr_ob:get_rid()
-            local ob_rid  = ob:get_rid()
+            local ctr_rid = ctr_ob:GET_RID()
+            local ob_rid  = ob:GET_RID()
 
             --依次增加属性
             for field, value in pairs(info) do
@@ -146,7 +146,7 @@ local function property_bonus(propertys, bonus_type)
         --若该对象是玩家，则加载道具
         if ob and ob:query("ob_type") == OB_TYPE_USER then
 
-            local ob_rid = ob:get_rid()
+            local ob_rid = ob:GET_RID()
             list[ob_rid] =  list[ob_rid] or {}
 
             local success, gain_list = ob:get_container():recieve_property(info)
@@ -169,7 +169,7 @@ local function caculate_bonus_property_times(property_info)
 
     for _, info in pairs(property_info) do
 
-        if is_object(info["ob"]) and info["ob"]:query("ob_type") == OB_TYPE_USER then
+        if IS_OBJECT(info["ob"]) and info["ob"]:query("ob_type") == OB_TYPE_USER then
             temp_list[info["ob"]:query("rid")] = true
         end
     end
@@ -189,7 +189,7 @@ local function caculate_bonus_attrib_times(attrib_info)
 
     for _, info in pairs(attrib_info) do
 
-        if is_object(info["ob"]) then
+        if IS_OBJECT(info["ob"]) then
 
             if info["ob"]:query("ob_type") == OB_TYPE_USER then
                 owner_rid = info["ob"]:query("rid")
@@ -237,7 +237,7 @@ end
 
 --获得奖励信息
 function calc_bonus(script, ...)
-    if is_int(script) then
+    if IS_INT(script) then
         if script > 0 then
             return (INVOKE_SCRIPT(script, ...))
         end
@@ -326,7 +326,7 @@ end
                     }   --]=]
 
 function do_bonus(bonus_info, bonus_type, show_type)
-    if not is_mapping(bonus_info) then
+    if not IS_MAPPING(bonus_info) then
         return
     end
 
@@ -340,7 +340,7 @@ function do_bonus(bonus_info, bonus_type, show_type)
 
     local attribs = bonus_info["attrib"]
     --如果有属性，执行属性奖励操作
-    if is_array(attribs) then
+    if IS_ARRAY(attribs) then
         --caculate_bonus_attrib_times(attribs)
         attrib_list = attrib_bonus(attribs, bonus_type)
     end
@@ -348,7 +348,7 @@ function do_bonus(bonus_info, bonus_type, show_type)
     local propertys = bonus_info["property"]
 
     --如果有物品则进行物品奖励
-    if is_array(propertys) then
+    if IS_ARRAY(propertys) then
         --caculate_bonus_property_times(propertys)
         property_list = property_bonus(propertys, bonus_type)
     end
@@ -358,14 +358,14 @@ function do_bonus(bonus_info, bonus_type, show_type)
         local bonus = {}
 
         -- 属性
-        if sizeof(attrib) > 0 then
+        if SIZEOF(attrib) > 0 then
             bonus["attribs"] = attrib
         end
 
         -- 没有奖励，则不需要发送
-        if sizeof(bonus) > 0 then
+        if SIZEOF(bonus) > 0 then
             local ob = find_object_by_rid(rid)
-            if is_object(ob) then
+            if IS_OBJECT(ob) then
                 ob:send_message(MSG_BONUS, bonus, show_type)
                 caculate_bonus_times_limit(ob, bonus_type)
             end
@@ -374,10 +374,10 @@ function do_bonus(bonus_info, bonus_type, show_type)
 
     --处理property_list中剩下的奖励
     for rid, property in pairs(property_list) do
-        if sizeof(property) > 0 then
+        if SIZEOF(property) > 0 then
             local bonus  = {properties = property}
             local ob     = find_object_by_rid(rid)
-            if is_object(ob) then
+            if IS_OBJECT(ob) then
                 ob:send_message(MSG_BONUS, bonus, show_type)
                 caculate_bonus_times_limit(ob, bonus_type)
             end

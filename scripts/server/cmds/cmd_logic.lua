@@ -15,7 +15,7 @@ function new_client_init(agent, port, data, ext)
     if old_agent then
         old_agent:connection_lost(true)
     end
-    local client_agent = clone_object(AGENT_TDCLS);
+    local client_agent = CLONE_OBJECT(AGENT_TDCLS);
     -- 设置端口与 agent 的映射关系
     client_agent:set_all_port_no(port, agent:get_port_no())
     client_agent:set_client_ip(ext["client_ip"])
@@ -69,7 +69,7 @@ end
 function cmd_chat( user, channel, info )
     local data = {chat_channel = channel, send_rid = user:query("rid"), recv_rid = info.recv_rid, send_name = user:query("name"), chat_info = {send_content = info.send_content, send_time = os.time()}}
     if channel == CHAT_CHANNEL_WORLD then
-        REDIS_D.run_command("PUBLISH", REDIS_CHAT_CHANNEL_WORLD, encode_json(data))
+        REDIS_D.run_command("PUBLISH", REDIS_CHAT_CHANNEL_WORLD, ENCODE_JSON(data))
     end
 
 end
@@ -87,7 +87,7 @@ function cmd_enter_room(user, info)
     end
 
     local function enter_room_callback(args, ext)
-        if not is_object(user) then
+        if not IS_OBJECT(user) then
             return
         end
 
@@ -114,7 +114,7 @@ function cmd_leave_room(user, info)
 
     local function leave_room_callback(args, ext)
         TRACE("leave_room_callback!!!")
-        if not is_object(user) then
+        if not IS_OBJECT(user) then
             return
         end
         user:send_message(MSG_LEAVE_ROOM, {room_name = room_name})

@@ -15,7 +15,7 @@ end
 
 function PLAYER_TDCLS:destruct()
     for _,v in pairs(self.carry) do
-        destruct_object(v)
+        DESTRUCT_OBJECT(v)
     end
 end
 
@@ -55,14 +55,14 @@ function PLAYER_TDCLS:load_property(object)
 end
 
 function PLAYER_TDCLS:unload_property(object)
-    if not is_object(object) then
+    if not IS_OBJECT(object) then
         return
     end
     local pos = object:query("pos")
     if pos then
         self.carry[pos] = nil
     end
-    destruct_object(object)
+    DESTRUCT_OBJECT(object)
 end
 
 function PLAYER_TDCLS:get_page_carry(page)

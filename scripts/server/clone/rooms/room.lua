@@ -8,7 +8,7 @@ ROOM_TDCLS.name = "ROOM_TDCLS"
 
 --构造函数
 function ROOM_TDCLS:create(value)
-    ASSERT(is_table(value), "room:create para not correct")
+    ASSERT(IS_TABLE(value), "room:create para not correct")
 
     --记录该场景的基本信息
     self.data = value
@@ -24,7 +24,7 @@ function ROOM_TDCLS:destruct()
         self:entity_destruct(data)
     end
     for _,table in pairs(self.desk_entity) do
-        destruct_object(table)
+        DESTRUCT_OBJECT(table)
     end
 end
 
@@ -33,7 +33,7 @@ function ROOM_TDCLS:init_desk_entity()
     self.desk_entity = {}
     local desk_num = self.data["desk_num"] or 100
     for i=1,desk_num do
-    self.desk_entity[i] = clone_object(self:get_desk_class(), self, i)
+    self.desk_entity[i] = CLONE_OBJECT(self:get_desk_class(), self, i)
     end
 end
 
@@ -66,10 +66,10 @@ end
 -- 广播消息
 function ROOM_TDCLS:broadcast_message(msg, ...)
 
-    local size = sizeof(self.room_entity)
+    local size = SIZEOF(self.room_entity)
     local config_amount = ROOM_D.get_msg_amount(msg)
     local find_object_by_rid = find_object_by_rid
-    local is_object = is_object
+    local IS_OBJECT = IS_OBJECT
     local user
     local msg_buf = pack_message(get_common_msg_type(), msg, ...)
     local send_raw_message = get_class_func(USER_TDCLS, "send_raw_message")
@@ -84,7 +84,7 @@ function ROOM_TDCLS:broadcast_message(msg, ...)
         if info.ob_type == OB_TYPE_USER then
             if  math.random(1, size) < config_amount then
                 user = find_object_by_rid(rid)
-                if is_object(user) then
+                if IS_OBJECT(user) then
                     send_raw_message(user, msg_buf)
                 else
                     self.room_entity[rid] = nil

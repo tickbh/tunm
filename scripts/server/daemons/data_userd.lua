@@ -40,7 +40,7 @@ function load_user_data_from_db(startPos)
 end
 
 function user_data_changed(info)
-    local rid = remove_get(info, "rid")
+    local rid = REMOVE_GET(info, "rid")
     if not rid then
         return
     end

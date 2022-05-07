@@ -28,7 +28,7 @@ end
 -- 定义公共接口，按照字母顺序排序
 
 -- 取得 rid
-function RID_TDCLS:get_rid()
+function RID_TDCLS:GET_RID()
     return (self:query("rid"));
 end
 

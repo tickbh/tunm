@@ -16,14 +16,14 @@ local function handle_line(line)
     local row = {}
 
     --如果为#开头，不做任何处理
-    line = trim(line)
+    line = TRIM(line)
     if string.find(line,"^#")  or string.find(line,"^\"#")then
 
     --如果开头为&则，则读取转换表
     --[[  elseif string.find(line,"^&#") or string.find(line,"^\"&#") then
         --去除头尾的"&#"
-        line = trim(string.gsub(line,"^(\"?)&#",""))
-        line = trim(string.gsub(line,"(\"?)$",""))
+        line = TRIM(string.gsub(line,"^(\"?)&#",""))
+        line = TRIM(string.gsub(line,"(\"?)$",""))
         csv["transformation"] = RESTORE_VALUE(line)]]--
     else
         line = line .. splitChar
@@ -46,12 +46,12 @@ local function handle_line(line)
             end
 
             local s     = string.sub(line,linestart+1,i-1)
-            row[#row+1] = trim(string.gsub(s,"\"\"","\""))
+            row[#row+1] = TRIM(string.gsub(s,"\"\"","\""))
             linestart   = string.find(line,splitChar,i) + 1
 
             else
                 local nexti = string.find(line, splitChar, linestart)
-                row[#row+1] = trim(string.sub(line,linestart,nexti-1))
+                row[#row+1] = TRIM(string.sub(line,linestart,nexti-1))
                 linestart   = nexti + 1
             end
         until linestart > string.len(line)
@@ -116,11 +116,11 @@ function array_to_mapping(array)
                 --如果字段类型为string则不需还原
                 if fieldtype[j] == "string" then
                     row[fieldname[j]] = array[i][j]
-                elseif fieldtype[j] == "int" and sizeof(array[i][j]) == 0 then
+                elseif fieldtype[j] == "int" and SIZEOF(array[i][j]) == 0 then
                     row[fieldname[j]] = 0
                 elseif fieldtype[j] == "table" then
-                    row[fieldname[j]] = restore_json(array[i][j])
-                elseif fieldtype[j] == "float" and sizeof(array[i][j]) == 0 then
+                    row[fieldname[j]] = RESTORE_JSON(array[i][j])
+                elseif fieldtype[j] == "float" and SIZEOF(array[i][j]) == 0 then
                     row[fieldname[j]] = 0
                 else
                     row[fieldname[j]] = RESTORE_VALUE(array[i][j])
@@ -129,18 +129,18 @@ function array_to_mapping(array)
 
             if fieldtype[1] == "string" then
                 mapping[array[i][1]] = row
-            elseif fieldtype[1] == "int" and sizeof(array[i][1]) == 0 then
+            elseif fieldtype[1] == "int" and SIZEOF(array[i][1]) == 0 then
                 mapping[0] = row
-            elseif fieldtype[1] == "float" and sizeof(array[i][1]) == 0 then
+            elseif fieldtype[1] == "float" and SIZEOF(array[i][1]) == 0 then
                 mapping[0] = row
-            elseif fieldtype[1] == "table" and sizeof(array[i][1]) == 0 then
+            elseif fieldtype[1] == "table" and SIZEOF(array[i][1]) == 0 then
                 row[{}] = row
             else
                 local index = RESTORE_VALUE(array[i][1])
                 if not index then
                     print(R.."%o未定义! 配置表结构如下:\n%o\n"..W, array[i][1], fieldname)
                 end
-                mapping[index] = set_table_read_only(row)
+                mapping[index] = SET_TABLE_READ_ONLY(row)
             end
         end
     end
@@ -167,11 +167,11 @@ function array_to_tables(array)
             --如果字段类型为string则不需还原
             if fieldtype[j] == "string" then
                 row[fieldname[j]] = array[i][j]
-            elseif fieldtype[j] == "int" and sizeof(array[i][j]) == 0 then
+            elseif fieldtype[j] == "int" and SIZEOF(array[i][j]) == 0 then
                 row[fieldname[j]] = 0
             elseif fieldtype[j] == "table" then
-                row[fieldname[j]] = restore_json(array[i][j])
-           elseif fieldtype[j] == "float" and sizeof(array[i][j]) == 0  then
+                row[fieldname[j]] = RESTORE_JSON(array[i][j])
+           elseif fieldtype[j] == "float" and SIZEOF(array[i][j]) == 0  then
                 row[fieldname[j]] = 0
             else
                 row[fieldname[j]] = RESTORE_VALUE(array[i][j])
@@ -188,12 +188,12 @@ end
 function build_mapping(table, field_key, field_value)
     local result = {}
     -- readcsv_to_tables产生的类型
-    if is_array(table) then
+    if IS_ARRAY(table) then
         for _, value in ipairs(table) do
             result[value[field_key]] = value[field_value]
         end
     -- readcsv_to_mapping产生的类型
-    elseif is_table(table) then
+    elseif IS_TABLE(table) then
         for _, value in pairs(table) do
             result[value[field_key]] = value[field_value]
         end
@@ -238,8 +238,8 @@ end
 -- 从csv读取出来的数组中提取一列
 function extract_column(csv_tables, column_name)
     -- mapping类型而非tables类型，需要作转化
-    if not is_array(csv_tables) then
-        if not is_table(csv_tables) then
+    if not IS_ARRAY(csv_tables) then
+        if not IS_TABLE(csv_tables) then
             return nil
         else
             local temp = {}
@@ -279,7 +279,7 @@ function readcsv_column_to_array(file, column_name)
 end
 
 --去除字符两端的空格
-function trim(s)
+function TRIM(s)
     return (string.gsub(s, "^%s*(.-)%s*$", "%1"))
 end
 

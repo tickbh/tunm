@@ -12,15 +12,15 @@ local gate_prefix = "{GATE:IP}"
 local redis_gate_prefix = "{GATE:IP}:*"
 
 function close_connecting_info()
-    if is_object(connect_agent) then
-        destruct_object(connect_agent)
+    if IS_OBJECT(connect_agent) then
+        DESTRUCT_OBJECT(connect_agent)
         connect_agent = nil
-        if is_valid_timer(connect_timer) then
+        if IS_VALID_TIMER(connect_timer) then
             delete_timer(connect_timer)
         end
         connect_timer = -1
     else
-        if is_valid_timer(heartbeat_timer) then
+        if IS_VALID_TIMER(heartbeat_timer) then
             delete_timer(heartbeat_timer)
         end
         heartbeat_timer = -1
@@ -31,13 +31,13 @@ local function gate_heartbeat_network()
     local agents = get_all_agents()
     local key = string.format("%s:%s:%d", gate_prefix, CURRENT_IP, GATE_LOGIC_PORT)
     -- TRACE("gate_heartbeat_network key %o", key)
-    REDIS_D.run_command("SET", key, sizeof(agents))
+    REDIS_D.run_command("SET", key, SIZEOF(agents))
     REDIS_D.run_command("EXPIRE", key, timeout)
 end
 
 local function logic_connect_callback(agent, arg)
-    if is_object(connect_agent) then
-        destruct_object(connect_agent)
+    if IS_OBJECT(connect_agent) then
+        DESTRUCT_OBJECT(connect_agent)
         connect_agent = nil
     end
     agent:set_server_type(SERVER_TYPE_GATE)
@@ -63,7 +63,7 @@ end
 
 --找出负载最低的网关进行连接
 local function logic_check_connection()
-    if is_object(connect_agent) then
+    if IS_OBJECT(connect_agent) then
         return
     end
 
