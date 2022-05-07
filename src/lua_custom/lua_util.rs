@@ -12,8 +12,15 @@ use {MaJiang, LuaEngine};
 static ENCODE_MAP: &'static [u8; 32] = b"0123456789ACDEFGHJKLMNPQRSTUWXYZ";
 
 
-fn lua_print(_method : u8, val: String) {
-    println!("{}", val);
+fn lua_print(method : u8, val: String) {
+    match method {
+        1 => error!("{}", val),
+        2 => warn!("{}", val),
+        3 => info!("{}", val),
+        4 => debug!("{}", val),
+        5 => trace!("{}", val),
+        _ => trace!("{}", val),
+    };
     TelnetUtils::instance().new_message(val);
 }
 
@@ -110,8 +117,9 @@ fn get_file_str(path: String) -> String {
 }
 
 fn get_msg_type(name: String) -> String {
-    let proto = NetConfig::instance().get_proto_msg_type(&name);
-    proto.map(|s| s.clone()).unwrap_or("".to_string())
+    // let proto = NetConfig::instance().get_proto_msg_type(&name);
+    // proto.map(|s| s.clone()).unwrap_or("".to_string())
+    String::new()
 }
 
 fn time_ms() -> u32 {

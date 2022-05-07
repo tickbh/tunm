@@ -77,4 +77,4 @@ function READ_MSG_NAME(all)
 end
 
 local test = "[  \"aaaaaafdsgf_fsd\", xxxx]"
-trace("msg name is %o", READ_MSG_NAME(test))
+trace("msg name is 111111111111 %o", READ_MSG_NAME(test))

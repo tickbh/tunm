@@ -3,10 +3,11 @@ use std::collections::HashMap;
 use super::DbTrait;
 use {NetResult, NetMsg, NetConfig, TimeUtils};
 
-use td_rp::{self, Value, encode_proto};
+use rt_proto::{self, Value, encode_proto};
 
 use rusqlite;
 use rusqlite::{Connection, params};
+use rusqlite::types::ValueRef;
 
 static DB_RESULT_PROTO: &'static str = "msg_db_result";
 static LAST_INSERT_ID: &'static str = "sys_last_insert_id";
@@ -41,7 +42,7 @@ impl DbSqlite {
 
 impl DbTrait for DbSqlite {
     fn select(&mut self, sql_cmd: &str, msg: &mut NetMsg) -> NetResult<i32> {
-        try!(self.check_connect());
+        self.check_connect()?;
         let config = NetConfig::instance();
         let mut array = vec![];
         let mut success = 0;
@@ -68,41 +69,18 @@ impl DbTrait for DbSqlite {
                 self.error = None;
                 while let Some(row) = rows.next().ok() {
                     let row = unwrap_or!(row, continue);
-                    let mut hash = HashMap::<String, Value>::new();
+                    let mut hash = HashMap::<Value, Value>::new();
                     
                     for i in 0..column_names.len() {
+                        let val = match row.get_ref_unwrap(i) {
+                            ValueRef::Null => Value::Nil,
+                            ValueRef::Integer(sub_val) => Value::from(sub_val as i64),
+                            ValueRef::Real(sub_val) => Value::from(sub_val as f64),
+                            ValueRef::Text(sub_val) => Value::from(String::from_utf8_lossy(sub_val).to_string()),
+                            ValueRef::Blob(sub_val) => Value::from(sub_val.to_vec()),
+                        };
                         let column_name = &column_names[i as usize];
-                        let field = unwrap_or!(config.get_field_by_name(column_name), continue);
-                        match td_rp::get_type_by_name(&*field.pattern) {
-                            td_rp::TYPE_U8 => {
-                                hash.insert(column_name.clone(), Value::from(unwrap_or!(row.get::<_, i32>(i).ok(), continue) as u8));
-                            }
-                            td_rp::TYPE_I8 => {
-                                hash.insert(column_name.clone(), Value::from(unwrap_or!(row.get::<_, i32>(i).ok(), continue) as i8));
-                            }
-                            td_rp::TYPE_U16 => {
-                                hash.insert(column_name.clone(), Value::from(unwrap_or!(row.get::<_, i32>(i).ok(), continue) as u16));
-                            }
-                            td_rp::TYPE_I16 => {
-                                hash.insert(column_name.clone(), Value::from(unwrap_or!(row.get::<_, i32>(i).ok(), continue) as i16));
-                            }
-                            td_rp::TYPE_U32 => {
-                                hash.insert(column_name.clone(), Value::from(unwrap_or!(row.get::<_, i32>(i).ok(), continue) as u32));
-                            }
-                            td_rp::TYPE_I32 => {
-                                hash.insert(column_name.clone(), Value::from(unwrap_or!(row.get::<_, i32>(i).ok(), continue) as i32));
-                            }
-                            td_rp::TYPE_FLOAT => {
-                                hash.insert(column_name.clone(), Value::from(unwrap_or!(row.get::<_, f64>(i).ok(), continue) as f32));
-                            }
-                            td_rp::TYPE_STR => {
-                                hash.insert(column_name.clone(), Value::from(unwrap_or!(row.get::<_, String>(i).ok(), continue)));
-                            }
-                            td_rp::TYPE_RAW => {
-                                hash.insert(column_name.clone(), Value::from(unwrap_or!(row.get::<_, Vec<u8>>(i).ok(), continue)));
-                            }
-                            _ => continue,
-                        }
+                        hash.insert(Value::from(column_name.clone()), val);
                     }
                     array.push(Value::from(hash));
                 }
@@ -116,15 +94,14 @@ impl DbTrait for DbSqlite {
                 return Ok(success);
             }
         }
-        try!(encode_proto(msg.get_buffer(),
-                          config,
+        encode_proto(msg.get_buffer(),
                           &DB_RESULT_PROTO.to_string(),
-                          vec![Value::AMap(array)]));
+                          array)?;
         Ok(0)
     }
 
     fn execute(&mut self, sql_cmd: &str) -> NetResult<i32> {
-        try!(self.check_connect());
+        self.check_connect()?;
         let mut success = 0;
         match self.conn.execute(sql_cmd, params![]) {
             Err(err) => {
@@ -144,21 +121,20 @@ impl DbTrait for DbSqlite {
 
 
     fn insert(&mut self, sql_cmd: &str, msg: &mut NetMsg) -> NetResult<i32> {
-        try!(self.check_connect());
+        self.check_connect()?;
         let value = self.conn.execute(sql_cmd, params![]);
         let mut success: i32 = 0;
         match value {
             Ok(_) => {
                 self.last_insert_id = self.conn.last_insert_rowid() as u64;
                 let mut array = vec![];
-                let mut hash = HashMap::<String, Value>::new();
-                hash.insert(LAST_INSERT_ID.to_string(),
+                let mut hash = HashMap::<Value, Value>::new();
+                hash.insert(Value::from(LAST_INSERT_ID.to_string()),
                             Value::from(self.last_insert_id as u32));
                 array.push(Value::from(hash));
-                try!(encode_proto(msg.get_buffer(),
-                                  NetConfig::instance(),
+                encode_proto(msg.get_buffer(),
                                   &DB_RESULT_PROTO.to_string(),
-                                  vec![Value::AMap(array)]));
+                                  array)?;
                 self.error = None;
             }
             Err(val) => {

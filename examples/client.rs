@@ -1,7 +1,6 @@
 #[macro_use(raw_to_ref)]
 extern crate tdengine;
 
-extern crate td_proto_rust as td_rp;
 use tdengine::{NetConfig, GlobalConfig, LuaEngine, register_custom_func, EventMgr, FileUtils, DbPool, RedisPool};
 
 use std::env;
@@ -16,7 +15,6 @@ fn main() {
     assert_eq!(success, true);
 
     let global_config = GlobalConfig::instance();
-    let success = NetConfig::change_by_file(&*global_config.net_info);
     assert_eq!(success, true);
 
     let success = DbPool::instance().set_db_info(global_config.db_info.clone());

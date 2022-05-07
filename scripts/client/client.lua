@@ -5,12 +5,14 @@ function update(name)
     name = string.gsub(name, ".lua", "") .. ".lua";
     local full_name = get_full_path(name);
     require(full_name);
+    trace("update file name = %o", name)
     -- 回收垃圾
     collectgarbage("collect");
 end
 
 update("global/base/util");
 update("global/base/load_folder");
+trace("??????????????")
 
 local function main()
     load_folder("global/include");

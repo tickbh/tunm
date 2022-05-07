@@ -1,7 +1,6 @@
 extern crate mysql as my;
 #[macro_use(raw_to_ref)]
 extern crate tdengine;
-// extern crate td_proto_rust as td_rp;
 
 // use tdengine::{DbTrait, DbMysql, NetMsg, NetConfig};
 
@@ -58,7 +57,7 @@ fn main() {
     // let mut net_msg = NetMsg::new();
     // sql_db.select("SELECT customer_id, amount, account_name from tmp.payment", &mut net_msg);
     // net_msg.set_read_data();
-    // let val = td_rp::decode_proto(net_msg.get_buffer(), instance);
+    // let val = rt_proto::decode_proto(net_msg.get_buffer(), instance);
     // println!("val = {:?}", val);
 
     //     let _ = env_logger::init();

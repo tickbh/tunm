@@ -1,153 +1,115 @@
 use td_rlua::{self, lua_State, LuaRead};
-use td_rp::*;
+use rt_proto::*;
 use std::collections::HashMap;
 use LuaUtils;
 pub struct NetUtils;
 
 impl NetUtils {
     pub fn lua_read_value(lua: *mut lua_State,
-                          config: &Config,
-                          index: i32,
-                          arg: &str)
+                          index: i32)
                           -> Option<Value> {
-        let t = get_type_by_name(arg);
-        let value = match t {
-            TYPE_NIL => None,
-            TYPE_U8 => {
-                let val: u8 = unwrap_or!(LuaRead::lua_read_at_position(lua, index), return None);
-                Some(Value::from(val))
-            }
-            TYPE_I8 => {
-                let val: i8 = unwrap_or!(LuaRead::lua_read_at_position(lua, index), return None);
-                Some(Value::from(val))
-            }
-            TYPE_U16 => {
-                let val: u16 = unwrap_or!(LuaRead::lua_read_at_position(lua, index), return None);
-                Some(Value::from(val))
-            }
-            TYPE_I16 => {
-                let val: i16 = unwrap_or!(LuaRead::lua_read_at_position(lua, index), return None);
-                Some(Value::from(val))
-            }
-            TYPE_U32 => {
-                let val: u32 = unwrap_or!(LuaRead::lua_read_at_position(lua, index), return None);
-                Some(Value::from(val))
-            }
-            TYPE_I32 => {
-                let val: i32 = unwrap_or!(LuaRead::lua_read_at_position(lua, index), return None);
-                Some(Value::from(val))
-            }
-            TYPE_FLOAT => {
-                let val: f32 = unwrap_or!(LuaRead::lua_read_at_position(lua, index), return None);
-                Some(Value::from(val))
-            }
-            TYPE_STR => {
-                let val: String = unwrap_or!(LuaRead::lua_read_at_position(lua, index),
-                                             return None);
-                Some(Value::from(val))
-            }
-            TYPE_RAW => {
-
-                let dst = unwrap_or!(LuaUtils::read_str_to_vec(lua, index), return None);
-                Some(Value::from(dst))
-            }
-            TYPE_MAP => {
-                let mut val: HashMap<String, Value> = HashMap::new();
-                unsafe {
-                    td_rlua::lua_pushnil(lua);
-                    let t = if index < 0 {
-                        index - 1
+        unsafe {
+            let t = td_rlua::lua_type(lua, index);
+            let value = match t {
+                td_rlua::LUA_TBOOLEAN => {
+                    let val: bool = unwrap_or!(LuaRead::lua_read_at_position(lua, index), return None);
+                    Some(Value::from(val))
+                }
+                td_rlua::LUA_TNUMBER => {
+                    let val: f64 = unwrap_or!(LuaRead::lua_read_at_position(lua, index), return None);
+                    if val - val.floor() < 0.001 {
+                        Some(Value::from(val as u32))
                     } else {
-                        index
-                    };
-                    while td_rlua::lua_istable(lua, t) && td_rlua::lua_next(lua, t) != 0 {
-                        let key: String = unwrap_or!(LuaRead::lua_read_at_position(lua, -2),
-                                                     return None);
-                        let field = config.get_field_by_name(&key);
-                        if field.is_some() {
-                            let sub_val = NetUtils::lua_read_value(lua,
-                                                                   config,
-                                                                   -1,
-                                                                   &*field.unwrap().pattern);
-                            if sub_val.is_none() {
-                                return None;
-                            }
-                            val.insert(key, sub_val.unwrap());
-                        }
-                        td_rlua::lua_pop(lua, 1);
+                        Some(Value::from(val as f32))
                     }
                 }
-                Some(Value::from(val))
-            }
-            TYPE_AU8 |
-            TYPE_AI8 |
-            TYPE_AU16 |
-            TYPE_AI16 |
-            TYPE_AU32 |
-            TYPE_AI32 |
-            TYPE_AFLOAT |
-            TYPE_ASTR |
-            TYPE_ARAW |
-            TYPE_AMAP => {
-                let mut val: Vec<Value> = Vec::new();
-                unsafe {
-                    if !td_rlua::lua_istable(lua, index) {
-                        return None;
+                td_rlua::LUA_TSTRING => {
+                    if let Some(val) = LuaRead::lua_read_at_position(lua, index) {
+                        Some(Value::Str(val))
+                    } else {
+                        let dst = unwrap_or!(LuaUtils::read_str_to_vec(lua, index), return None);
+                        Some(Value::from(dst))
                     }
-                    let len = td_rlua::lua_rawlen(lua, index);
-                    for i in 1..(len + 1) {
-                        td_rlua::lua_pushnumber(lua, i as f64);
-                        let new_index = if index < 0 {
-                            index - 1
-                        } else {
-                            index
-                        };
-                        td_rlua::lua_gettable(lua, new_index);
-                        let sub_val = NetUtils::lua_read_value(lua,
-                                                               config,
-                                                               -1,
-                                                               get_name_by_type(t - TYPE_STEP));
-                        if sub_val.is_none() {
+                }
+                td_rlua::LUA_TTABLE => {
+                    unsafe {
+                        if !td_rlua::lua_istable(lua, index) {
                             return None;
                         }
-                        val.push(sub_val.unwrap());
-                        td_rlua::lua_pop(lua, 1);
+                        let len = td_rlua::lua_rawlen(lua, index);
+                        if len > 0 {
+                            let mut val: Vec<Value> = Vec::new();
+                            for i in 1..(len + 1) {
+                                td_rlua::lua_pushnumber(lua, i as f64);
+                                let new_index = if index < 0 {
+                                    index - 1
+                                } else {
+                                    index
+                                };
+                                td_rlua::lua_gettable(lua, new_index);
+                                let sub_val = NetUtils::lua_read_value(lua,
+                                                                       -1);
+                                if sub_val.is_none() {
+                                    return None;
+                                }
+                                val.push(sub_val.unwrap());
+                                td_rlua::lua_pop(lua, 1);
+                            }
+                            Some(Value::from(val))
+                        } else {
+                            let mut val: HashMap<Value, Value> = HashMap::new();
+                            unsafe {
+                                td_rlua::lua_pushnil(lua);
+                                let t = if index < 0 {
+                                    index - 1
+                                } else {
+                                    index
+                                };
+        
+                                let mut sure_idx = 0u32;
+                                
+                                while td_rlua::lua_istable(lua, t) && td_rlua::lua_next(lua, t) != 0 {
+                                    sure_idx += 1;
+                                    let sub_val = unwrap_or!(NetUtils::lua_read_value(lua, -1), return None);
+                                    let value = if td_rlua::lua_isnumber(lua, -2) != 0 {
+                                        let idx: u32 = unwrap_or!(LuaRead::lua_read_at_position(lua, -2),
+                                        return None);
+                                        // if sure_idx == idx {
+                                        //     arr.push(sub_val);
+                                        //     continue;
+                                        // }
+                                        Value::from(idx)
+                                    } else {
+                                        let key: String = unwrap_or!(LuaRead::lua_read_at_position(lua, -2),
+                                        return None);
+                                        Value::from(key)
+                                    };
+                                    val.insert(value, sub_val);
+                                    td_rlua::lua_pop(lua, 1);
+                                }
+                            }
+                            // if arr.len() != 0 {
+                            //     Some(Value::from(arr))
+                            // } else {
+                            Some(Value::from(val))
+                            // }
+                        }
                     }
                 }
-                match t {
-                    TYPE_AU8 => Some(Value::AU8(val)),
-                    TYPE_AI8 => Some(Value::AI8(val)),
-                    TYPE_AU16 => Some(Value::AU16(val)),
-                    TYPE_AI16 => Some(Value::AI16(val)),
-                    TYPE_AU32 => Some(Value::AU32(val)),
-                    TYPE_AI32 => Some(Value::AI32(val)),
-                    TYPE_AFLOAT => Some(Value::AFloat(val)),
-                    TYPE_ASTR => Some(Value::AStr(val)),
-                    TYPE_ARAW => Some(Value::ARaw(val)),
-                    TYPE_AMAP => Some(Value::AMap(val)),
-                    _ => None,
-                }
-            }
-            _ => None,
-        };
-        value
+                _ => Some(Value::Nil),
+            };
+            value
+        }
     }
 
     pub fn lua_convert_value(lua: *mut lua_State,
-                             config: &Config,
-                             index: i32,
-                             args: &Vec<String>)
+                             index: i32)
                              -> Option<Vec<Value>> {
         let size = unsafe { td_rlua::lua_gettop(lua) - index + 1 };
-        if size != args.len() as i32 {
-            return None;
-        }
         let mut val: Vec<Value> = Vec::new();
         for i in 0..size {
             let sub_val = NetUtils::lua_read_value(lua,
-                                                   config,
-                                                   i + index,
-                                                   &*args.get(i as usize).unwrap());
+                                                   i + index);
             if sub_val.is_none() {
                 return None;
             }

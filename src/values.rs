@@ -1,7 +1,7 @@
 use std::error;
 use std::fmt;
 use std::io;
-use td_rp::RpError;
+use rt_proto::RpError;
 
 /// An enum of all error kinds.
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
@@ -129,13 +129,13 @@ impl fmt::Display for NetError {
         match self.repr {
             ErrorRepr::WithDescription(_, desc) => desc.fmt(f),
             ErrorRepr::WithDescriptionAndDetail(_, desc, ref detail) => {
-                try!(desc.fmt(f));
-                try!(f.write_str(": "));
+                desc.fmt(f)?;
+                f.write_str(": ")?;
                 detail.fmt(f)
             }
             ErrorRepr::ExtensionError(ref code, ref detail) => {
-                try!(code.fmt(f));
-                try!(f.write_str(": "));
+                code.fmt(f)?;
+                f.write_str(": ")?;
                 detail.fmt(f)
             }
             ErrorRepr::IoError(ref err) => err.fmt(f),

@@ -1,8 +1,9 @@
-use std::io;
+    use std::io;
 use std::io::prelude::*;
 use std::path::Path;
 use std::env;
 use std::fs::{self, File};
+
 
 static mut EL: *mut FileUtils = 0 as *mut _;
 
@@ -30,10 +31,10 @@ impl FileUtils {
     }
 
     pub fn get_file_data(file_name: &str) -> io::Result<Vec<u8>> {
-        let mut f = try!(File::open(file_name));
+        let mut f = File::open(file_name)?;
         let mut buffer = Vec::new();
         // read the whole file
-        try!(f.read_to_end(&mut buffer));
+        f.read_to_end(&mut buffer)?;
         Ok(buffer)
     }
 
@@ -80,10 +81,10 @@ impl FileUtils {
     }
 
     pub fn list_files(dir: &Path, files: &mut Vec<String>, deep: bool) -> io::Result<()> {
-        if try!(fs::metadata(dir)).is_dir() {
-            for entry in try!(fs::read_dir(dir)) {
-                let entry = try!(entry);
-                if try!(fs::metadata(entry.path())).is_dir() {
+        if fs::metadata(dir)?.is_dir() {
+            for entry in fs::read_dir(dir)? {
+                let entry = entry?;
+                if fs::metadata(entry.path())?.is_dir() {
                     if deep {
                         let _ = Self::list_files(&entry.path(), files, deep);
                     }

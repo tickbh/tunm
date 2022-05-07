@@ -25,7 +25,7 @@ impl Handler for WebsocketClient {
     
     fn on_open(&mut self, shake: Handshake) -> Result<()> {
         let mut addr = "unkown_ip".to_string();
-        if let Some(ip_addr) = try!(shake.remote_addr()) {
+        if let Some(ip_addr) = shake.remote_addr()? {
             addr = format!("{}", ip_addr);
         }
 
@@ -93,12 +93,12 @@ impl Handler for WebsocketServer {
 
     fn on_open(&mut self, shake: Handshake) -> Result<()> {
         let mut addr = "unkown_ip".to_string();
-        if let Some(ip_addr) = try!(shake.remote_addr()) {
+        if let Some(ip_addr) = shake.remote_addr()? {
             addr = format!("{}", ip_addr);
         }
 
         if let Some(t) = self.open_timeout.take() {
-            try!(self.out.cancel(t))
+            self.out.cancel(t)?
         }
         self.open_timeout = None;
 
@@ -178,7 +178,7 @@ impl Handler for WebsocketServer {
         // Cancel the old timeout and replace.
         if event == CONNECT {
             if let Some(t) = self.open_timeout.take() {
-                try!(self.out.cancel(t))
+                self.out.cancel(t)?
             }
             self.open_timeout = Some(timeout);
         }

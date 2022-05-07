@@ -77,6 +77,9 @@ local function init_network_status()
         listen_server(GATE_CLIENT_PORT)
         listen_http("0.0.0.0:" .. GATE_HTTP_PORT)
         listen_websocket("0.0.0.0", tonumber(GATE_WEBSOCKET_PORT))
+
+        trace("listen http server:%o", "0.0.0.0:" .. GATE_HTTP_PORT)
+        trace("listen websocket server:%o", "0.0.0.0:" .. GATE_WEBSOCKET_PORT)
         
         CURRENT_IP = CURRENT_IP or "127.0.0.1"
         gate_heartbeat_network()
@@ -101,5 +104,6 @@ local function init()
     init_network_status()
 end
 
+trace("fuck")
 create()
 register_post_data_init(init)

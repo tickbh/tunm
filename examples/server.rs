@@ -1,19 +1,24 @@
 extern crate mysql as my;
+extern crate log;
+extern crate env_logger;
 #[macro_use(raw_to_ref)]
 extern crate tdengine;
 
-extern crate td_proto_rust as td_rp;
 extern crate td_rthreadpool;
 extern crate td_revent;
 
 
-use td_revent::{EventLoop, EventEntry, EventFlags};
+use env_logger::{Builder, Target};
+use log::{warn, info};
+use td_revent::{EventLoop, EventEntry, EventFlags, CellAny, RetValue};
 use tdengine::{NetConfig, GlobalConfig, LuaEngine, register_custom_func, EventMgr, FileUtils, DbPool, RedisPool, TelnetUtils, LogUtils};
 
 use std::env;
 
 
 fn main() {
+    log4rs::init_file("config/log4rs.yml", Default::default()).unwrap();
+    warn!("fuck!!");
     let args = env::args();
     for arg in args {
         println!("args {:?}", arg);    
@@ -23,7 +28,6 @@ fn main() {
     assert_eq!(success, true);
 
     let global_config = GlobalConfig::instance();
-    let success = NetConfig::change_by_file(&*global_config.net_info);
     assert_eq!(success, true);
 
     let success = DbPool::instance().set_db_info(global_config.db_info.clone());
@@ -60,9 +64,11 @@ fn main() {
 
 
     //timer check server status, example db connect is idle 
-    fn check_server_status(_ : &mut EventLoop, _ : u32, _ : EventFlags, _ : *mut ()) -> i32 {
+    fn check_server_status(
+        ev: &mut EventLoop,
+        _timer: u32, _ : Option<&mut CellAny>) -> (RetValue, u64) {
         DbPool::instance().check_connect_timeout();
-        0
+        (RetValue::OK, 0)
     }
     EventMgr::instance().get_event_loop().add_timer(EventEntry::new_timer(5 * 60 * 1000_000, true, Some(check_server_status), None)); 
 

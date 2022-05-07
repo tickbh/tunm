@@ -86,7 +86,7 @@ function trace(value,...)
                                                 end)
     end
 
-    lua_print(0, value)
+    lua_print(3, value)
 end
 
 -- 自定义调用栈输出

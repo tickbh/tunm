@@ -293,7 +293,7 @@ impl Handler for Server {
 
     fn on_open(&mut self, shake: Handshake) -> Result<()> {
         let mut addr = "unkown_ip".to_string();
-        if let Some(ip_addr) = try!(shake.remote_addr()) {
+        if let Some(ip_addr) = shake.remote_addr()? {
             addr = format!("{}", ip_addr);
         }
 

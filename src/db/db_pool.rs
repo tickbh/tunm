@@ -140,12 +140,12 @@ impl PoolTrait for DbMysql {
     }
 
     fn init_db_trait(pool: &mut DbPool, db_name: &String) -> Option<DbMysql> {
-        let info = pool.db_info.get(&db_name.to_string());
+        let mut info = pool.db_info.get(&db_name.to_string());
         if info.is_none() {
             info = pool.db_info.get(&"mysql".to_string());
         }
         let info = unwrap_or!(info, return None);
-        let mut opts: Opts = DbMysql::from_url_basic(&**info).unwrap();
+        let opts: Opts = DbMysql::from_url_basic(&**info).unwrap();
         let opts = OptsBuilder::from_opts(opts).db_name(Some(db_name.clone()));
         // opts.db_name(db_name.clone());
         println!("opts = {:?}", opts);

@@ -22,12 +22,15 @@ tiny_http = { version = "0.11.0", default-features = false }
 td_rlua = "0.2.0"
 td_revent = "0.3.0"
 td_proto_rust = "0.1.2"
+rt_proto = "0.1.4"
 td_rredis = "0.1.0"
 td_rthreadpool = "0.1.1"
 sys-info = "0.9.1"
 url = "2.2.2"
 psocket="0.1.5"
 log="0.4.17"
+env_logger = "0.9.0"
+log4rs = "1.1.1"
 reqwest = { version = "0.11", features = ["blocking", "json"] }
 mysql = { version = "22.1.0", no-default-features = true }
 #rusqlite = { git = "https://github.com/tickbh/rusqlite.git" }

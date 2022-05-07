@@ -1,22 +1,39 @@
 use std::collections::HashMap;
 use libc;
-
-use td_rp::Value;
+use std::hash::Hash;
+use rt_proto::Value;
 use td_rlua::{self, LuaPush, lua_State};
 /// the wrapper for push to lua
+
+#[derive(PartialEq, Clone)]
 pub struct LuaWrapperValue(pub Value);
+
+impl Eq for LuaWrapperValue {
+}
+
+impl Hash for LuaWrapperValue {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        core::mem::discriminant(&self.0).hash(state);
+    }
+}
+
+
 
 impl LuaPush for LuaWrapperValue {
     fn push_to_lua(self, lua: *mut lua_State) -> i32 {
         match self.0 {
             Value::Nil => ().push_to_lua(lua),
+            Value::Bool(val) => val.push_to_lua(lua),
             Value::U8(val) => val.push_to_lua(lua),
             Value::I8(val) => val.push_to_lua(lua),
             Value::U16(val) => val.push_to_lua(lua),
             Value::I16(val) => val.push_to_lua(lua),
             Value::U32(val) => val.push_to_lua(lua),
             Value::I32(val) => val.push_to_lua(lua),
+            Value::U64(val) => val.push_to_lua(lua),
+            Value::I64(val) => val.push_to_lua(lua),
             Value::Float(val) => val.push_to_lua(lua),
+            Value::Double(val) => val.push_to_lua(lua),
             Value::Str(val) => val.push_to_lua(lua),
             Value::Raw(val) => {
                 unsafe {
@@ -25,22 +42,13 @@ impl LuaPush for LuaWrapperValue {
                 1
             }
             Value::Map(mut val) => {
-                let mut wrapper_val: HashMap<String, LuaWrapperValue> = HashMap::new();
+                let mut wrapper_val: HashMap<LuaWrapperValue, LuaWrapperValue> = HashMap::new();
                 for (k, v) in val.drain() {
-                    wrapper_val.insert(k, LuaWrapperValue(v));
+                    wrapper_val.insert(LuaWrapperValue(k), LuaWrapperValue(v));
                 }
                 wrapper_val.push_to_lua(lua)
             }
-            Value::AU8(mut val) |
-            Value::AI8(mut val) |
-            Value::AU16(mut val) |
-            Value::AI16(mut val) |
-            Value::AU32(mut val) |
-            Value::AI32(mut val) |
-            Value::AFloat(mut val) |
-            Value::AStr(mut val) |
-            Value::ARaw(mut val) |
-            Value::AMap(mut val) => {
+            Value::Arr(mut val) => {
                 let mut wrapper_val: Vec<LuaWrapperValue> = vec![];
                 for v in val.drain(..) {
                     wrapper_val.push(LuaWrapperValue(v));

@@ -78,7 +78,7 @@ extern "C" fn pack_raw_message(lua: *mut td_rlua::lua_State) -> libc::c_int {
 }
 
 fn get_message_type(msg: String) -> String {
-    NetConfig::instance().get_proto_msg_type(&msg).map(|s| s.clone()).unwrap_or(String::new())
+    return String::new();
 }
 
 extern "C" fn listen_server(lua: *mut td_rlua::lua_State) -> libc::c_int {
@@ -177,15 +177,15 @@ fn listen_websocket(url: String, port: u16) {
 }
 
 fn update_net_message(path: String) {
-    let success = {
-        if path.len() == 0 {
-            let global_config = GlobalConfig::instance();
-            NetConfig::change_by_file(&*global_config.net_info)
-        } else {
-            NetConfig::change_by_file(&*path)
-        }
-    };
-    println!("update_net_message {:?}", success);
+    // let success = {
+    //     if path.len() == 0 {
+    //         let global_config = GlobalConfig::instance();
+    //         NetConfig::change_by_file(&*global_config.net_info)
+    //     } else {
+    //         NetConfig::change_by_file(&*path)
+    //     }
+    // };
+    println!("update_net_message {:?}", 1);
 }
 
 pub fn register_network_func(lua: &mut Lua) {

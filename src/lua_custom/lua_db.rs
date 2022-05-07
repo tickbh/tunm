@@ -1,5 +1,5 @@
 use td_rlua::{self, LuaPush, Lua, LuaRead};
-use td_rp;
+use rt_proto;
 use td_rredis::{self, Cmd, Script};
 use libc;
 use {DbTrait, DbPool, RedisPool};
@@ -216,9 +216,8 @@ extern "C" fn db_select_sync(lua: *mut td_rlua::lua_State) -> libc::c_int {
     let result = db.select(&*sql_cmd, &mut net_msg);
     let ret = unwrap_or!(result.ok(), db.get_error_code());
     ret.push_to_lua(lua);
-    let instance = NetConfig::instance();
     net_msg.set_read_data();
-    if let Ok((_, val)) = td_rp::decode_proto(net_msg.get_buffer(), instance) {
+    if let Ok((_, val)) = rt_proto::decode_proto(net_msg.get_buffer()) {
         LuaWrapperTableValue(val).push_to_lua(lua);
     } else {
         unwrap_or!(db.get_error_str(), "unknown error".to_string()).push_to_lua(lua);

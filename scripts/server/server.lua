@@ -6,6 +6,7 @@ function update(name)
     local full_name = get_full_path(name)
     package.loaded[full_name] = false
     require(full_name)
+    trace("update %o", name)
     -- 回收垃圾
     collectgarbage("collect")
 end
@@ -53,11 +54,11 @@ local function main()
 
     post_init()
     start_command_input()
-    print("------------------welcome to rust lua game server------------------")
+    trace("------------------welcome to rust lua game server------------------")
 
-    local msg = pack_message(MSG_TYPE_JSON, "aaaaaaaa", {a="1111", c="xxxxxxxxxx", d= {a="xxxx"}}, {b="xxxxxxxxxxx"})
-    local name, un = msg_to_table(msg)
-    trace("name = %o un = %o", name, un)
+    -- local msg = pack_message(MSG_TYPE_JSON, "aaaaaaaa", {a="1111", c="xxxxxxxxxx", d= {a="xxxx"}}, {b="xxxxxxxxxxx"})
+    -- local name, un = msg_to_table(msg)
+    -- trace("name = %o un = %o", name, un)
 end
 
 

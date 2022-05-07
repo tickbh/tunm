@@ -1,4 +1,4 @@
-use td_rp::*;
+use rt_proto::*;
 use td_rlua::{self, Lua, LuaPush};
 use super::EngineProtocol;
 use {NetMsg, MSG_TYPE_JSON};
@@ -25,8 +25,8 @@ impl EngineProtocol for ProtoJson {
 
     fn unpack_protocol(lua: *mut td_rlua::lua_State, net_msg: &mut NetMsg) -> NetResult<i32> {
         net_msg.set_read_data();
-        let name: String = try!(decode_str_raw(net_msg.get_buffer(), TYPE_STR)).into();
-        let raw: Value = try!(decode_str_raw(net_msg.get_buffer(), TYPE_STR));
+        let name: String = decode_str_raw(net_msg.get_buffer(), TYPE_STR)?.into();
+        let raw: Value = decode_str_raw(net_msg.get_buffer(), TYPE_STR)?;
         name.push_to_lua(lua);
         LuaWrapperValue(raw).push_to_lua(lua);
         return Ok(2);
@@ -34,8 +34,8 @@ impl EngineProtocol for ProtoJson {
 
     fn convert_string(_: *mut td_rlua::lua_State, net_msg: &mut NetMsg) -> NetResult<String> {
         net_msg.set_read_data();
-        let _: String = try!(decode_str_raw(net_msg.get_buffer(), TYPE_STR)).into();
-        let raw: String = try!(decode_str_raw(net_msg.get_buffer(), TYPE_STR)).into();
+        let _: String = decode_str_raw(net_msg.get_buffer(), TYPE_STR)?.into();
+        let raw: String = decode_str_raw(net_msg.get_buffer(), TYPE_STR)?.into();
         return Ok(raw);
     }
 }

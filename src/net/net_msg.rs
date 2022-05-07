@@ -1,5 +1,5 @@
-use td_rp;
-use td_rp::{Buffer, Value, encode_number, encode_str_raw, decode_number, decode_str_raw};
+use rt_proto;
+use rt_proto::{Buffer, Value, encode_number, encode_str_raw, decode_number, decode_str_raw};
 
 use std::io::{Read, Write, Result};
 use {NetResult, make_extension_error};
@@ -59,7 +59,7 @@ impl NetMsg {
         let _ = buffer.write(&HEAD_FILL_UP);
         let _ = buffer.write(&data);
         buffer.set_rpos(HEAD_FILL_UP.len());
-        let pack_name: String = try!(decode_str_raw(&mut buffer, td_rp::TYPE_STR)).into();
+        let pack_name: String = decode_str_raw(&mut buffer, rt_proto::TYPE_STR)?.into();
         buffer.set_rpos(HEAD_FILL_UP.len());
 
         let mut net_msg = NetMsg {
@@ -80,16 +80,16 @@ impl NetMsg {
         }
         let mut buffer = Buffer::new();
         let _ = buffer.write(&data);
-        let length: u32 = try!(decode_number(&mut buffer, td_rp::TYPE_U32)).into();
-        let seq_fd: u16 = try!(decode_number(&mut buffer, td_rp::TYPE_U16)).into();
-        let cookie: u32 = try!(decode_number(&mut buffer, td_rp::TYPE_U32)).into();
-        let msg_type: u16 = try!(decode_number(&mut buffer, td_rp::TYPE_U16)).into();
+        let length: u32 = decode_number(&mut buffer, rt_proto::TYPE_U32)?.into();
+        let seq_fd: u16 = decode_number(&mut buffer, rt_proto::TYPE_U16)?.into();
+        let cookie: u32 = decode_number(&mut buffer, rt_proto::TYPE_U32)?.into();
+        let msg_type: u16 = decode_number(&mut buffer, rt_proto::TYPE_U16)?.into();
         if data.len() != length as usize {
             trace!("data.len() = {:?}, length = {:?}", data.len(), length);
             return Err(make_extension_error("data length not match", None));
         }
         buffer.set_rpos(HEAD_FILL_UP.len());
-        let pack_name: String = try!(decode_str_raw(&mut buffer, td_rp::TYPE_STR)).into();
+        let pack_name: String = decode_str_raw(&mut buffer, rt_proto::TYPE_STR)?.into();
         buffer.set_rpos(HEAD_FILL_UP.len());
         Ok(NetMsg {
             seq_fd: seq_fd,
@@ -124,12 +124,12 @@ impl NetMsg {
     pub fn read_head(&mut self) -> NetResult<()> {
         let rpos = self.buffer.get_rpos();
         self.buffer.set_rpos(0);
-        self.length = try!(decode_number(&mut self.buffer, td_rp::TYPE_U32)).into();
-        self.seq_fd = try!(decode_number(&mut self.buffer, td_rp::TYPE_U16)).into();
-        self.cookie = try!(decode_number(&mut self.buffer, td_rp::TYPE_U32)).into();
-        self.msg_type = try!(decode_number(&mut self.buffer, td_rp::TYPE_U16)).into();
+        self.length = decode_number(&mut self.buffer, rt_proto::TYPE_U32)?.into();
+        self.seq_fd = decode_number(&mut self.buffer, rt_proto::TYPE_U16)?.into();
+        self.cookie = decode_number(&mut self.buffer, rt_proto::TYPE_U32)?.into();
+        self.msg_type = decode_number(&mut self.buffer, rt_proto::TYPE_U16)?.into();
         self.buffer.set_rpos(HEAD_FILL_UP.len());
-        self.pack_name = try!(decode_str_raw(&mut self.buffer, td_rp::TYPE_STR)).into();
+        self.pack_name = decode_str_raw(&mut self.buffer, rt_proto::TYPE_STR)?.into();
         self.buffer.set_rpos(rpos);
         Ok(())
     }
