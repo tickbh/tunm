@@ -30,7 +30,7 @@ impl ProtocolMgr {
         }
     }
 
-    pub fn pack_protocol(&mut self, lua: *mut td_rlua::lua_State, index: i32, msg_type: u16) -> Option<NetMsg> {
+    pub fn pack_protocol(&mut self, lua: *mut td_rlua::lua_State, index: i32, msg_type: u8) -> Option<NetMsg> {
         match msg_type {
             MSG_TYPE_TD => ProtoTd::pack_protocol(lua, index),
             MSG_TYPE_JSON => ProtoJson::pack_protocol(lua, index),

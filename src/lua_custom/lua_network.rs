@@ -46,10 +46,10 @@ fn send_msg_to_port(fd: SOCKET, net_msg: &mut NetMsg) -> i32 {
 
 extern "C" fn pack_message(lua: *mut td_rlua::lua_State) -> libc::c_int {
 
-    let msg_type: u16 = unwrap_or!(td_rlua::LuaRead::lua_read_at_position(lua, 1), return 0);
+    let msg_type: u8 = unwrap_or!(td_rlua::LuaRead::lua_read_at_position(lua, 1), return 0);
     let net_msg = unwrap_or!(ProtocolMgr::instance().pack_protocol(lua, 2, msg_type), return 0);
     if net_msg.len() > 0xFFFFFF {
-        println!("pack message({}) size > 0xFFFF fail!", net_msg.get_pack_name());
+        println!("pack message({}) size > 0xFFFFFF fail!", net_msg.get_pack_name());
         return 0;
     }
     net_msg.push_to_lua(lua);

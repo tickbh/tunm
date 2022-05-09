@@ -4,10 +4,10 @@ use rt_proto::{Buffer, Value, encode_number, encode_str_raw, decode_number, deco
 use std::io::{Read, Write, Result};
 use {NetResult, make_extension_error};
 
-pub const MSG_TYPE_TD: u16 = 0;
-pub const MSG_TYPE_JSON: u16 = 1;
-pub const MSG_TYPE_BIN: u16 = 2;
-pub const MSG_TYPE_TEXT: u16 = 3;
+pub const MSG_TYPE_TD: u8 = 0;
+pub const MSG_TYPE_JSON: u8 = 1;
+pub const MSG_TYPE_BIN: u8 = 2;
+pub const MSG_TYPE_TEXT: u8 = 3;
 
 static HEAD_FILL_UP: [u8; 12] = [0; 12];
 
@@ -16,7 +16,12 @@ pub struct NetMsg {
     seq_fd: u16,
     length: u32,
     cookie: u32,
-    msg_type: u16,
+    msg_type: u8, //message type: normal, request, response
+    msg_flag: u8, // flag: encode, compress, route, trace, package
+    from_svr_type: u16,
+    from_svr_id: u32,
+    to_svr_type: u16,
+    to_svr_id: u32,
     pack_name: String,
 }
 
@@ -28,13 +33,18 @@ impl NetMsg {
             seq_fd: 0u16,
             length: buffer.len() as u32,
             cookie: 0u32,
-            msg_type: 0u16,
+            msg_type: 0u8,
+            msg_flag: 0u8,
+            from_svr_type: 0u16,
+            from_svr_id: 0u32,
+            to_svr_type: 0u16,
+            to_svr_id: 0u32,
             buffer: buffer,
             pack_name: String::new(),
         }
     }
 
-    pub fn new_by_detail(msg_type: u16, msg_name: String, data: &[u8]) -> NetMsg {
+    pub fn new_by_detail(msg_type: u8, msg_name: String, data: &[u8]) -> NetMsg {
         let mut buffer = Buffer::new();
         let _ = buffer.write(&HEAD_FILL_UP);
         let _ = encode_str_raw(&mut buffer, &Value::Str(msg_name.clone()));
@@ -45,6 +55,11 @@ impl NetMsg {
             length: buffer.len() as u32,
             cookie: 0u32,
             msg_type: msg_type,
+            msg_flag: 0u8,
+            from_svr_type: 0u16,
+            from_svr_id: 0u32,
+            to_svr_type: 0u16,
+            to_svr_id: 0u32,
             buffer: buffer,
             pack_name: msg_name,
         };
@@ -67,6 +82,11 @@ impl NetMsg {
             length: buffer.len() as u32,
             cookie: 0u32,
             msg_type: 0,
+            msg_flag: 0u8,
+            from_svr_type: 0u16,
+            from_svr_id: 0u32,
+            to_svr_type: 0u16,
+            to_svr_id: 0u32,
             buffer: buffer,
             pack_name: pack_name,
         };
@@ -83,7 +103,7 @@ impl NetMsg {
         let length: u32 = decode_number(&mut buffer, rt_proto::TYPE_U32)?.into();
         let seq_fd: u16 = decode_number(&mut buffer, rt_proto::TYPE_U16)?.into();
         let cookie: u32 = decode_number(&mut buffer, rt_proto::TYPE_U32)?.into();
-        let msg_type: u16 = decode_number(&mut buffer, rt_proto::TYPE_U16)?.into();
+        let msg_type: u8 = decode_number(&mut buffer, rt_proto::TYPE_U8)?.into();
         if data.len() != length as usize {
             trace!("data.len() = {:?}, length = {:?}", data.len(), length);
             return Err(make_extension_error("data length not match", None));
@@ -96,6 +116,11 @@ impl NetMsg {
             length: length,
             cookie: cookie,
             msg_type: msg_type,
+            msg_flag: 0u8,
+            from_svr_type: 0u16,
+            from_svr_id: 0u32,
+            to_svr_type: 0u16,
+            to_svr_id: 0u32,
             buffer: buffer,
             pack_name: pack_name,
         })
@@ -113,7 +138,7 @@ impl NetMsg {
         let _ = encode_number(&mut self.buffer, &Value::U32(self.length));
         let _ = encode_number(&mut self.buffer, &Value::U16(self.seq_fd));
         let _ = encode_number(&mut self.buffer, &Value::U32(self.cookie));
-        let _ = encode_number(&mut self.buffer, &Value::U16(self.msg_type));
+        let _ = encode_number(&mut self.buffer, &Value::U8(self.msg_type));
         self.buffer.set_wpos(wpos);
     }
 
@@ -167,12 +192,53 @@ impl NetMsg {
         self.buffer.get_wpos()
     }
 
-    pub fn set_msg_type(&mut self, msg_type: u16) {
+    pub fn set_msg_type(&mut self, msg_type: u8) {
         self.msg_type = msg_type
     }
 
-    pub fn get_msg_type(&self) -> u16 {
+    pub fn get_msg_type(&self) -> u8 {
         self.msg_type
+    }
+    
+    pub fn set_msg_flag(&mut self, msg_flag: u8) {
+        self.msg_flag = msg_flag
+    }
+
+    pub fn get_msg_flag(&self) -> u8 {
+        self.msg_flag
+    }
+
+    pub fn set_from_svr_type(&mut self, from_svr_type: u16) {
+        self.from_svr_type = from_svr_type
+    }
+
+    pub fn get_from_svr_type(&self) -> u16 {
+        self.from_svr_type
+    }
+
+    pub fn set_from_svr_id(&mut self, from_svr_id: u32) {
+        self.from_svr_id = from_svr_id
+    }
+
+    pub fn get_from_svr_id(&self) -> u32 {
+        self.from_svr_id
+    }
+
+    
+    pub fn set_to_svr_type(&mut self, to_svr_type: u16) {
+        self.to_svr_type = to_svr_type
+    }
+
+    pub fn get_to_svr_type(&self) -> u16 {
+        self.to_svr_type
+    }
+
+    pub fn set_to_svr_id(&mut self, to_svr_id: u32) {
+        self.to_svr_id = to_svr_id
+    }
+
+    pub fn get_to_svr_id(&self) -> u32 {
+        self.to_svr_id
     }
 
     pub fn set_seq_fd(&mut self, seq_fd: u16) {
