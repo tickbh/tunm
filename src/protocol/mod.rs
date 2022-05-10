@@ -14,7 +14,7 @@ mod proto_json;
 mod proto_bin;
 mod proto_text;
 
-pub use self::proto_rt::ProtoTd;
+pub use self::proto_rt::ProtoRt;
 pub use self::proto_json::ProtoJson;
 pub use self::proto_bin::ProtoBin;
 pub use self::proto_text::ProtoText;

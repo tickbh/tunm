@@ -110,11 +110,14 @@ function cmd_new_connection(cookie, fd, client_ip, server_port, websocket)
     agent:set_client_ip(client_ip)
     agent:set_websocket(websocket)
     local server_type = get_server_type(client_ip, server_port)
+    
+    TRACE("1111111111111111")
     if server_type == SERVER_TYPE_GATE or server_type == SERVER_TYPE_LOGIC then
         -- 现在暂时不需要验证
         agent:set_authed(true)
         agent:set_server_type(server_type)
     else
+        TRACE("222222222222222")
         local server_fd = get_logic_fd()
         if SERVER_TYPE == SERVER_GATE and server_fd ~= -1 then
             agent:set_server_type(server_type)
@@ -124,8 +127,10 @@ function cmd_new_connection(cookie, fd, client_ip, server_port, websocket)
             agent:connection_lost()
         end
 
+        TRACE("444444444444444")
         --超过最高在线
         if get_real_agent_count() > max_online_num then
+            TRACE("555555555555")
             agent:connection_lost()
         end
     end
@@ -224,11 +229,11 @@ function get_message_manage_type(message, server_type)
 end
 
 function oper_message(agent, message, msg_buf)
-    local name, args = msg_to_table(msg_buf)
+    local name, args = MSG_TO_TABLE(msg_buf)
     -- ASSERT(name == message)
     local flag = get_debug_flag()
     if (type(flag) == "number" and flag == 1) or
-           (type(flag) == "table" and self:is_user() and flag[self:GET_RID()]) then
+           (type(flag) == "table" and agent:is_user() and flag[agent:GET_RID()]) then
         TRACE("------------- msg : %s -------------\n%o", message, args)
     end
     
@@ -274,9 +279,9 @@ function global_dispatch_command(port_no, message, buffer)
         end
         do return end
     end
-    -- TRACE("------- my agent = %o ---------", agent)
+    TRACE("------- my agent = %o ---------", agent)
     if not agent or
-       (not agent:is_authed() and message ~= "cmd_internal_auth") then
+       (not agent:is_authed() and (message ~= "cmd_internal_auth" and message ~= "cmd_agent_identity")) then
         -- 若找不到 agent，且该消息不为验证消息，则认为是非法连接，不处理
         TRACE("非法连接(%d)\n 消息为(%o)", port_no, message)
         if not agent then
@@ -293,12 +298,12 @@ function global_dispatch_command(port_no, message, buffer)
 
 
     TRACE(" 11111111111 message is %o", message)
-    local mm_type = get_message_manage_type(message, agent:get_server_type())
-    if mm_type == MESSAGE_DISCARD then
-        TRACE("------------- discard port_no is %o, cmd : %s -------------", port_no, message)
-        del_message(buffer)
-        return 
-    end
+    -- local mm_type = get_message_manage_type(message, agent:get_server_type())
+    -- if mm_type == MESSAGE_DISCARD then
+    --     TRACE("------------- discard port_no is %o, cmd : %s -------------", port_no, message)
+    --     del_message(buffer)
+    --     return 
+    -- end
 
     if not agent:is_websocket() and agent:get_server_type() == SERVER_TYPE_CLIENT and CHECK_PACK and not agent:check_next_client(buffer:get_seq_fd()) then
         TRACE("package check failed %o kick the socket", agent:get_ob_id())

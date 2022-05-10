@@ -1,15 +1,16 @@
 use std::path::Path;
 use std::collections::HashMap;
 
-use time;
+use std::net::UdpSocket;
 use crypto;
 use libc;
 use td_rlua::{self, Lua, lua_State, LuaPush, LuaRead};
-use {FileUtils, NetConfig, TelnetUtils, CommandMgr, LogUtils, EventMgr, TimeUtils};
+use {FileUtils, TelnetUtils, CommandMgr, LogUtils, EventMgr, TimeUtils};
 use sys_info;
 use {MaJiang, LuaEngine};
 
 static ENCODE_MAP: &'static [u8; 32] = b"0123456789ACDEFGHJKLMNPQRSTUWXYZ";
+
 
 
 fn lua_print(method : u8, val: String) {
@@ -94,6 +95,24 @@ extern "C" fn get_next_rid(lua: *mut lua_State) -> libc::c_int {
     1
 }
 
+
+/// get the local ip address, return an `Option<String>`. when it fail, return `None`.
+pub fn get_localip_addr() -> String {
+    let socket = match UdpSocket::bind("0.0.0.0:0") {
+        Ok(s) => s,
+        Err(_) => return String::new(),
+    };
+
+    match socket.connect("8.8.8.8:80") {
+        Ok(()) => (),
+        Err(_) => return String::new(),
+    };
+
+    match socket.local_addr() {
+        Ok(addr) => return addr.ip().to_string(),
+        Err(_) => return String::new(),
+    };
+}
 
 
 fn get_full_path(path: String) -> String {
@@ -250,6 +269,8 @@ pub fn register_util_func(lua: &mut Lua) {
     lua.set("GET_FLODER_FILES", td_rlua::function1(get_floder_files));
     lua.set("TIME_MS", td_rlua::function0(time_ms));
     lua.set("BLOCK_READ", td_rlua::function0(block_read));
+    lua.set("GET_LOCALIP_ADDR", td_rlua::function0(get_localip_addr));
+    
     lua.set("CALC_STR_MD5", td_rlua::function1(calc_str_md5));
     lua.set("START_COMMAND_INPUT",
             td_rlua::function0(start_command_input));

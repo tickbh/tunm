@@ -9,7 +9,7 @@ pub const MSG_TYPE_JSON: u8 = 1;
 pub const MSG_TYPE_BIN: u8 = 2;
 pub const MSG_TYPE_TEXT: u8 = 3;
 
-static HEAD_FILL_UP: [u8; 12] = [0; 12];
+static HEAD_FILL_UP: [u8; 24] = [0; 24];
 
 pub struct NetMsg {
     buffer: Buffer,
@@ -104,6 +104,11 @@ impl NetMsg {
         let seq_fd: u16 = decode_number(&mut buffer, rt_proto::TYPE_U16)?.into();
         let cookie: u32 = decode_number(&mut buffer, rt_proto::TYPE_U32)?.into();
         let msg_type: u8 = decode_number(&mut buffer, rt_proto::TYPE_U8)?.into();
+        let msg_flag: u8 = decode_number(&mut buffer, rt_proto::TYPE_U8)?.into();
+        let from_svr_type: u16 = decode_number(&mut buffer, rt_proto::TYPE_U16)?.into();
+        let from_svr_id: u32 = decode_number(&mut buffer, rt_proto::TYPE_U32)?.into();
+        let to_svr_type: u16 = decode_number(&mut buffer, rt_proto::TYPE_U16)?.into();
+        let to_svr_id: u32 = decode_number(&mut buffer, rt_proto::TYPE_U32)?.into();
         if data.len() != length as usize {
             trace!("data.len() = {:?}, length = {:?}", data.len(), length);
             return Err(make_extension_error("data length not match", None));
@@ -116,11 +121,11 @@ impl NetMsg {
             length: length,
             cookie: cookie,
             msg_type: msg_type,
-            msg_flag: 0u8,
-            from_svr_type: 0u16,
-            from_svr_id: 0u32,
-            to_svr_type: 0u16,
-            to_svr_id: 0u32,
+            msg_flag: msg_flag,
+            from_svr_type: from_svr_type,
+            from_svr_id: from_svr_id,
+            to_svr_type: to_svr_type,
+            to_svr_id: to_svr_id,
             buffer: buffer,
             pack_name: pack_name,
         })
@@ -139,6 +144,11 @@ impl NetMsg {
         let _ = encode_number(&mut self.buffer, &Value::U16(self.seq_fd));
         let _ = encode_number(&mut self.buffer, &Value::U32(self.cookie));
         let _ = encode_number(&mut self.buffer, &Value::U8(self.msg_type));
+        let _ = encode_number(&mut self.buffer, &Value::U8(self.msg_flag));
+        let _ = encode_number(&mut self.buffer, &Value::U16(self.from_svr_type));
+        let _ = encode_number(&mut self.buffer, &Value::U32(self.from_svr_id));
+        let _ = encode_number(&mut self.buffer, &Value::U16(self.to_svr_type));
+        let _ = encode_number(&mut self.buffer, &Value::U32(self.to_svr_id));
         self.buffer.set_wpos(wpos);
     }
 
@@ -152,7 +162,12 @@ impl NetMsg {
         self.length = decode_number(&mut self.buffer, rt_proto::TYPE_U32)?.into();
         self.seq_fd = decode_number(&mut self.buffer, rt_proto::TYPE_U16)?.into();
         self.cookie = decode_number(&mut self.buffer, rt_proto::TYPE_U32)?.into();
-        self.msg_type = decode_number(&mut self.buffer, rt_proto::TYPE_U16)?.into();
+        self.msg_type = decode_number(&mut self.buffer, rt_proto::TYPE_U8)?.into();
+        self.msg_flag = decode_number(&mut self.buffer, rt_proto::TYPE_U8)?.into();
+        self.from_svr_type = decode_number(&mut self.buffer, rt_proto::TYPE_U16)?.into();
+        self.from_svr_id = decode_number(&mut self.buffer, rt_proto::TYPE_U32)?.into();
+        self.to_svr_type = decode_number(&mut self.buffer, rt_proto::TYPE_U16)?.into();
+        self.to_svr_id = decode_number(&mut self.buffer, rt_proto::TYPE_U32)?.into();
         self.buffer.set_rpos(HEAD_FILL_UP.len());
         self.pack_name = decode_str_raw(&mut self.buffer, rt_proto::TYPE_STR)?.into();
         self.buffer.set_rpos(rpos);

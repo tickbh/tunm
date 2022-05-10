@@ -2,8 +2,6 @@ extern crate mysql as my;
 #[macro_use(raw_to_ref)]
 extern crate tdengine;
 
-// use tdengine::{DbTrait, DbMysql, NetMsg, NetConfig};
-
 use std::default::Default;
 
 #[derive(Debug, PartialEq, Eq)]

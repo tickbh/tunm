@@ -2,6 +2,7 @@
 
 -- 登录帐号命令处理
 function cmd_login(agent, map)
+    TRACE("cmd_login receive!!!!!!!!")
     LOGIN_D.login(agent, map)
 end
 

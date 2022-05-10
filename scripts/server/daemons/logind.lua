@@ -121,7 +121,7 @@ function login(agent, login_info)
     --account case insensitive
     login_info["account"] = string.lower(login_info["account"] or "")
     local account   = login_info["account"]
-    local password  = login_info["password"]    
+    local password  = login_info["password"]
     local version   = login_info["version"]
     local server_id   = login_info["server_id"]
     local device_id = login_info["device_id"]

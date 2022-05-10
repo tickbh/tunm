@@ -32,6 +32,7 @@ impl LuaPush for LuaWrapperValue {
             Value::I32(val) => val.push_to_lua(lua),
             Value::U64(val) => val.push_to_lua(lua),
             Value::I64(val) => val.push_to_lua(lua),
+            Value::Varint(val) => val.push_to_lua(lua),
             Value::Float(val) => val.push_to_lua(lua),
             Value::Double(val) => val.push_to_lua(lua),
             Value::Str(val) => val.push_to_lua(lua),

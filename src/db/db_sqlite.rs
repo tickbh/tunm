@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use super::DbTrait;
-use {NetResult, NetMsg, NetConfig, TimeUtils};
+use {NetResult, NetMsg, TimeUtils};
 
 use rt_proto::{self, Value, encode_proto};
 
@@ -43,7 +43,6 @@ impl DbSqlite {
 impl DbTrait for DbSqlite {
     fn select(&mut self, sql_cmd: &str, msg: &mut NetMsg) -> NetResult<i32> {
         self.check_connect()?;
-        let config = NetConfig::instance();
         let mut array = vec![];
         let mut success = 0;
         let mut statement = match self.conn.prepare(sql_cmd) {

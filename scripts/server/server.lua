@@ -29,6 +29,8 @@ local function main()
     LOAD_FOLDER("global/daemons", "importd:dbd:sqld:datad")
     LOAD_FOLDER("global/clone")
 
+    LOAD_FOLDER("define")
+    
     LOAD_FOLDER("etc")
 
     local load_table={

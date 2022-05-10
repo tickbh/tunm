@@ -45,8 +45,6 @@ function load_data_from_db(rid, callback, callback_arg)
     }
     cookie_map[data.cookie] = record
     REDIS_D.run_command_with_call(accout_user_callback, data, "GET", rid)
-
-    return
 end
 
 function cache_data_to_db(rid, data)

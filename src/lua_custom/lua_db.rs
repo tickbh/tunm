@@ -3,7 +3,7 @@ use rt_proto;
 use td_rredis::{self, Cmd, Script};
 use libc;
 use {DbTrait, DbPool, RedisPool};
-use {LuaEngine, NetMsg, NetConfig, LuaWrapperTableValue, RedisWrapperCmd, RedisWrapperResult,
+use {LuaEngine, NetMsg, LuaWrapperTableValue, RedisWrapperCmd, RedisWrapperResult,
      RedisWrapperMsg, RedisWrapperVecVec};
 use {ThreadUtils, LogUtils, log_utils};
 

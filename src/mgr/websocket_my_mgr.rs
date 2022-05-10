@@ -312,7 +312,7 @@ impl Handler for Server {
                 return Ok(());
             },
             Message::Binary(data) => {
-                unwrap_or!(NetMsg::new_by_proto_data(&data[..]).ok(), return Ok(()))
+                unwrap_or!(NetMsg::new_by_data(&data[..]).ok(), return Ok(()))
             },
         };
 

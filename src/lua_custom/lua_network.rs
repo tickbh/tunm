@@ -4,7 +4,7 @@ use td_rlua::{self, Lua, LuaPush};
 use td_revent::*;
 use psocket::SOCKET;
 use ws;
-use {EventMgr, ServiceMgr, ProtocolMgr, NetMsg, NetConfig, ThreadUtils, 
+use {EventMgr, ServiceMgr, ProtocolMgr, NetMsg, ThreadUtils, 
     HttpMgr, WebSocketMgr, WebsocketMyMgr, SocketEvent,
     LuaUtils, WebsocketClient, GlobalConfig};
 

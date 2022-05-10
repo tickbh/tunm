@@ -11,14 +11,34 @@ extern crate td_revent;
 use env_logger::{Builder, Target};
 use log::{warn, info};
 use td_revent::{EventLoop, EventEntry, EventFlags, CellAny, RetValue};
-use tdengine::{NetConfig, GlobalConfig, LuaEngine, register_custom_func, EventMgr, FileUtils, DbPool, RedisPool, TelnetUtils, LogUtils};
+use tdengine::{GlobalConfig, LuaEngine, register_custom_func, EventMgr, FileUtils, DbPool, RedisPool, TelnetUtils, LogUtils};
 
 use std::env;
 
+use std::net::UdpSocket;
+
+/// get the local ip address, return an `Option<String>`. when it fail, return `None`.
+pub fn get() -> Option<String> {
+    let socket = match UdpSocket::bind("0.0.0.0:0") {
+        Ok(s) => s,
+        Err(_) => return None,
+    };
+
+    match socket.connect("8.8.8.8:80") {
+        Ok(()) => (),
+        Err(_) => return None,
+    };
+
+    match socket.local_addr() {
+        Ok(addr) => return Some(addr.ip().to_string()),
+        Err(_) => return None,
+    };
+}
 
 fn main() {
     log4rs::init_file("config/log4rs.yml", Default::default()).unwrap();
-    warn!("fuck!!");
+    warn!("local address!! {}", get().unwrap());
+
     let args = env::args();
     for arg in args {
         println!("args {:?}", arg);    

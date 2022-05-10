@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 use super::DbTrait;
-use {NetResult, NetMsg, NetConfig, ErrorKind, TimeUtils};
+use {NetResult, NetMsg, ErrorKind, TimeUtils};
 
 use rt_proto::{self, Value, encode_proto};
 use chrono::prelude::*;
@@ -71,7 +71,6 @@ impl DbTrait for DbMysql {
     fn select(&mut self, sql_cmd: &str, msg: &mut NetMsg) -> NetResult<i32> {
         self.check_connect()?;
         let mut value = self.conn.query_iter(sql_cmd)?;
-        let config = NetConfig::instance();
         let mut success: i32 = 0;
 
         while let Some(val) = value.iter() {
@@ -146,7 +145,6 @@ impl DbTrait for DbMysql {
     fn insert(&mut self, sql_cmd: &str, msg: &mut NetMsg) -> NetResult<i32> {
         self.check_connect()?;
         let value = self.conn.query_iter(sql_cmd);
-        let config = NetConfig::instance();
         let mut success: i32 = 0;
         match value {
             Ok(val) => {

@@ -1,12 +1,12 @@
 use td_rlua::{self, Lua, LuaPush};
 use rt_proto;
 use super::EngineProtocol;
-use {NetMsg, NetConfig, NetUtils};
+use {NetMsg, NetUtils};
 use {NetResult, LuaWrapperTableValue};
 
-pub struct ProtoTd;
+pub struct ProtoRt;
 
-impl EngineProtocol for ProtoTd {
+impl EngineProtocol for ProtoRt {
     fn pack_protocol(lua: *mut td_rlua::lua_State, index: i32) -> Option<NetMsg> {
         let name: String = unwrap_or!(td_rlua::LuaRead::lua_read_at_position(lua, index), return None);
         let value = NetUtils::lua_convert_value(lua, index + 1);

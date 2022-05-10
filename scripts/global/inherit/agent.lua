@@ -162,7 +162,7 @@ function AGENT_TDCLS:send_message(msg, ...)
     if port_no == -1 then
         return;
     end
-
+    TRACE("send_message msg = %o args = %o", msg, {...})
     local net_msg = pack_message(self:get_msg_type(), msg, ...)
     if SERVER_TYPE == "client" and get_network_seq_id then
         net_msg:set_seq_fd(get_network_seq_id(port_no))
@@ -291,6 +291,12 @@ end
 function AGENT_TDCLS:set_server_type(type)
     self.server_type = type
     set_type_port(self.server_type, self.fport_no == -1 and self.port_no or self.fport_no)
+end
+
+function AGENT_TDCLS:set_code_type(code_type, code_id)
+    self.code_type = code_type
+    self.code_id = code_id
+    set_code_type_port(self.code_type, self.code_id, self.fport_no == -1 and self.port_no or self.fport_no)
 end
 
 function AGENT_TDCLS:get_server_type()

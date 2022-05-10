@@ -3,7 +3,7 @@ use std::ffi::{CString};
 use crypto::aes_gcm::AesGcm;
 use crypto::aes::{KeySize};
 use crypto::aead::AeadDecryptor;
-use {NetMsg, NetConfig, FileUtils};
+use {NetMsg, FileUtils};
 use td_rlua::{self, Lua, LuaRead};
 use libc;
 use rt_proto;

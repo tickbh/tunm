@@ -1,7 +1,7 @@
 #[macro_use(raw_to_ref)]
 extern crate tdengine;
 
-use tdengine::{NetConfig, GlobalConfig, LuaEngine, register_custom_func, EventMgr, FileUtils, DbPool, RedisPool};
+use tdengine::{GlobalConfig, LuaEngine, register_custom_func, EventMgr, FileUtils, DbPool, RedisPool};
 
 use std::env;
 

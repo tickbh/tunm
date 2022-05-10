@@ -6,10 +6,17 @@ local _ENV = CONNECT_D
 
 local connect_agent = nil
 local connect_timer = nil
+local ensure_timer = nil
 local heartbeat_timer = nil
 local timeout = 60
 local gate_prefix = "{GATE:IP}"
 local redis_gate_prefix = "{GATE:IP}:*"
+local gate_match_string = string.format("%s:([%%w.]*):(%%d+)",gate_prefix)
+
+local connecting_cache_table = {}
+local connected_gate_table = {}
+local all_server_table = {}
+
 
 function close_connecting_info()
     if IS_OBJECT(connect_agent) then
@@ -19,12 +26,16 @@ function close_connecting_info()
             delete_timer(connect_timer)
         end
         connect_timer = -1
-    else
-        if IS_VALID_TIMER(heartbeat_timer) then
-            delete_timer(heartbeat_timer)
-        end
-        heartbeat_timer = -1
     end
+    if IS_VALID_TIMER(heartbeat_timer) then
+        delete_timer(heartbeat_timer)
+    end
+    heartbeat_timer = -1
+    
+    if IS_VALID_TIMER(ensure_timer) then
+        delete_timer(ensure_timer)
+    end
+    ensure_timer = -1
 end
 
 local function gate_heartbeat_network()
@@ -71,10 +82,55 @@ local function logic_check_connection()
     REDIS_SCRIPTD.eval_script_by_name("gate_select", {redis_gate_prefix, gate_prefix}, callback_gate_select, {})
 end
 
+local function ensure_server_async()
+    if SERVER_TYPE == SERVER_GATE and not STANDALONE then
+        return
+    end
+
+    local function server_callback(data, result_list)
+        local succ, list = REDIS_D.check_array(result_list)
+        if not succ then
+            return
+        end
+
+        for _, value in ipairs(list) do
+            local cur_ip, cur_port = string.match(value, gate_match_string)
+            local unique_key = cur_ip .. ":" .. cur_port
+            local last_cache_time = connecting_cache_table[unique_key] or 0
+            local cache_agent = connected_gate_table[unique_key]
+            if not IS_OBJECT(cache_agent) and last_cache_time + 120 < os.time()  then
+                connecting_cache_table[unique_key] = os.time()
+                    
+                local function local_logic_connect_callback(agent, arg)
+                    if IS_OBJECT(connecting_cache_table[arg]) then
+                        DESTRUCT_OBJECT(connecting_cache_table[arg])
+                        connecting_cache_table[arg] = nil
+                    end
+                    agent:set_server_type(SERVER_TYPE_GATE)
+                    local password = CALC_STR_MD5(string.format("%s:%s:%s", CODE_TYPE, CODE_ID, SECRET_KEY))
+                    
+                    agent:send_message(CMD_AGENT_IDENTITY, CODE_TYPE, CODE_ID, password)
+                    connecting_cache_table[arg] = agent
+                    
+                    TRACE("!!!!!!!!logic_connect_callback success fd is %o", agent)
+                end
+
+                socket_connect(cur_ip, cur_port, 25000, local_logic_connect_callback, unique_key)
+            
+            end
+        end
+        
+
+    end
+
+    REDIS_D.run_command_with_call(server_callback, {}, "KEYS", redis_gate_prefix)
+
+end
+
 local function init_network_status()
     TRACE("init server %o %o", SERVER_TYPE, STANDALONE)
     if SERVER_TYPE == SERVER_GATE or STANDALONE then
-        listen_server(GATE_LOGIC_PORT, BIND_IP)
+        listen_server(GATE_LOGIC_PORT)
         listen_server(GATE_CLIENT_PORT)
 
         TRACE("listen http server:%o", "0.0.0.0:" .. GATE_HTTP_PORT)
@@ -82,16 +138,19 @@ local function init_network_status()
         
         listen_http("0.0.0.0:" .. GATE_HTTP_PORT)
         listen_websocket("0.0.0.0", tonumber(GATE_WEBSOCKET_PORT))
-
         
-        CURRENT_IP = CURRENT_IP or "127.0.0.1"
+        CURRENT_IP = GET_LOCALIP_ADDR() or "127.0.0.1"
         gate_heartbeat_network()
         heartbeat_timer = set_timer(3000, gate_heartbeat_network, nil, true)
     end
 
+    -- ensure_timer = set_timer(3000, ensure_server_async, nil, true)
+
     if SERVER_TYPE == SERVER_LOGIC or STANDALONE then
-        logic_check_connection()
-        connect_timer = set_timer(3000, logic_check_connection, nil, true)
+        ensure_server_async()
+        ensure_timer = set_timer(3000, ensure_server_async, nil, true)
+        -- logic_check_connection()
+        -- connect_timer = set_timer(3000, logic_check_connection, nil, true)
     end
 end
 

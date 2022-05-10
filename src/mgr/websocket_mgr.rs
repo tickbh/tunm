@@ -127,7 +127,11 @@ impl Handler for WebsocketServer {
                         }
                     }
                 }
-                let name = String::from_utf8_lossy(&data[first + 1 .. last]).to_string();
+                let name = if last > first {
+                    String::from_utf8_lossy(&data[first + 1 .. last]).to_string()
+                } else {
+                    String::new()
+                };
                 NetMsg::new_by_detail(MSG_TYPE_TEXT, name, &text.as_bytes()[..])
 
             },

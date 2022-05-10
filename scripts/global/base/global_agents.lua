@@ -83,6 +83,11 @@ function set_type_port(server_type, port_no)
     type_fds[server_type][port_no] = true
 end
 
+function set_code_type_port(code_type, code_id, port_no)
+    type_fds[code_type] = type_fds[code_type] or {}
+    type_fds[code_type][code_id] = port_no
+end
+
 function remove_port_map(port_no)
     local ports = port_map[port_no]
     for no, _ in pairs(ports or {}) do
