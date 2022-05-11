@@ -199,12 +199,12 @@ impl WebsocketMyMgr {
             return false;
         }
 
-        if net_msg.get_buffer().len() <= 12 {
+        if net_msg.get_buffer().len() <= 24 {
             return false;
         }
 
         let connect = self.connection_fds.get_mut(&fd).unwrap();
-        if let Err(err) = connect.send_message(Message::binary(&net_msg.get_buffer().get_data()[12..])) {
+        if let Err(err) = connect.send_message(Message::binary(&net_msg.get_buffer().get_data()[24..])) {
             WebsocketMyMgr::instance().on_close(fd, format!("{:?}", err).to_string());
         }
         true

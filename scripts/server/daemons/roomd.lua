@@ -182,7 +182,7 @@ function cmd_room_message(room_name, user_rid, cookie, oper, info)
     end
     local data = room:get_data_by_rid(user_rid)
     local ret = 0
-    local server_id = remove_get(info, "server_id")
+    local server_id = REMOVE_GET(info, "server_id")
     if oper == "enter_room" then
         ASSERT(IS_INT(server_id), "server_id must exist")
         ret = room:entity_enter(server_id, user_rid, info)

@@ -89,7 +89,7 @@ local function ensure_server_async()
                 connecting_cache_table[unique_key] = os.time()
                     
                 local function local_logic_connect_callback(agent, arg)
-                    local unique_key, code_id = arg["unique_key"], arg["code_id"]
+                    local unique_key, code_id = arg["unique_key"], tonumber(arg["code_id"]) 
                     if IS_OBJECT(connected_gate_table[unique_key]) then
                         DESTRUCT_OBJECT(connected_gate_table[unique_key])
                         connected_gate_table[unique_key] = nil
@@ -97,7 +97,7 @@ local function ensure_server_async()
                     agent:set_code_type(SERVER_TYPE_GATE, code_id)
                     local password = CALC_STR_MD5(string.format("%s:%s:%s", CODE_TYPE, CODE_ID, SECRET_KEY))
                     
-                    agent:send_message(CMD_AGENT_IDENTITY, CODE_TYPE, CODE_ID, password)
+                    agent:send_gate_message(CMD_AGENT_IDENTITY, CODE_TYPE, CODE_ID, password)
                     connected_gate_table[unique_key] = agent
                     
                     TRACE("!!!!!!!!logic_connect_callback success fd is %o", agent)

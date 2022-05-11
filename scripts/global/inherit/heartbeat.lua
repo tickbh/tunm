@@ -15,7 +15,7 @@ end
 
 -- 析构函数
 function HEARTBEAT_TDCLS:destruct()
-    if is_valid_timer(self.heartbeat_timer) then
+    if IS_VALID_TIMER(self.heartbeat_timer) then
         delete_timer(self.heartbeat_timer);
         self.heartbeat_timer = -1;
     end
@@ -37,7 +37,7 @@ end
 
 -- 设置心跳时间
 function HEARTBEAT_TDCLS:delete_hearbeat()
-    if is_valid_timer(self.heartbeat_timer) then
+    if IS_VALID_TIMER(self.heartbeat_timer) then
         delete_timer(self.heartbeat_timer);
         self.heartbeat_timer = -1;
     end

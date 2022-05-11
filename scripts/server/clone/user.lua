@@ -45,7 +45,7 @@ function USER_TDCLS:get_ob_id()
 end
 
 function USER_TDCLS:delete_logout_timer()
-    if is_valid_timer(self.logout_timer) then
+    if IS_VALID_TIMER(self.logout_timer) then
         delete_timer(self.logout_timer)
         self.logout_timer = nil
     end
@@ -81,7 +81,7 @@ function USER_TDCLS:connection_lost(at_once)
         USER_D.user_logout(self)
     else
         self:close_agent()
-        if not is_valid_timer(self.logout_timer) then
+        if not IS_VALID_TIMER(self.logout_timer) then
             self.logout_timer = set_timer(30, self.logout_callback, self)--30000
         end
     end
@@ -103,6 +103,7 @@ function USER_TDCLS:enter_world()
         item_list = self:get_dump_item(),
         equip_list = self:get_dump_equip(),
         ddz_info = self:get_ddz_dbase():query(),
+        server = {code_type = SERVER_TYPE_GAME, code_id=1 }
     }
    
     self:send_message(MSG_ENTER_GAME, data)
@@ -315,3 +316,10 @@ function USER_TDCLS:get_equip_dbase()
     return self:get_container():get_page_carry(PAGE_EQUIP)
 end
 
+function USER_TDCLS:query_into_server_data()
+    local data = {
+        user = self:query(), 
+        item_list = self:get_dump_item(),
+    }
+    return data
+end

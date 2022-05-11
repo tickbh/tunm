@@ -155,9 +155,13 @@ function AGENT_TDCLS:forward_client_message(msg)
 end
 
 function AGENT_TDCLS:send_net_msg(net_msg)
+    TRACE("AGENT_TDCLS:send_net_msg %o", self.fport_no)
     if self.fport_no ~= -1 then
-        net_msg:set_seq_fd(self.fport_no)
+        net_msg:end_msg(self.fport_no)
+    else
+        net_msg:end_msg(0)
     end
+
 
     -- 缓存中没消息，直接发送该消息
     local _, ret = pcall(send_msg_to_port, self.port_no, net_msg);
@@ -165,14 +169,18 @@ function AGENT_TDCLS:send_net_msg(net_msg)
 end
 
 -- 发送消息
-function AGENT_TDCLS:send_message(msg, ...)
+function AGENT_TDCLS:send_dest_message(data, msg, ...)
     local port_no = self.port_no;
     if port_no == -1 then
         return;
     end
     TRACE("send_message msg = %o args = %o", msg, {...})
     local net_msg = pack_message(self:get_msg_type(), msg, ...)
+    net_msg:set_to_svr_type(data["code_type"] or self.code_type)
+    net_msg:set_to_svr_id(data["code_id"] or self.code_id)
+    net_msg:set_msg_flag(data["msg_flag"] or 0)
     local ret = self:send_net_msg(net_msg)
+    TRACE("????????????????? = %o", msg, ret)
 
     if ret == 0 then
         -- 发送成功
@@ -196,6 +204,21 @@ function AGENT_TDCLS:send_message(msg, ...)
     return;
 end
 
+-- 发送消息
+function AGENT_TDCLS:send_gate_message(msg, ...)
+    return self:send_dest_message({code_type=SERVER_TYPE_GATE}, msg, ...)
+end
+
+-- 发送消息
+function AGENT_TDCLS:send_client_message(msg, ...)
+    return self:send_dest_message({code_type=SERVER_TYPE_CLIENT}, msg, ...)
+end
+
+-- 发送消息
+function AGENT_TDCLS:send_message(msg, ...)
+    return self:send_dest_message({code_type=self.code_type, code_id=self.code_id}, msg, ...)
+end
+
 -- 发送打包好的消息
 function AGENT_TDCLS:send_raw_message(msg_buf)
     local port_no = self.port_no;
@@ -204,6 +227,7 @@ function AGENT_TDCLS:send_raw_message(msg_buf)
     end
 
     local name, net_msg = pack_raw_message(msg_buf)
+    TRACE("ooooooooooooooooo %o", name)
     local ret = self:send_net_msg(net_msg)
     if ret == 0 then
         -- 发送成功
@@ -359,9 +383,11 @@ function AGENT_TDCLS:forward_logic_message(net_msg)
 end
 
 function AGENT_TDCLS:forward_server_message(net_msg, client_port)
-    net_msg:set_seq_fd(client_port)
-    net_msg:set_msg_type(MSG_TYPE_FORWARD)
-    self:send_raw_message(net_msg)
+    net_msg:set_msg_type(MSG_FLAG_FORWARD)
+    net_msg:end_msg(client_port)
+    -- 缓存中没消息，直接发送该消息
+    local _, ret = pcall(send_msg_to_port, self.port_no, net_msg);
+    return ret
 end
 
 function AGENT_TDCLS:print_fd_info()
@@ -369,9 +395,9 @@ function AGENT_TDCLS:print_fd_info()
 end
 
 function AGENT_TDCLS:get_msg_type()
-    if self.websocket then
-        return MSG_TYPE_JSON
-    end
+    -- if self.websocket then
+    --     return MSG_TYPE_JSON
+    -- end
     return MSG_TYPE_TD
 end
 

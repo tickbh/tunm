@@ -7,6 +7,7 @@ ACCOUNT_D = {}
 setmetatable(ACCOUNT_D, {__index = _G})
 local _ENV = ACCOUNT_D
 
+
 -- 创建弱引用表
 local account_list = {}
 setmetatable(account_list, { __mode = "v" })
@@ -29,6 +30,7 @@ end
 
 -- 新增玩家记录的回调
 local function create_new_account_callback(info, ret, result_list)
+    TRACE("create_new_account_callback")
     local account_ob = info["account_ob"]
     if ret ~= 0 then
         do return end
@@ -41,7 +43,7 @@ function login(agent, account_rid, account_dbase)
     ASSERT(account_rid == account_dbase["rid"])
     local account = create_account(account_dbase)
     account:accept_relay(agent)
-    account:send_message(MSG_LOGIN_NOTIFY_STATUS, {ret = 0})
+    account:send_message(MSG_LOGIN_NOTIFY_STATUS, {ret = 0, code_type=SERVER_NAMES[SERVER_TYPE_GATE], code_id=0})
     success_login(account, false)
 end
 
@@ -61,6 +63,8 @@ end
 
 -- 创建 user 表记录
 function create_new_account(login_info)
+    TRACE("create_new_account ======== %o", login_info)
+
     local agent = login_info["agent"]
     local device_id = login_info["device_id"]
 
@@ -89,6 +93,7 @@ function create_new_account(login_info)
     }
     local sql = SQL_D.insert_sql("account", account_dbase)
     account_dbase["account_ob"] = agent
+    TRACE("111111111111111111111111111aa")
     DB_D.execute_db("account", sql, create_new_account_callback, account_dbase)
 end
 

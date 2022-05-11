@@ -28,13 +28,12 @@ function lose_client(agent, fd)
             ASSERT(find_agent_by_port(fd) == nil, "client is must nil") 
         end
     end
-
 end
 
-function cmd_enter_server(agent, port, data, ext)
+function cmd_inner_enter_server(agent, port, data, ext)
     --端口区分本地端口
-    port = port + 0x10000
-
+    TRACE("cmd_inner_enter_server port ==== ", port, data)
+    port = tonumber(port) + 0x10000
     --断线重连
     local old_agent = find_agent_by_port(port)
     if old_agent then
@@ -47,6 +46,8 @@ function cmd_enter_server(agent, port, data, ext)
     if ext.is_websocket then
         client_agent:set_websocket(ext.is_websocket)
     end
-    client_agent:set_server_type(SERVER_TYPE_CLIENT)
+    client_agent:set_code_type(SERVER_TYPE_CLIENT, 0)
     client_agent:set_authed(true)
+
+    client_agent:send_message(MSG_ENTER_SERVER, {status="ok"})
 end

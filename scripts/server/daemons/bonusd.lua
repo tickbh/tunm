@@ -21,7 +21,7 @@ local function attrib_bonus(attribs, bonus_type)
     for _, info in pairs(attribs) do
         local attrib = {}
         local ctr_ob
-        local ob = remove_get(info, "ob")
+        local ob = REMOVE_GET(info, "ob")
         if ob and ob:get_owner() then
             ctr_ob = ob:get_owner()
         end
@@ -140,8 +140,8 @@ local function property_bonus(propertys, bonus_type)
     local list ={}
     for _, info in pairs(propertys) do
         -- 取出额外参数
-        local extra = remove_get(info, "extra") or {}
-        local ob = remove_get(info, "ob")
+        local extra = REMOVE_GET(info, "extra") or {}
+        local ob = REMOVE_GET(info, "ob")
 
         --若该对象是玩家，则加载道具
         if ob and ob:query("ob_type") == OB_TYPE_USER then

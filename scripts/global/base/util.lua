@@ -137,15 +137,18 @@ function TRACEBACK(log_to_file)
     until not source_info
 
     local str = table.concat(result, "")
-    TRACE(str)
+    LOG.warn(str)
     return str
 end
 
 -- 重新定义assert函数，打印调用栈
 function ASSERT(e, msg)
     if not e then
+        TRACEBACK(true)
+
         local err = string.format("Assert Failed: %s\n", tostring(msg))
         error(err)
+
     end
 end
 
@@ -156,9 +159,9 @@ function ERROR_HANDLE(...)
         err_msg = err_msg[1]
     end
 
+    TRACEBACK(true)
     err_msg = string.format( "Error:\n%s\n", err_msg)
     TRACE( "%s", err_msg )
-    TRACEBACK(true)
     return ""
 end
 

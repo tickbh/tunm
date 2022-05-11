@@ -34,7 +34,7 @@ function raise_issue(event, ...)
     for listener, node in pairs(nodes) do
         f = node["func"];
         if type(f) == "function" then
-            ret = call_func(f, node["args"], ...)
+            ret = CALL_FUNC(f, node["args"], ...)
             if ret then
                 table.insert(result, ret)
                 return result
@@ -46,7 +46,7 @@ function raise_issue(event, ...)
     for listener, node in pairs(nodes) do
         f = node["func"];
         if type(f) == "function" then
-            ret = call_func(f, node["args"], ...)
+            ret = CALL_FUNC(f, node["args"], ...)
             if ret then
                 table.insert(result, ret)
             end

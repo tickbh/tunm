@@ -17,6 +17,7 @@ local wait_login_list = {}
 -- 定义内部接口，按照字母顺序排序
 local function check_account_callback(login_info, ret, result_list)
     local agent = login_info["agent"]
+    TRACE("11111111111111111111111")
     if type(result_list) ~= "table" or #result_list == 0 then
         -- TRACE("create new ACCOUNT_D!! ret = %o, result_list is = %o", ret, result_list)
         -- 创建新角色
@@ -24,6 +25,7 @@ local function check_account_callback(login_info, ret, result_list)
         return
     end
 
+    TRACE("2222222222222222222")
     local data = result_list[1]
     if login_info.password ~= data.password then
         LOG_D.to_log(LOG_TYPE_LOGIN_FAIL, login_info["account"], "密码不正确", login_info.password, "")
@@ -61,6 +63,7 @@ local function check_account_callback(login_info, ret, result_list)
         wait_account_login(agent, data["rid"], data)
         return
     end
+    TRACE("333333333333333333")
 
     do_login(agent, data["rid"], data)
 end
@@ -166,7 +169,7 @@ local function check_account_login(account_rid)
     if ACCOUNT_D.is_account_freeze(account_rid) or ACCOUNT_D.is_account_online(account_rid) then
         return
     end
-    local wait_info = remove_get(wait_login_list, account_rid)
+    local wait_info = REMOVE_GET(wait_login_list, account_rid)
     if not wait_info then
         return
     end
@@ -187,7 +190,7 @@ local function time_handle()
     end
 
     for rid,_ in pairs(need_op) do
-        local info = remove_get(wait_login_list, rid)
+        local info = REMOVE_GET(wait_login_list, rid)
         REDIS_D.run_publish(REDIS_ACCOUNT_CANCEL_WAIT_LOGIN, info.account_rid)
         if IS_OBJECT(info.agent) then
             info.agent:connection_lost()

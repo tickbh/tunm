@@ -14,8 +14,8 @@ local _enter_game = false
 
 -- 进入游戏第一次更新玩家数据
 function me_updated(agent, data)
-    local item_list = remove_get(data, "item_list") or {}
-    local equip_list = remove_get(data, "equip_list") or {}
+    local item_list = REMOVE_GET(data, "item_list") or {}
+    local equip_list = REMOVE_GET(data, "equip_list") or {}
     -- 创建玩家
     local user = PLAYER_TDCLS.new(data.user)
     for k, v in pairs(agent.data) do

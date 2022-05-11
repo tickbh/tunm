@@ -75,13 +75,15 @@ function set_port_agent(port_no, agent)
 end
 
 function set_type_port(server_type, port_no)
-    type_fds[server_type] = type_fds[server_type] or {}
-    type_fds[server_type][port_no] = true
+    -- type_fds[server_type] = type_fds[server_type] or {}
+    -- type_fds[server_type][port_no] = true
 end
 
 function set_code_type_port(code_type, code_id, port_no)
     type_fds[code_type] = type_fds[code_type] or {}
     type_fds[code_type][code_id] = port_no
+    
+    TRACE("set_code_type_port type_fds ==== %o code_type = %o, code_id = %o", type_fds, code_type, code_id)
 end
 
 function remove_port_map(port_no)
@@ -134,8 +136,9 @@ function get_gate_fd()
 end
 
 function find_port_by_code(code_type, code_id)
+    TRACE("type_fds ==== %o code_type = %o, code_id = %o", type_fds, code_type, code_id)
     if not type_fds[code_type] then
         return -1
     end
-    return type_fds[code_type][code_id] or -1
+    return find_agent_by_port(type_fds[code_type][code_id] or -1) 
 end

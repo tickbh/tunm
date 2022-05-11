@@ -18,13 +18,16 @@ CMD_INTERNAL_AUTH           = "cmd_internal_auth"
 CMD_AGENT_IDENTITY          = "cmd_agent_identity"
 CMD_LOGIN                   = "cmd_login"
 CMD_ENTER_SERVER            = "cmd_enter_server"
+CMD_INNER_ENTER_SERVER      = "cmd_inner_enter_server"
 CMD_CHECK_HEART             = "cmd_check_heart"
+MSG_CHECK_HEART             = "msg_check_heart"
 CMD_USER_LIST               = "cmd_user_list"
 MSG_USER_LIST               = "msg_user_list"
 CMD_CREATE_USER             = "cmd_create_user"
 MSG_CREATE_USER             = "msg_create_user"
 CMD_SELECT_USER             = "cmd_select_user"
 MSG_ENTER_GAME              = "msg_enter_game"
+MSG_ENTER_SERVER            = "msg_enter_server"
 MSG_LOGIN_NOTIFY_STATUS     = "msg_login_notify_status"
 NEW_CLIENT_INIT             = "new_client_init"
 LOSE_CLIENT                 = "lose_client"
@@ -56,9 +59,10 @@ MSG_DEDEAL_SERVER[CMD_AGENT_IDENTITY] = {SERVER_TYPE_GATE, SERVER_TYPE_LOGIC}
 MSG_DEDEAL_SERVER[CMD_LOGIN] = {SERVER_TYPE_GATE, SERVER_TYPE_LOGIC}
 MSG_DEDEAL_SERVER[CMD_CHECK_HEART] = {SERVER_TYPE_GATE}
 MSG_DEDEAL_SERVER[MSG_ENTER_GAME] = {SERVER_TYPE_CLIENT}
+MSG_DEDEAL_SERVER[MSG_ENTER_SERVER] = {SERVER_TYPE_CLIENT}
 MSG_DEDEAL_SERVER[LOSE_CLIENT] = ALL_SERVER_TYPES
-MSG_DEDEAL_SERVER[CMD_ENTER_SERVER] = {SERVER_TYPE_LOGIC, SERVER_TYPE_GAME}
-
+MSG_DEDEAL_SERVER[CMD_ENTER_SERVER] = {SERVER_TYPE_GATE}
+MSG_DEDEAL_SERVER[CMD_INNER_ENTER_SERVER] = {SERVER_TYPE_LOGIC, SERVER_TYPE_GAME}
 
 
 for name, value in pairs(MSG_DEDEAL_SERVER) do
@@ -74,5 +78,8 @@ function is_msg_can_deal(message)
     if not info then
         return false        
     end
-    return info[SERVER_TYPE]
+    if STANDALONE then
+        return true
+    end
+    return info[SERVER_TYPE] or info[CODE_TYPE]
 end
