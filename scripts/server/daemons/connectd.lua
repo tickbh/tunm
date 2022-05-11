@@ -11,7 +11,7 @@ local heartbeat_timer = nil
 local timeout = 60
 local gate_prefix = "{GATE:IP}"
 local redis_gate_prefix = "{GATE:IP}:*"
-local gate_match_string = string.format("%s:([%%w.]*):(%%d+)",gate_prefix)
+local gate_match_string = string.format("%s:([%%w.]*):(%%d+):(%%d+)",gate_prefix)
 
 local connecting_cache_table = {}
 local connected_gate_table = {}
@@ -40,7 +40,7 @@ end
 
 local function gate_heartbeat_network()
     local agents = get_all_agents()
-    local key = string.format("%s:%s:%d", gate_prefix, CURRENT_IP, GATE_LOGIC_PORT)
+    local key = string.format("%s:%s:%d:%d", gate_prefix, CURRENT_IP, GATE_LOGIC_PORT, CODE_ID)
     -- TRACE("gate_heartbeat_network key %o", key)
     REDIS_D.run_command("SET", key, SIZEOF(agents))
     REDIS_D.run_command("EXPIRE", key, timeout)
@@ -83,6 +83,7 @@ local function logic_check_connection()
 end
 
 local function ensure_server_async()
+    TRACE("ensure_server_async === %o", SERVER_TYPE)
     if SERVER_TYPE == SERVER_GATE and not STANDALONE then
         return
     end
@@ -94,7 +95,7 @@ local function ensure_server_async()
         end
 
         for _, value in ipairs(list) do
-            local cur_ip, cur_port = string.match(value, gate_match_string)
+            local cur_ip, cur_port, code_id = string.match(value, gate_match_string)
             local unique_key = cur_ip .. ":" .. cur_port
             local last_cache_time = connecting_cache_table[unique_key] or 0
             local cache_agent = connected_gate_table[unique_key]
@@ -102,25 +103,25 @@ local function ensure_server_async()
                 connecting_cache_table[unique_key] = os.time()
                     
                 local function local_logic_connect_callback(agent, arg)
-                    if IS_OBJECT(connecting_cache_table[arg]) then
-                        DESTRUCT_OBJECT(connecting_cache_table[arg])
-                        connecting_cache_table[arg] = nil
+                    local unique_key, code_id = arg["unique_key"], arg["code_id"]
+                    if IS_OBJECT(connected_gate_table[unique_key]) then
+                        DESTRUCT_OBJECT(connected_gate_table[unique_key])
+                        connected_gate_table[unique_key] = nil
                     end
-                    agent:set_server_type(SERVER_TYPE_GATE)
+                    agent:set_code_type(SERVER_TYPE_GATE, code_id)
                     local password = CALC_STR_MD5(string.format("%s:%s:%s", CODE_TYPE, CODE_ID, SECRET_KEY))
                     
                     agent:send_message(CMD_AGENT_IDENTITY, CODE_TYPE, CODE_ID, password)
-                    connecting_cache_table[arg] = agent
+                    connected_gate_table[unique_key] = agent
                     
                     TRACE("!!!!!!!!logic_connect_callback success fd is %o", agent)
                 end
 
-                socket_connect(cur_ip, cur_port, 25000, local_logic_connect_callback, unique_key)
-            
+                socket_connect(cur_ip, cur_port, 25000, local_logic_connect_callback, {["unique_key"] = unique_key, ["code_id"] = code_id})
+            else
+                TRACE("%o is alive ", unique_key)
             end
         end
-        
-
     end
 
     REDIS_D.run_command_with_call(server_callback, {}, "KEYS", redis_gate_prefix)
@@ -148,7 +149,7 @@ local function init_network_status()
 
     if SERVER_TYPE == SERVER_LOGIC or STANDALONE then
         ensure_server_async()
-        ensure_timer = set_timer(3000, ensure_server_async, nil, true)
+        ensure_timer = set_timer(10000, ensure_server_async, nil, true)
         -- logic_check_connection()
         -- connect_timer = set_timer(3000, logic_check_connection, nil, true)
     end

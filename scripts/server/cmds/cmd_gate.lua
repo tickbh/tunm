@@ -9,13 +9,16 @@ end
 
 function cmd_agent_identity(agent, code_type, code_id, password)
     TRACE("cmd_agent_identity == code_type = %o, code_id = %o, password = %o", code_type, code_id, password)
-    
+    if code_type == SERVER_TYPE_CLIENT then
+        agent:set_code_type(code_type, 0)
+        return
+    end
+
     local calc_password = CALC_STR_MD5(string.format("%s:%s:%s", code_type, code_id, SECRET_KEY))
     if calc_password ~= password then
         agent:connection_lost()
         return
     end
-    agent:set_code_type(code_type)
-    agent:set_code_id(code_id)
+    agent:set_code_type(code_type, code_id)
     agent:set_authed(true)
 end

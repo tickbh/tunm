@@ -90,7 +90,7 @@ fn main() {
         DbPool::instance().check_connect_timeout();
         (RetValue::OK, 0)
     }
-    EventMgr::instance().get_event_loop().add_timer(EventEntry::new_timer(5 * 60 * 1000_000, true, Some(check_server_status), None)); 
+    EventMgr::instance().get_event_loop().add_timer(EventEntry::new_timer(5 * 60 * 1000, true, Some(check_server_status), None)); 
 
     let _ = EventMgr::instance().get_event_loop().run();
 

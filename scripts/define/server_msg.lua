@@ -47,4 +47,20 @@ MSG_DEDEAL_SERVER = {}
 MSG_DEDEAL_SERVER[CMD_INTERNAL_AUTH] = {SERVER_TYPE_GATE}
 MSG_DEDEAL_SERVER[CMD_AGENT_IDENTITY] = {SERVER_TYPE_GATE, SERVER_TYPE_LOGIC}
 MSG_DEDEAL_SERVER[CMD_LOGIN] = {SERVER_TYPE_GATE, SERVER_TYPE_LOGIC}
-MSG_DEDEAL_SERVER[MSG_ENTER_GAME] = {SERVER_CLIENT}
+MSG_DEDEAL_SERVER[MSG_ENTER_GAME] = {SERVER_TYPE_CLIENT}
+
+for name, value in pairs(MSG_DEDEAL_SERVER) do
+    local new_value = {}
+    for _, k in ipairs(value) do
+        new_value[SERVER_NAMES[k]] = true
+    end
+    MSG_DEDEAL_SERVER[name] = new_value
+end
+
+function is_msg_can_deal(message)
+    local info = MSG_DEDEAL_SERVER[message]
+    if not info then
+        return false        
+    end
+    return info[SERVER_TYPE]
+end

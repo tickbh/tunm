@@ -137,10 +137,6 @@ function AGENT_TDCLS:forward_message(msg)
         return;
     end
 
-    if SERVER_TYPE == "gate" and self.server_type == SERVER_TYPE_CLIENT then
-        msg:set_seq_fd(self:get_next_server_seq())
-    end
-
     pcall(forward_to_port, port_no, msg);
 end
 
@@ -299,6 +295,11 @@ function AGENT_TDCLS:set_code_type(code_type, code_id)
     set_code_type_port(self.code_type, self.code_id, self.fport_no == -1 and self.port_no or self.fport_no)
 end
 
+function AGENT_TDCLS:get_code_type()
+    return self.code_type, self.code_id
+end
+
+
 function AGENT_TDCLS:get_server_type()
     return self.server_type
 end
@@ -346,6 +347,12 @@ function AGENT_TDCLS:forward_logic_message(net_msg)
     end
     net_msg:set_seq_fd(self.port_no)
     pcall(forward_to_port, logic_port, net_msg);
+end
+
+function AGENT_TDCLS:forward_server_message(net_msg, client_port)
+    net_msg:set_seq_fd(client_port)
+    net_msg:set_msg_type(MSG_TYPE_FORWARD)
+    self:send_raw_message(net_msg)
 end
 
 function AGENT_TDCLS:print_fd_info()

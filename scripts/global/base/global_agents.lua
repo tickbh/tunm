@@ -44,17 +44,17 @@ end
 function remove_port_agent(port_no)
     local agent = agents[port_no]
     if agent then
-        local server_type = agent:get_server_type()
-        if server_type == SERVER_TYPE_GATE then
+        local code_type, code_id = agent:get_code_type()
+        if code_type == SERVER_TYPE_GATE then
             for _,ag in pairs(DUP(agents)) do
                 if ag:get_server_type() == SERVER_TYPE_CLIENT then
                     ag:connection_lost()
                 end
             end
-        elseif server_type == SERVER_TYPE_LOGIC then
-            for port,_ in pairs(DUP(port_map[port_no]) or {}) do
-                agents[port]:connection_lost()
-            end
+        -- elseif code_type == SERVER_TYPE_LOGIC then
+        --     for port,_ in pairs(DUP(port_map[port_no]) or {}) do
+        --         agents[port]:connection_lost()
+        --     end
         else
             local logic_agent = find_agent_by_port(get_map_port(port_no))
             if logic_agent then
@@ -67,8 +67,8 @@ function remove_port_agent(port_no)
             end
         end
         remove_port_map(port_no)
-        type_fds[server_type] = type_fds[server_type] or {}
-        type_fds[server_type][port_no] = nil
+        -- type_fds[server_type] = type_fds[server_type] or {}
+        -- type_fds[server_type][port_no] = nil
     end
     agents[port_no] = nil
 end
@@ -130,8 +130,16 @@ function get_logic_fd()
 end
 
 function get_gate_fd()
-    for fd,_ in pairs(type_fds[SERVER_TYPE_GATE] or {}) do
+    local gate = type_fds[SERVER_TYPE_GATE] or {}
+    for id,fd in pairs(gate or {}) do
         return fd
     end
     return -1
+end
+
+function find_port_by_code(code_type, code_id)
+    if not type_fds[code_type] then
+        return -1
+    end
+    return type_fds[code_type][code_id] or -1
 end

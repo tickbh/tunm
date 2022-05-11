@@ -21,7 +21,11 @@ fn timer_event_del(time: u32) -> u32 {
 
 fn timer_event_set(time: u32, repeat: bool) -> u32 {
     let event_loop = EventMgr::instance().get_event_loop();
-    let timer_id = event_loop.add_timer(EventEntry::new_timer((time * 1000) as u64,
+    trace!("entry debug = {:?}", EventEntry::new_timer(time as u64,
+        repeat,
+        Some(time_callback),
+        None));
+    let timer_id = event_loop.add_timer(EventEntry::new_timer(time as u64,
                                                               repeat,
                                                               Some(time_callback),
                                                               None));

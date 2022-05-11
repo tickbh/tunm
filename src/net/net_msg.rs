@@ -16,7 +16,7 @@ pub struct NetMsg {
     seq_fd: u16,
     length: u32,
     cookie: u32,
-    msg_type: u8, //message type: normal, request, response
+    msg_type: u8, //message type: 0:normal, 1:forward, request, response
     msg_flag: u8, // flag: encode, compress, route, trace, package
     from_svr_type: u16,
     from_svr_id: u32,

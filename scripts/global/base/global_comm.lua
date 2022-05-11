@@ -109,31 +109,32 @@ function cmd_new_connection(cookie, fd, client_ip, server_port, websocket)
     agent:set_port_no(fd)
     agent:set_client_ip(client_ip)
     agent:set_websocket(websocket)
-    local server_type = get_server_type(client_ip, server_port)
-    
-    TRACE("1111111111111111")
-    if server_type == SERVER_TYPE_GATE or server_type == SERVER_TYPE_LOGIC then
-        -- 现在暂时不需要验证
-        agent:set_authed(true)
-        agent:set_server_type(server_type)
-    else
-        TRACE("222222222222222")
-        local server_fd = get_logic_fd()
-        if SERVER_TYPE == SERVER_GATE and server_fd ~= -1 then
-            agent:set_server_type(server_type)
-            set_port_map(server_fd, fd)
-        else
-            TRACE("no logic server to accept so close the port")
-            agent:connection_lost()
-        end
 
-        TRACE("444444444444444")
-        --超过最高在线
+    if server_port ~= GATE_LOGIC_PORT then
         if get_real_agent_count() > max_online_num then
             TRACE("555555555555")
             agent:connection_lost()
+            return
         end
     end
+
+    -- local server_type = get_server_type(client_ip, server_port)
+    -- TRACE("1111111111111111")
+    -- if server_type == SERVER_TYPE_GATE or server_type == SERVER_TYPE_LOGIC then
+    --     -- 现在暂时不需要验证
+    --     agent:set_authed(true)
+    --     agent:set_server_type(server_type)
+    -- else
+    --     TRACE("222222222222222")
+    --     local server_fd = get_logic_fd()
+    --     if SERVER_TYPE == SERVER_GATE and server_fd ~= -1 then
+    --         agent:set_server_type(server_type)
+    --         set_port_map(server_fd, fd)
+    --     else
+    --         TRACE("no logic server to accept so close the port")
+    --         agent:connection_lost()
+    --     end
+    -- end
 end
 
 -- 是否输出消息trace
@@ -296,38 +297,61 @@ function global_dispatch_command(port_no, message, buffer)
         do return end
     end
 
+    if not agent:get_code_type() then
+        TRACE("未知连接身份(%d)\n 发送消息为(%o)", port_no, message)
+        agent:connection_lost()
+        return
+    end
 
-    TRACE(" 11111111111 message is %o", message)
-    -- local mm_type = get_message_manage_type(message, agent:get_server_type())
-    -- if mm_type == MESSAGE_DISCARD then
-    --     TRACE("------------- discard port_no is %o, cmd : %s -------------", port_no, message)
-    --     del_message(buffer)
-    --     return 
-    -- end
-
-    if not agent:is_websocket() and agent:get_server_type() == SERVER_TYPE_CLIENT and CHECK_PACK and not agent:check_next_client(buffer:get_seq_fd()) then
+    if agent:get_server_type() == SERVER_TYPE_CLIENT and CHECK_PACK and not agent:check_next_client(buffer:get_seq_fd()) then
         TRACE("package check failed %o kick the socket", agent:get_ob_id())
         TRACE("agent:get_server_type() = %o ", agent:get_server_type())
         agent:connection_lost()
         del_message(buffer)
         return
     end
-    if mm_type == MESSAGE_FORWARD then
-        if agent:get_server_type() == SERVER_TYPE_LOGIC then
-            local clientAgent = find_agent_by_port(buffer:get_seq_fd())
-            if clientAgent then
-               clientAgent:forward_message(buffer) 
-            end
-        else
-            agent:forward_logic_message(buffer)
+    local to_type, to_id, msg_type = buffer:get_to_svr_type(), buffer:get_to_svr_id(), buffer:get_msg_type()
+    if to_type == SERVER_TYPE_CLIENT then
+        local clientAgent = find_agent_by_port(buffer:get_seq_fd())
+        if clientAgent then
+           clientAgent:forward_message(buffer)
         end
         del_message(buffer)
         return
-    elseif agent:get_server_type() == SERVER_TYPE_GATE then
-        local logic_agent = find_agent_by_port(buffer:get_seq_fd() + 0x10000)
-        if logic_agent then
-            agent = logic_agent
+    -- elseif to_type == SERVER_TYPE_GATE then
+    --     if  SERVER_TYPE ~= SERVER_GATE and not STANDALONE then
+    --         agent:connection_lost()
+    --         LOG.warn("非法消息, 发送网关消息, 却在服务器接收 %o 消息为 %o", SERVER_TYPE, message)
+    --         del_message(buffer)
+    --         return
+    --     end
+    else
+        -- 其它, 转发到内部服务器, 可能需要做验证
+        if msg_type == MSG_TYPE_FORWARD then
+            if  not STANDALONE and SERVER_TYPE ~= SERVER_NAMES[to_type] then
+                -- agent:connection_lost()
+                agent:send_message(LOSE_CLIENT, buffer:get_seq_fd())
+                LOG.warn("非法消息, 消息无法处理, 却在服务器接收 %o 消息为 %o", SERVER_TYPE, message)
+                del_message(buffer)
+                return
+            end
+        else
+            if  SERVER_TYPE_GATE ~= to_type then
+                local agent = find_port_by_code(to_type, to_id)
+                -- agent:connection_lost()
+                agent:forward_server_message(buffer, port_no)
+                LOG.warn("非法消息, 消息无法处理, 却在服务器接收 %o 消息为 %o", SERVER_TYPE, message)
+                del_message(buffer)
+                return
+            end
         end
+    end
+
+    if not is_msg_can_deal(message) then
+        agent:connection_lost()
+        LOG.warn("发送非法消息, 该服务器无法处理 %o 消息为 %o", SERVER_TYPE, message)
+        del_message(buffer)
+        return
     end
 
     if IS_FUNCTION(msg_filter[message]) then
