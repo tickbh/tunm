@@ -41,7 +41,7 @@ function reset_port_agent(port_no, agent)
 end
 
 -- 移除 port_no　与 agent 的映射关系
-function remove_port_agent(port_no)
+function remove_port_agent(port_no, sended_close)
     local agent = agents[port_no]
     if agent then
         local code_type, code_id = agent:get_code_type()
@@ -51,19 +51,15 @@ function remove_port_agent(port_no)
                     ag:connection_lost()
                 end
             end
-        -- elseif code_type == SERVER_TYPE_LOGIC then
-        --     for port,_ in pairs(DUP(port_map[port_no]) or {}) do
-        --         agents[port]:connection_lost()
-        --     end
-        else
+        elseif not sended_close then
             local logic_agent = find_agent_by_port(get_map_port(port_no))
             if logic_agent then
-                logic_agent:send_message(LOSE_CLIENT, port_no)
+                logic_agent:send_message(LOSE_CLIENT, port_no, true)
             end
             
             local gate_agent = find_agent_by_port(get_gate_fd())
             if gate_agent then
-                gate_agent:send_message(LOSE_CLIENT, port_no)
+                gate_agent:send_message(LOSE_CLIENT, port_no, true)
             end
         end
         remove_port_map(port_no)

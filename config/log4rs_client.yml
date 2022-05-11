@@ -12,7 +12,7 @@ appenders:
 
 
 root:
-  level: trace
+  level: info
   appenders:
     - default
     - stdout
@@ -20,5 +20,18 @@ root:
 loggers:
   app::backend::db:
     level: trace
+
+  tdengine:
+    level: trace
+    appenders:
+      - default
+      - stdout
+    additive: false
+
+  websocket:
+    level: info
+    appenders:
+      - default
+    additive: false
 
     

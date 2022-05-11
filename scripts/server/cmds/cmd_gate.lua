@@ -22,3 +22,7 @@ function cmd_agent_identity(agent, code_type, code_id, password)
     agent:set_code_type(code_type, code_id)
     agent:set_authed(true)
 end
+
+function cmd_check_heart(agent)
+    
+end

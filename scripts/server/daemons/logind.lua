@@ -122,7 +122,7 @@ function login(agent, login_info)
     login_info["account"] = string.lower(login_info["account"] or "")
     local account   = login_info["account"]
     local password  = login_info["password"]
-    local version   = login_info["version"]
+    local version   = tonumber(login_info["version"]) 
     local server_id   = login_info["server_id"]
     local device_id = login_info["device_id"]
 
@@ -136,7 +136,7 @@ function login(agent, login_info)
         return
     end
 
-    local vaild, info = check_table_sql_vailed(login_info, {"account", "device_id", "password", "version", "server_id"})
+    local vaild, info = CHECK_TABLE_SQL_VAILED(login_info, {"account", "device_id", "password", "version", "server_id"})
     if not vaild then
         LOG.err("account:%o login contain unvaid char:%o", account, info)
         LOG_D.to_log(LOG_TYPE_LOGIN_FAIL, login_info["account"], "含有非法字符", "", "")

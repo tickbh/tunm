@@ -7,11 +7,16 @@ local _ENV = CONNECT_D
 local connect_agent = nil
 local connect_timer = nil
 local ensure_timer = nil
-local heartbeat_timer = nil
+local gate_heartbeat_timer = nil
+local server_heartbeat_timer = nil
 local timeout = 60
 local gate_prefix = "{GATE:IP}"
 local redis_gate_prefix = "{GATE:IP}:*"
 local gate_match_string = string.format("%s:([%%w.]*):(%%d+):(%%d+)",gate_prefix)
+
+local server_prefix = "{SERVER:TYPE}"
+local redis_server_prefix = "{SERVER:TYPE}:*"
+local server_match_string = string.format("%s:([%%w.]*):(%%d+):([%%w.]*)",server_prefix)
 
 local connecting_cache_table = {}
 local connected_gate_table = {}
@@ -27,10 +32,16 @@ function close_connecting_info()
         end
         connect_timer = -1
     end
-    if IS_VALID_TIMER(heartbeat_timer) then
-        delete_timer(heartbeat_timer)
+    if IS_VALID_TIMER(gate_heartbeat_timer) then
+        delete_timer(gate_heartbeat_timer)
     end
-    heartbeat_timer = -1
+    gate_heartbeat_timer = -1
+
+    if IS_VALID_TIMER(server_heartbeat_timer) then
+        delete_timer(server_heartbeat_timer)
+    end
+    server_heartbeat_timer = -1
+    
     
     if IS_VALID_TIMER(ensure_timer) then
         delete_timer(ensure_timer)
@@ -46,46 +57,21 @@ local function gate_heartbeat_network()
     REDIS_D.run_command("EXPIRE", key, timeout)
 end
 
-local function logic_connect_callback(agent, arg)
-    if IS_OBJECT(connect_agent) then
-        DESTRUCT_OBJECT(connect_agent)
-        connect_agent = nil
-    end
-    agent:set_server_type(SERVER_TYPE_GATE)
-    connect_agent = agent
-
-    -- for i=1,10000 do
-    --     agent:send_message(LOSE_CLIENT, 0)
-    -- end
-    
-    TRACE("logic_connect_callback success fd is %o", connect_agent)
-end
-
-local function callback_gate_select(data, result_list)
-    if result_list.success == 0 then
-        return
-    end
-
-    local ip, port = result_list[1], result_list[2]
-    if ip and port then
-        socket_connect(ip, port, 25000, logic_connect_callback)
-    end
-end
-
---找出负载最低的网关进行连接
-local function logic_check_connection()
-    if IS_OBJECT(connect_agent) then
-        return
-    end
-
-    TRACE("---------logic_check_connection---------------")
-    REDIS_SCRIPTD.eval_script_by_name("gate_select", {redis_gate_prefix, gate_prefix}, callback_gate_select, {})
+local function server_heartbeat_network()
+    local agents = get_all_agents()
+    local key = string.format("%s:%s:%d:%s", server_prefix, CODE_TYPE, CODE_ID, "game")
+    -- TRACE("gate_heartbeat_network key %o", key)
+    REDIS_D.run_command("SET", key, SIZEOF(agents))
+    REDIS_D.run_command("EXPIRE", key, timeout)
 end
 
 local function ensure_server_async()
     TRACE("ensure_server_async === %o", SERVER_TYPE)
-    if SERVER_TYPE == SERVER_GATE and not STANDALONE then
-        return
+    if SERVER_TYPE == SERVER_GATE  then
+
+        if not STANDALONE then
+            return
+        end
     end
 
     local function server_callback(data, result_list)
@@ -142,16 +128,17 @@ local function init_network_status()
         
         CURRENT_IP = GET_LOCALIP_ADDR() or "127.0.0.1"
         gate_heartbeat_network()
-        heartbeat_timer = set_timer(3000, gate_heartbeat_network, nil, true)
+        gate_heartbeat_timer = set_timer(3000, gate_heartbeat_network, nil, true)
     end
 
     -- ensure_timer = set_timer(3000, ensure_server_async, nil, true)
 
     if SERVER_TYPE == SERVER_LOGIC or STANDALONE then
+        server_heartbeat_network()
+        server_heartbeat_timer = set_timer(3000, server_heartbeat_network, nil, true)
+
         ensure_server_async()
         ensure_timer = set_timer(10000, ensure_server_async, nil, true)
-        -- logic_check_connection()
-        -- connect_timer = set_timer(3000, logic_check_connection, nil, true)
     end
 end
 

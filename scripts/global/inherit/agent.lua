@@ -19,10 +19,23 @@ function AGENT_TDCLS:create()
     self.client_seq = -1;
     self.server_seq = 234;
 
+    self.code_type = 0;
+    self.code_id = 0;
+
+    self.sended_close = false
+
     self.websocket = false;
     self.authed = false;
     -- 保存agent数据
     self.data = {};
+end
+
+function AGENT_TDCLS:set_sended_close(close)
+    self.sended_close = close
+end
+
+function AGENT_TDCLS:get_sended_close()
+    return self.sended_close
 end
 
 function AGENT_TDCLS:calc_next_seq(seq)
@@ -33,6 +46,7 @@ end
 
 function AGENT_TDCLS:get_next_server_seq()
     self.server_seq = self:calc_next_seq(self.server_seq)
+    TRACE("get_next_server_seq == %o", self.server_seq)
     return self.server_seq
 end
 
@@ -51,9 +65,9 @@ end
 
 function AGENT_TDCLS:close_agent()
     if self.fport_no ~= -1 then
-        remove_port_agent(self.fport_no);
+        remove_port_agent(self.fport_no, self.sended_close);
     elseif self.port_no ~= -1 then
-        remove_port_agent(self.port_no);
+        remove_port_agent(self.port_no, self.sended_close);
         close_fd(self.port_no)
     end
     self.fport_no = -1
@@ -131,20 +145,18 @@ function AGENT_TDCLS:relay_comm(to_comm)
     self.fport_no = -1
 end
 
-function AGENT_TDCLS:forward_message(msg)
+function AGENT_TDCLS:forward_client_message(msg)
     local port_no = self.port_no;
     if port_no == -1 then
         return;
     end
 
-    pcall(forward_to_port, port_no, msg);
+    pcall(forward_to_port, port_no, msg)
 end
 
 function AGENT_TDCLS:send_net_msg(net_msg)
     if self.fport_no ~= -1 then
         net_msg:set_seq_fd(self.fport_no)
-    elseif SERVER_TYPE == "gate" and self.server_type == SERVER_TYPE_CLIENT then
-        net_msg:set_seq_fd(self:get_next_server_seq())
     end
 
     -- 缓存中没消息，直接发送该消息
@@ -160,9 +172,6 @@ function AGENT_TDCLS:send_message(msg, ...)
     end
     TRACE("send_message msg = %o args = %o", msg, {...})
     local net_msg = pack_message(self:get_msg_type(), msg, ...)
-    if SERVER_TYPE == "client" and get_network_seq_id then
-        net_msg:set_seq_fd(get_network_seq_id(port_no))
-    end
     local ret = self:send_net_msg(net_msg)
 
     if ret == 0 then

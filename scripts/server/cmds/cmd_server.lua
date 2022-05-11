@@ -6,12 +6,14 @@ function lose_client(agent, fd)
     if STANDALONE then
         local client_agent = find_agent_by_port(fd)
         if client_agent then
+            client_agent:set_sended_close(true)
             client_agent:connection_lost()
             ASSERT(find_agent_by_port(fd) == nil, "client is must nil") 
         end
 
         local client_agent = find_agent_by_port(fd + 0x10000)
         if client_agent then
+            client_agent:set_sended_close(true)
             client_agent:connection_lost()
             ASSERT(find_agent_by_port(fd) == nil, "client is must nil") 
         end
@@ -21,9 +23,30 @@ function lose_client(agent, fd)
         end
         local client_agent = find_agent_by_port(fd)
         if client_agent then
+            client_agent:set_sended_close(true)
             client_agent:connection_lost()
             ASSERT(find_agent_by_port(fd) == nil, "client is must nil") 
         end
     end
 
+end
+
+function cmd_enter_server(agent, port, data, ext)
+    --端口区分本地端口
+    port = port + 0x10000
+
+    --断线重连
+    local old_agent = find_agent_by_port(port)
+    if old_agent then
+        old_agent:connection_lost(true)
+    end
+    local client_agent = CLONE_OBJECT(USER_TDCLS, data);
+    -- 设置端口与 agent 的映射关系
+    client_agent:set_all_port_no(port, agent:get_port_no())
+    client_agent:set_client_ip(ext["client_ip"])
+    if ext.is_websocket then
+        client_agent:set_websocket(ext.is_websocket)
+    end
+    client_agent:set_server_type(SERVER_TYPE_CLIENT)
+    client_agent:set_authed(true)
 end
