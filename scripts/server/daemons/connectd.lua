@@ -67,12 +67,12 @@ end
 
 local function ensure_server_async()
     TRACE("ensure_server_async === %o", SERVER_TYPE)
-    if SERVER_TYPE == SERVER_GATE  then
+    -- if SERVER_TYPE == SERVER_GATE  then
 
-        if not STANDALONE then
-            return
-        end
-    end
+    --     if not STANDALONE then
+    --         return
+    --     end
+    -- end
 
     local function server_callback(data, result_list)
         local succ, list = REDIS_D.check_array(result_list)
@@ -116,7 +116,7 @@ end
 
 local function init_network_status()
     TRACE("init server %o %o", SERVER_TYPE, STANDALONE)
-    if SERVER_TYPE == SERVER_GATE or STANDALONE then
+    if SERVER_TYPE == SERVER_GATE then
         listen_server(GATE_LOGIC_PORT)
         listen_server(GATE_CLIENT_PORT)
 
@@ -133,7 +133,7 @@ local function init_network_status()
 
     -- ensure_timer = set_timer(3000, ensure_server_async, nil, true)
 
-    if SERVER_TYPE == SERVER_LOGIC or STANDALONE then
+    if SERVER_TYPE ~= SERVER_GATE then
         server_heartbeat_network()
         server_heartbeat_timer = set_timer(3000, server_heartbeat_network, nil, true)
 
@@ -143,7 +143,7 @@ local function init_network_status()
 end
 
 local function create()
-    if SERVER_TYPE == SERVER_LOGIC or STANDALONE then
+    if SERVER_TYPE == SERVER_GATE then
         REDIS_D.add_subscribe_channel(REDIS_ACCOUNT_START_HIBERNATE)
         REDIS_D.add_subscribe_channel(REDIS_ACCOUNT_END_HIBERNATE)
     end
@@ -154,6 +154,5 @@ local function init()
     init_network_status()
 end
 
-TRACE("fuck!!!!!!")
 create()
 register_post_data_init(init)

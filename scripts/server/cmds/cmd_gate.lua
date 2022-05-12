@@ -52,5 +52,5 @@ function cmd_enter_server(agent, server)
     end
 
     TRACE("44444444444444444 ==== %o === %o", server, agent:get_port_no())
-    server_agent:send_dest_message({code_type=code_type, code_id=code_id, msg_flag=MSG_FLAG_FORWARD}, CMD_INNER_ENTER_SERVER, agent:get_port_no(), agent:query_into_server_data(), {is_websocket=agent:is_websocket()})
+    server_agent:send_dest_message({code_type=code_type, code_id=code_id}, CMD_INNER_ENTER_SERVER, agent:get_port_no(), agent:query_into_server_data(), {is_websocket=agent:is_websocket()})
 end

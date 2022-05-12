@@ -86,7 +86,6 @@ function USER_TDCLS:connection_lost(at_once)
         end
     end
 
-    REDIS_D.run_publish(REDIS_USER_CONNECTION_LOST, get_ob_rid(self))
 end
 
 -- 玩家进入世界

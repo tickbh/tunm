@@ -299,9 +299,9 @@ function create()
     
     register_msg_filter("cmd_room_message", logic_cmd_room_message)
 
-    if SERVER_TYPE == SERVER_LOGIC or STANDALONE then
-        REDIS_D.add_subscribe_channel(SUBSCRIBE_ROOM_DETAIL_RECEIVE)
-    end
+    -- if SERVER_TYPE == SERVER_LOGIC or STANDALONE then
+    --     REDIS_D.add_subscribe_channel(SUBSCRIBE_ROOM_DETAIL_RECEIVE)
+    -- end
 end
 
 local function init()

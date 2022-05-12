@@ -7,6 +7,8 @@ extern crate tdengine;
 extern crate td_rthreadpool;
 extern crate td_revent;
 
+extern crate commander;
+use commander::Commander;
 
 use env_logger::{Builder, Target};
 use log::{warn, info};
@@ -36,15 +38,21 @@ pub fn get() -> Option<String> {
 }
 
 fn main() {
-    log4rs::init_file("config/log4rs.yml", Default::default()).unwrap();
+
+
+    
+    let command = Commander::new()
+                .version(&env!("CARGO_PKG_VERSION").to_string())
+                .usage("test")
+                .usage_desc("tdengine server commander.")
+                .option_str("-c, --config [value]", "config data ", Some("config/Gate_GlobalConfig.conf".to_string()))
+                .option_str("-l, --log [value]", "log4rs file config ", Some("config/log4rs.yml".to_string()))
+                .parse_env_or_exit()
+                ;
+
+    log4rs::init_file(&*command.get_str("l").unwrap(), Default::default()).unwrap();
     warn!("local address!! {}", get().unwrap());
-
-    let args = env::args();
-    for arg in args {
-        println!("args {:?}", arg);    
-    }
-
-    let success = GlobalConfig::change_by_file("config/Gate_GlobalConfig.conf");
+    let success = GlobalConfig::change_by_file(&*command.get_str("c").unwrap());
     assert_eq!(success, true);
 
     let global_config = GlobalConfig::instance();
@@ -73,9 +81,9 @@ fn main() {
     LogUtils::instance().set_log_path("log/".to_string());
 
     FileUtils::instance().add_search_path("scripts/");
-
-    if global_config.telnet_addr.is_some() {
-        TelnetUtils::instance().listen(&*global_config.telnet_addr.as_ref().unwrap());
+    let telnet_addr = global_config.telnet_addr.clone().unwrap_or(String::new());
+    if telnet_addr.len() > 2 {
+        TelnetUtils::instance().listen(&*telnet_addr);
     }
 
     register_custom_func(lua);

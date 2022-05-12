@@ -311,7 +311,7 @@ function global_dispatch_command(port_no, message, buffer)
         TRACE("3333333333333333 %o, msg_flag = %o", message, msg_flag)
         -- 其它, 转发到内部服务器, 可能需要做验证
         if msg_flag == MSG_FLAG_FORWARD then
-            if  not STANDALONE and SERVER_TYPE ~= SERVER_NAMES[to_type] then
+            if SERVER_TYPE ~= SERVER_NAMES[to_type] then
                 -- agent:connection_lost()
                 local port_agent = find_agent_by_port(buffer:get_seq_fd() + 0x10000)
                 if port_agent then
@@ -323,9 +323,9 @@ function global_dispatch_command(port_no, message, buffer)
             end
         else
             TRACE("aaaaaaaaaaaaaaa %o", to_type)
-            if SERVER_TYPE_GATE ~= to_type and (SERVER_TYPE == SERVER_GATE or STANDALONE) then
+            if SERVER_TYPE_GATE ~= to_type and (SERVER_TYPE == SERVER_GATE) then
                 local agent = find_port_by_code(to_type, to_id)
-                if not agent then
+                if not IS_OBJECT(agent) then
                     return
                 end
                 -- agent:connection_lost()

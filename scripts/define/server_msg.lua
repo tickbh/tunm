@@ -78,8 +78,5 @@ function is_msg_can_deal(message)
     if not info then
         return false        
     end
-    if STANDALONE then
-        return true
-    end
     return info[SERVER_TYPE] or info[CODE_TYPE]
 end

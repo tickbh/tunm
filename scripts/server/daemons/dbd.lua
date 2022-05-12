@@ -67,7 +67,7 @@ function get_db_type()
     end
 
     db_type = get_config_value("DB_TYPE")
-    if SIZEOF(db_type) == 0 and STANDALONE then
+    if SIZEOF(db_type) == 0 then
         db_type = "sqlite"
     end
 
@@ -95,10 +95,8 @@ function lua_sync_insert(db_name, sql_cmd, n_dbtype)
 end
 
 function lua_sync_select(db_name, sql_cmd, n_dbtype)
-    TRACE("lua_sync_select sql is %o ", sql_cmd)
     n_dbtype = n_dbtype or get_db_index()
     local err, ret = db_select_sync(db_name, n_dbtype, sql_cmd)
-    TRACE("lua_sync_select err, ret %o %o ", err, ret)
     if err ~= 0 then
         return err, ret
     end

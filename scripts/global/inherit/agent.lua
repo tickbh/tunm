@@ -383,7 +383,7 @@ function AGENT_TDCLS:forward_logic_message(net_msg)
 end
 
 function AGENT_TDCLS:forward_server_message(net_msg, client_port)
-    net_msg:set_msg_type(MSG_FLAG_FORWARD)
+    net_msg:set_msg_flag(MSG_FLAG_FORWARD)
     net_msg:end_msg(client_port)
     -- 缓存中没消息，直接发送该消息
     local _, ret = pcall(send_msg_to_port, self.port_no, net_msg);

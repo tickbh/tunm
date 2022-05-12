@@ -119,10 +119,10 @@ end
 function create()
     set_timer(1000, timer_handle, nil, true)
 
-    if SERVER_TYPE == SERVER_LOGIC or STANDALONE then
-        REDIS_D.add_subscribe_channel(string.format(REDIS_SERVER_MSG_USER, SERVER_ID))
-        REDIS_D.add_subscribe_channel(string.format(REDIS_RESPONE_SERVER_INFO, SERVER_ID))
-    end
+    -- if SERVER_TYPE == SERVER_LOGIC or STANDALONE then
+    --     REDIS_D.add_subscribe_channel(string.format(REDIS_SERVER_MSG_USER, SERVER_ID))
+    --     REDIS_D.add_subscribe_channel(string.format(REDIS_RESPONE_SERVER_INFO, SERVER_ID))
+    -- end
 
 end
 
