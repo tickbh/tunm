@@ -5,6 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "LuaHelper-Debug",
+            "request": "launch",
+            "name": "LuaHelper-Attach",
+            "description": "通用模式,通常调试项目请选择此模式",
+            "cwd": "",
+            "luaFileExtension": "",
+            "connectionPort": 8818,
+            "stopOnEntry": true,
+            "useCHook": true,
+            "autoPathMode": true
+        },
+        {
             "type": "lldb",
             "request": "launch",
             "name": "Debug unit tests in library 'tdengine'",

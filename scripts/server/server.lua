@@ -9,7 +9,11 @@ function update(name)
     -- 回收垃圾
     collectgarbage("collect")
 end
-
+if ENABLE_LUA_HELPER_DEBUG then
+    -- 把luasocket添加到相关地方, 先启动luahelper
+    require("socket.core")
+    require("LuaPanda").start("127.0.0.1", 8818);
+end
 math.randomseed(os.time())
 update("global/base/util")
 update("global/base/load_folder")
