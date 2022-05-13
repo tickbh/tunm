@@ -10,10 +10,14 @@ local _ENV = DATA_D
 local table_infos = {}
 local table_maping = {}
 local db_infos = {}
+local is_insync = false
 
 local test_cloumn = "only_test_for_create"
 
 function get_real_table_name(table_name)
+    if is_insync then
+        return table_name
+    end
     return table_maping[table_name] or table_name
 end
 
@@ -45,6 +49,7 @@ local function create_db(db_name,tinfo)
 end
 
 function ensure_database()
+    is_insync = true
     for db_name, dinfo in pairs(db_infos) do
         ensure_exist_database(db_name)
     end
@@ -54,6 +59,7 @@ function ensure_database()
         check_table_right(tinfo)
         check_table_index_right(tinfo)
     end
+    is_insync = false
 end
 
 function get_db_name( table_name )
@@ -127,6 +133,7 @@ function load_database( path )
             table_value["field_order"] = field_order
             local table_name = (TABLE_SUFFIX or "") .. table_value["name"]
             table_maping[table_value["name"]] = table_name
+            table_value["name"] = table_name
             table_infos[table_name] = table_value
             db_infos[database_name][table_name] = table_value
         end
