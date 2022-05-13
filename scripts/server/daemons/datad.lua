@@ -8,16 +8,21 @@ local _ENV = DATA_D
 
 -- 内部变量声明
 local table_infos = {}
+local table_maping = {}
 local db_infos = {}
 
 local test_cloumn = "only_test_for_create"
 
+function get_real_table_name(table_name)
+    return table_maping[table_name] or table_name
+end
+
 function get_table_info(table_name) 
-    return table_infos[table_name]
+    return table_infos[get_real_table_name(table_name)]
 end
 
 function get_table_fields( table_name )
-    local tinfo = table_infos[table_name]
+    local tinfo = table_infos[get_real_table_name(table_name)]
     if not tinfo then
         return {}
     end
@@ -52,7 +57,8 @@ function ensure_database()
 end
 
 function get_db_name( table_name )
-    local tinfo = table_infos[table_name]
+
+    local tinfo = table_infos[get_real_table_name(table_name)]
     if not tinfo then
         return nil
     end
@@ -119,8 +125,10 @@ function load_database( path )
             table_value["field_map"] = generate_field_map(tablejson, field_table)
             table_value["index_map"] = generate_index_map(tablejson)
             table_value["field_order"] = field_order
-            table_infos[table_value["name"]] = table_value
-            db_infos[database_name][table_value["name"]] = table_value
+            local table_name = (TABLE_SUFFIX or "") .. table_value["name"]
+            table_maping[table_value["name"]] = table_name
+            table_infos[table_name] = table_value
+            db_infos[database_name][table_name] = table_value
         end
     end
 end
@@ -145,7 +153,7 @@ function ensure_exist_database(dbname)
     if DB_D.is_sqlite() or is_database_exist(dbname) then
         return true
     end
-    local sql = string.format("CREATE DATABASE `%s`", dbname)
+    local sql = string.format("CREATE DATABASE `%s` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;", dbname)
     local err, ret = DB_D.lua_sync_select("", sql, DB_D.get_db_index())
     return true
 end
@@ -363,7 +371,9 @@ end
 
 function create( )
     load_database("config/dba_database.json")
-    ensure_database()
+    if ENABLE_DATABASE_SYNC then
+        ensure_database()
+    end
 end
 
 

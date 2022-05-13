@@ -7,7 +7,7 @@ local i_cookie = 0;
 -- 取得新的 cookie
 function new_cookie()
     s_cookie = s_cookie + 1;
-    s_cookie = bit32.band(s_cookie, 0xffff);
+    s_cookie = bit32.band(s_cookie, 0xffffffff);
     s_cookie = (s_cookie == 0 and 1 or s_cookie);
 
     return s_cookie;

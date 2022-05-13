@@ -96,7 +96,9 @@ end
 
 function lua_sync_select(db_name, sql_cmd, n_dbtype)
     n_dbtype = n_dbtype or get_db_index()
+    -- TRACE("sql command  = %o", sql_cmd)
     local err, ret = db_select_sync(db_name, n_dbtype, sql_cmd)
+    -- TRACE("sql ret  = %o", err, ret)
     if err ~= 0 then
         return err, ret
     end
@@ -107,12 +109,16 @@ function convert_table_info(table_struct)
     local result = {}
     for _,value in ipairs(table_struct) do
         local convert = {}
-        convert["field"] = value["COLUMN_NAME"] or value["name"] or ""
-        convert["type"] = value["COLUMN_TYPE"] or value["type"] or ""
-        convert["key"] = value["COLUMN_KEY"] or value["key"] or ""
-        convert["default"] = value["COLUMN_DEFAULT"] or value["dflt_value"] or ""
+        convert["field"] = value["COLUMN_NAME"] or value["name"] or value["Field"] or ""
+        convert["type"] = value["COLUMN_TYPE"] or value["type"] or value["Type"] or ""
+        convert["key"] = value["COLUMN_KEY"] or value["key"] or value["Key"] or ""
+        convert["default"] = value["COLUMN_DEFAULT"] or value["dflt_value"] or value["Default"] or "" 
         convert["extra"] = value["EXTRA"] or ""
-        convert["nullable"] = value["IS_NULLABLE"] == "NO" and 0 or 1
+        if value["Null"] then
+            convert["nullable"] = value["Null"] == "YES" and 1 or 0
+        else
+            convert["nullable"] = value["IS_NULLABLE"] == "NO" and 0 or 1
+        end
         if get_db_type() == "sqlite" then
             convert["nullable"] = value["notnull"] == 1 and 0 or 1
         end

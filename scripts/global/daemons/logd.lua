@@ -27,6 +27,3 @@ local function create()
 end
 
 create()
-IMPORT_D = {}
-setmetatable(IMPORT_D, {__index = _G})
-local _ENV = IMPORT_D
