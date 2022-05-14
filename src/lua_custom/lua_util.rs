@@ -29,11 +29,11 @@ fn write_log(method : u8, val: String) {
     LogUtils::instance().append(method, &*val);
 }
 
-fn get_rid(server_id: u16, flag: Option<u8>) -> [u8; 12] {
+fn get_rid(server_id: u16, flag: u16) -> [u8; 18] {
     static mut RID_SEQUENCE: u32 = 0;
     static mut LAST_RID_TIME: u32 = 0;
 
-    let mut rid = [0; 12];
+    let mut rid = [0; 18];
     unsafe {
         RID_SEQUENCE += 1;
         RID_SEQUENCE &= 0x8FFF;
@@ -54,43 +54,35 @@ fn get_rid(server_id: u16, flag: Option<u8>) -> [u8; 12] {
          * 00000-00000-00000-00000-00000-00000 00000-00000-00 000-00000-00000-00000
          * -------------- TIME --------------- - SERVER_ID -- --- RID SEQUENCE ----
         */
-        if flag.is_some() {
-            rid[0] = ENCODE_MAP[(flag.unwrap() & 0x1F) as usize];
-            rid[1] = ENCODE_MAP[((ti >> 23) & 0x1F) as usize];
-            rid[2] = ENCODE_MAP[((ti >> 18) & 0x1F) as usize];
-            rid[3] = ENCODE_MAP[((ti >> 13) & 0x1F) as usize];
-            rid[4] = ENCODE_MAP[((ti >> 8) & 0x1F) as usize];
-            rid[5] = ENCODE_MAP[((ti >> 3) & 0x1F) as usize]; //time
+        rid[0] = ENCODE_MAP[((ti >> 30) & 0x1F) as usize];
+        rid[1] = ENCODE_MAP[((ti >> 25) & 0x1F) as usize];
+        rid[2] = ENCODE_MAP[((ti >> 20) & 0x1F) as usize];
+        rid[3] = ENCODE_MAP[((ti >> 15) & 0x1F) as usize];
+        rid[4] = ENCODE_MAP[((ti >> 10) & 0x1F) as usize];
+        rid[5] = ENCODE_MAP[((ti >> 5) & 0x1F) as usize];
+        rid[6] = ENCODE_MAP[(ti & 0x1F) as usize]; //time
 
-            // server_id[10..11]
-            rid[6] = ENCODE_MAP[(((ti) & 0x7) | ((server_id >> 10) as u32 & 0x3)) as usize];
-            rid[7] = ENCODE_MAP[((server_id >> 5) & 0x1F) as usize]; //[5..9]
-            rid[8] = ENCODE_MAP[(server_id & 0x1F) as usize]; //[0..4]
-            rid[9] = ENCODE_MAP[((RID_SEQUENCE >> 10) & 0x1F) as usize];
-            rid[10] = ENCODE_MAP[((RID_SEQUENCE >> 5) & 0x1F) as usize];
-            rid[11] = ENCODE_MAP[(RID_SEQUENCE & 0x1F) as usize];
-        } else {
-            rid[0] = ENCODE_MAP[((ti >> 25) & 0x1F) as usize];
-            rid[1] = ENCODE_MAP[((ti >> 20) & 0x1F) as usize];
-            rid[2] = ENCODE_MAP[((ti >> 15) & 0x1F) as usize];
-            rid[3] = ENCODE_MAP[((ti >> 10) & 0x1F) as usize];
-            rid[4] = ENCODE_MAP[((ti >> 5) & 0x1F) as usize];
-            rid[5] = ENCODE_MAP[(ti & 0x1F) as usize]; //time
-            rid[6] = ENCODE_MAP[((server_id >> 10) & 0x1F) as usize]; //
-            rid[7] = ENCODE_MAP[((server_id >> 5) & 0x1F) as usize]; //server_id[2..11]
-            rid[8] = ENCODE_MAP[((server_id) & 0x1F) as usize]; //server_id[0..2]
-            rid[9] = ENCODE_MAP[((RID_SEQUENCE >> 10) & 0x1F) as usize];
-            rid[10] = ENCODE_MAP[((RID_SEQUENCE >> 5) & 0x1F) as usize];
-            rid[11] = ENCODE_MAP[(RID_SEQUENCE & 0x1F) as usize];
-        }
+        rid[7] = ENCODE_MAP[((server_id >> 15) & 0x1F) as usize]; //
+        rid[8] = ENCODE_MAP[((server_id >> 10) & 0x1F) as usize]; //
+        rid[9] = ENCODE_MAP[((server_id >> 5) & 0x1F) as usize]; //server_id[2..11]
+        rid[10] = ENCODE_MAP[((server_id) & 0x1F) as usize]; //server_id[0..2]
+
+        rid[11] = ENCODE_MAP[((flag >> 10) & 0x1F) as usize];
+        rid[12] = ENCODE_MAP[((flag >> 10) & 0x1F) as usize];
+        rid[13] = ENCODE_MAP[((flag >> 5) & 0x1F) as usize];
+        
+        rid[14] = ENCODE_MAP[((RID_SEQUENCE >> 10) & 0x1F) as usize];
+        rid[15] = ENCODE_MAP[((RID_SEQUENCE >> 10) & 0x1F) as usize];
+        rid[16] = ENCODE_MAP[((RID_SEQUENCE >> 5) & 0x1F) as usize];
+        rid[17] = ENCODE_MAP[(RID_SEQUENCE & 0x1F) as usize];
     }
     rid
 }
 
 extern "C" fn get_next_rid(lua: *mut lua_State) -> libc::c_int {
     let server_id: u16 = unwrap_or!(LuaRead::lua_read_at_position(lua, 1), return 0);
-    let flag: Option<u8> = LuaRead::lua_read_at_position(lua, 2);
-    let rid = get_rid(server_id, flag);
+    let flag: Option<u16> = LuaRead::lua_read_at_position(lua, 2);
+    let rid = get_rid(server_id, flag.unwrap_or(0));
     String::from_utf8_lossy(&rid).push_to_lua(lua);
     1
 }
