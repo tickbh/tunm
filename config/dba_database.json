@@ -5,7 +5,7 @@
             "fields" : [
                 {   "field" : "account",                   "type" : "varchar(128)",     "nullable" : 0,         "default" : "",    "comment" : "账号名称",     "key" : "PRI",  "extra" : ""       },
                 {   "field" : "device_id",                 "type" : "varchar(128)",     "nullable" : 0,         "default" : "",         "comment" : "设备ID"                                  },
-                {   "field" : "rid",                       "type" : "varchar(12)",     "nullable" : 0,         "default" : "",         "comment" : "账号RID",         "key" : "UNI"        },
+                {   "field" : "rid",                       "type" : "varchar(18)",     "nullable" : 0,         "default" : "",         "comment" : "账号RID",         "key" : "UNI"        },
                 {   "field" : "name",                      "type" : "varchar(128)",     "nullable" : 1,         "default" : "",         "comment" : "账号名字"                                  },
                 {   "field" : "device_md5",                "type" : "varchar(128)",     "nullable" : 1,         "default" : "",         "comment" : "设备md5"                                  },
                 {   "field" : "create_time",               "type" : "int(32)",         "nullable" : 1,         "default" : "",         "comment" : "创建时间"                                  },
@@ -20,8 +20,8 @@
             "name":"user",
             "fields" : [
                 {   "field" : "name",                      "type" : "varchar(128)",     "nullable" : 0,         "default" : "",         "comment" : "用户名称",     "key" : "PRI",  "extra" : ""       },
-                {   "field" : "rid",                       "type" : "varchar(12)",     "nullable" : 0,         "default" : "",         "comment" : "角色RID",         "key" : "UNI"        },
-                {   "field" : "account_rid",               "type" : "varchar(12)",     "nullable" : 0,         "default" : "",         "comment" : "账号RID"                                  },
+                {   "field" : "rid",                       "type" : "varchar(18)",     "nullable" : 0,         "default" : "",         "comment" : "角色RID",         "key" : "UNI"        },
+                {   "field" : "account_rid",               "type" : "varchar(18)",     "nullable" : 0,         "default" : "",         "comment" : "账号RID"                                  },
                 {   "field" : "lv",                        "type" : "int(16)",         "nullable" : 1,         "default" : "1",         "comment" : "Lv"                      },
                 {   "field" : "exp",                       "type" : "int(32)",         "nullable" : 1,         "default" : "0",         "comment" : "exp"                     },
                 {   "field" : "create_time",               "type" : "int(32)",         "nullable" : 1,         "default" : "" ,         "comment" : "创建时间"                                 },
@@ -43,8 +43,8 @@
         {
             "name":"item",
             "fields" : [
-                {   "field" : "rid",                       "type" : "varchar(12)",     "nullable" : 1,         "default" : "",      "comment" : "物品RID",     "key" : "PRI"                                  },
-                {   "field" : "owner",                     "type" : "varchar(12)",     "nullable" : 1,         "default" : "",      "comment" : "拥有者RID"                               },
+                {   "field" : "rid",                       "type" : "varchar(18)",     "nullable" : 1,         "default" : "",      "comment" : "物品RID",     "key" : "PRI"                                  },
+                {   "field" : "owner",                     "type" : "varchar(18)",     "nullable" : 1,         "default" : "",      "comment" : "拥有者RID"                               },
                 {   "field" : "pos",                       "type" : "varchar(18)",     "nullable" : 1,         "default" : "",      "comment" : "装备位置信息"                                  },
                 {   "field" : "class_id",                  "type" : "int(11)",         "nullable" : 1,         "default" : "",      "comment" : "装备ID"                                  },
                 {   "field" : "amount",                    "type" : "int(11)",         "nullable" : 1,         "default" : "",      "comment" : "装备数量"                                  },
@@ -54,10 +54,10 @@
         {
             "name":"equip",
             "fields" : [
-                {   "field" : "rid",                       "type" : "varchar(12)",     "nullable" : 0,         "default" : "",      "comment" : "物品的RID", "key" : "PRI"                                             },
-                {   "field" : "owner",                     "type" : "varchar(12)",     "nullable" : 1,         "default" : "",      "comment" : "物品拥有者RID"                                  },
+                {   "field" : "rid",                       "type" : "varchar(18)",     "nullable" : 0,         "default" : "",      "comment" : "物品的RID", "key" : "PRI"                                             },
+                {   "field" : "owner",                     "type" : "varchar(18)",     "nullable" : 1,         "default" : "",      "comment" : "物品拥有者RID"                                  },
                 {   "field" : "class_id",                  "type" : "int(32)",         "nullable" : 1,         "default" : "",      "comment" : "物品ID"                                  },
-                {   "field" : "pos",                       "type" : "varchar(12)",     "nullable" : 1,         "default" : "",      "comment" : "物品位置以22-33形式"                                  },
+                {   "field" : "pos",                       "type" : "varchar(18)",     "nullable" : 1,         "default" : "",      "comment" : "物品位置以22-33形式"                                  },
                 {   "field" : "lv",                        "type" : "int(32)",         "nullable" : 1,         "default" : "0",      "comment" : "强化等级，起始0"                                  },
                 {   "field" : "exp",                       "type" : "int(32)",         "nullable" : 1,         "default" : "0",      "comment" : "物品当前经验"                     },               
                 {   "name"  : "rid",                       "type" : "normal",          "indexs" : "rid",       "key" : "index"                                  },
@@ -69,7 +69,7 @@
         {
             "name":"ddz_info",
             "fields" : [
-                {   "field" : "owner",                     "type" : "varchar(12)",     "nullable" : 0,         "default" : "",       "comment" : "人物的RID", "key" : "PRI"          },
+                {   "field" : "owner",                     "type" : "varchar(18)",     "nullable" : 0,         "default" : "",       "comment" : "人物的RID", "key" : "PRI"          },
                 {   "field" : "pea_amount",                "type" : "int(32)",         "nullable" : 1,         "default" : "0",      "comment" : "豆豆的数量"                        },
                 {   "field" : "score",                     "type" : "int(32)",         "nullable" : 1,         "default" : "0",      "comment" : "玩家积分"                          },
                 {   "field" : "win_amount",                "type" : "int(32)",         "nullable" : 1,         "default" : "0",      "comment" : "胜场次数"                          },
