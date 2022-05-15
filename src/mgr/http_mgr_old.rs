@@ -2,7 +2,7 @@
 // use std::thread;
 // use std::net::TcpStream;
 
-// use rt_proto::Buffer;
+// use tunm_proto::Buffer;
 
 // use std;
 // use std::io::prelude::*;

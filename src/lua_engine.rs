@@ -6,7 +6,7 @@ use crypto::aead::AeadDecryptor;
 use {NetMsg, FileUtils};
 use td_rlua::{self, Lua, LuaRead};
 use libc;
-use rt_proto;
+use tunm_proto;
 use std::sync::Arc;
 use td_rthreadpool::ReentrantMutex;
 use td_rredis::{RedisResult, Value};
@@ -210,7 +210,7 @@ impl LuaEngine {
                 // if let Some(net_msg) = net_msg.as_mut() {
                 let mut net_msg = net_msg.unwrap();
                 net_msg.set_read_data();
-                if let Ok((_, val)) = rt_proto::decode_proto(net_msg.get_buffer()) {
+                if let Ok((_, val)) = tunm_proto::decode_proto(net_msg.get_buffer()) {
                     self.lua.exec_func3("msg_db_result", cookie, ret, LuaWrapperTableValue(val))
                 } else {
                     self.lua.exec_func3("msg_db_result", cookie, -2, "analyse data failed")

@@ -32,7 +32,7 @@ end
 
 -- 生成新的RID
 function NEW_RID(flag)
-    flag = flag or "1";
+    flag = flag or 1;
     return (GET_NEXT_RID(tonumber(SERVER_ID), flag));
 end
 

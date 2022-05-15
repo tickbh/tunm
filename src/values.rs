@@ -1,7 +1,7 @@
 use std::error;
 use std::fmt;
 use std::io;
-use rt_proto::RpError;
+use tunm_proto::RpError;
 
 /// An enum of all error kinds.
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]

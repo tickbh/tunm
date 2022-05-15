@@ -1,4 +1,4 @@
-use rt_proto::Buffer;
+use tunm_proto::Buffer;
 use psocket::{SOCKET};
 
 #[derive(Debug)]

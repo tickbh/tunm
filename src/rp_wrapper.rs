@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use libc;
 use std::hash::Hash;
-use rt_proto::Value;
+use tunm_proto::Value;
 use td_rlua::{self, LuaPush, lua_State};
 /// the wrapper for push to lua
 

@@ -55,7 +55,7 @@ fn main() {
     // let mut net_msg = NetMsg::new();
     // sql_db.select("SELECT customer_id, amount, account_name from tmp.payment", &mut net_msg);
     // net_msg.set_read_data();
-    // let val = rt_proto::decode_proto(net_msg.get_buffer(), instance);
+    // let val = tunm_proto::decode_proto(net_msg.get_buffer(), instance);
     // println!("val = {:?}", val);
 
     //     let _ = env_logger::init();

@@ -12,7 +12,7 @@ extern crate ws;
 extern crate chrono;
 
 extern crate td_rlua;
-extern crate rt_proto;
+extern crate tunm_proto;
 extern crate td_rredis;
 extern crate td_rthreadpool;
 extern crate td_revent;

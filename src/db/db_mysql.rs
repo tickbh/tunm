@@ -4,7 +4,7 @@ use std::str::FromStr;
 use super::DbTrait;
 use {NetResult, NetMsg, ErrorKind, TimeUtils};
 
-use rt_proto::{self, Value, encode_proto};
+use tunm_proto::{self, Value, encode_proto};
 use chrono::prelude::*;
 use url;
 use mysql;

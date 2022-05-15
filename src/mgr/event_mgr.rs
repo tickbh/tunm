@@ -13,7 +13,7 @@ use LogUtils;
 
 use std::sync::Arc;
 use td_rthreadpool::ReentrantMutex;
-use rt_proto::{self, Buffer, decode_number};
+use tunm_proto::{self, Buffer, decode_number};
 use td_revent::*;
 
 static mut EL: *mut EventMgr = 0 as *mut _;
@@ -201,7 +201,7 @@ impl EventMgr {
             return None;
         }
         let rpos = buffer.get_rpos();
-        let mut length: u32 = unwrap_or!(decode_number(buffer, rt_proto::TYPE_U32).ok(), return None)
+        let mut length: u32 = unwrap_or!(decode_number(buffer, tunm_proto::TYPE_U32).ok(), return None)
                               .into();
         buffer.set_rpos(rpos);
         length = unsafe { ::std::cmp::min(length, READ_DATA.len() as u32) };

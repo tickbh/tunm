@@ -1,5 +1,5 @@
 use td_rlua::{self, Lua, LuaPush};
-use rt_proto;
+use tunm_proto;
 use super::EngineProtocol;
 use {NetMsg, NetUtils};
 use {NetResult, LuaWrapperTableValue};
@@ -16,7 +16,7 @@ impl EngineProtocol for ProtoRt {
         }
         let value = value.unwrap();
         let mut net_msg = NetMsg::new();
-        unwrap_or!(rt_proto::encode_proto(net_msg.get_buffer(), &name, value).ok(),
+        unwrap_or!(tunm_proto::encode_proto(net_msg.get_buffer(), &name, value).ok(),
                    return None);
         net_msg.end_msg(0);
         if net_msg.len() > 0xFFFFFF {
@@ -28,7 +28,7 @@ impl EngineProtocol for ProtoRt {
 
     fn unpack_protocol(lua: *mut td_rlua::lua_State, net_msg: &mut NetMsg) -> NetResult<i32> {
         net_msg.set_read_data();
-        if let Ok((name, val)) = rt_proto::decode_proto(net_msg.get_buffer()) {
+        if let Ok((name, val)) = tunm_proto::decode_proto(net_msg.get_buffer()) {
             name.push_to_lua(lua);
             LuaWrapperTableValue(val).push_to_lua(lua);
             return Ok(2);
@@ -39,7 +39,7 @@ impl EngineProtocol for ProtoRt {
 
     fn convert_string(lua: *mut td_rlua::lua_State, net_msg: &mut NetMsg) -> NetResult<String> {
         net_msg.set_read_data();
-        if let Ok((name, val)) = rt_proto::decode_proto(net_msg.get_buffer()) {
+        if let Ok((name, val)) = tunm_proto::decode_proto(net_msg.get_buffer()) {
             unsafe {
                 td_rlua::lua_settop(lua, 0);
                 name.push_to_lua(lua);

@@ -1,5 +1,5 @@
 use td_rlua::{self, lua_State, LuaRead};
-use rt_proto::*;
+use tunm_proto::*;
 use std::collections::HashMap;
 use LuaUtils;
 pub struct NetUtils;
