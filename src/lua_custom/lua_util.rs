@@ -31,7 +31,7 @@ fn write_log(method : u8, val: String) {
 
 fn get_rid(server_id: u16, flag: u16) -> [u8; 18] {
     static mut RID_SEQUENCE: u32 = 0;
-    static mut LAST_RID_TIME: u32 = 0;
+    static mut LAST_RID_TIME: u64 = 0;
 
     let mut rid = [0; 18];
     unsafe {
@@ -45,33 +45,34 @@ fn get_rid(server_id: u16, flag: u16) -> [u8; 18] {
             LAST_RID_TIME += 1;
         }
 
-        let ti = TimeUtils::get_time_s() as u32;
+        let ti = TimeUtils::get_time_ms() as u64;
         if ti > LAST_RID_TIME {
             LAST_RID_TIME = ti;
+            RID_SEQUENCE = 0;
         }
-        let ti = LAST_RID_TIME - 1292342400; // 2010/12/15 0:0:0
-        /* 60bits RID
-         * 00000-00000-00000-00000-00000-00000 00000-00000-00 000-00000-00000-00000
-         * -------------- TIME --------------- - SERVER_ID -- --- RID SEQUENCE ----
+        let ti = LAST_RID_TIME - 1639497600; // 2021/12/15 0:0:0
+        /* 90bits RID
+         * 00000-00000-00000-00000-00000-00000-00000-00000 00000-00000-00000-00000  00000-00000-00000      00000-00000-00000
+         * -------------- TIME MS ---------------          ----- SERVER_ID  100w---  ----flag  32768---    --- RID SEQUENCE ----
         */
-        rid[0] = ENCODE_MAP[((ti >> 30) & 0x1F) as usize];
-        rid[1] = ENCODE_MAP[((ti >> 25) & 0x1F) as usize];
-        rid[2] = ENCODE_MAP[((ti >> 20) & 0x1F) as usize];
-        rid[3] = ENCODE_MAP[((ti >> 15) & 0x1F) as usize];
-        rid[4] = ENCODE_MAP[((ti >> 10) & 0x1F) as usize];
-        rid[5] = ENCODE_MAP[((ti >> 5) & 0x1F) as usize];
-        rid[6] = ENCODE_MAP[(ti & 0x1F) as usize]; //time
+        rid[0] = ENCODE_MAP[((ti >> 35) & 0x1F) as usize];
+        rid[1] = ENCODE_MAP[((ti >> 30) & 0x1F) as usize];
+        rid[2] = ENCODE_MAP[((ti >> 25) & 0x1F) as usize];
+        rid[3] = ENCODE_MAP[((ti >> 20) & 0x1F) as usize];
+        rid[4] = ENCODE_MAP[((ti >> 15) & 0x1F) as usize];
+        rid[5] = ENCODE_MAP[((ti >> 10) & 0x1F) as usize];
+        rid[6] = ENCODE_MAP[((ti >> 5) & 0x1F) as usize];
+        rid[7] = ENCODE_MAP[(ti & 0x1F) as usize]; //time
 
-        rid[7] = ENCODE_MAP[((server_id >> 15) & 0x1F) as usize]; //
-        rid[8] = ENCODE_MAP[((server_id >> 10) & 0x1F) as usize]; //
-        rid[9] = ENCODE_MAP[((server_id >> 5) & 0x1F) as usize]; //server_id[2..11]
-        rid[10] = ENCODE_MAP[((server_id) & 0x1F) as usize]; //server_id[0..2]
+        rid[8] = ENCODE_MAP[((server_id >> 15) & 0x1F) as usize]; //
+        rid[9] = ENCODE_MAP[((server_id >> 10) & 0x1F) as usize]; //
+        rid[10] = ENCODE_MAP[((server_id >> 5) & 0x1F) as usize]; //server_id[2..11]
+        rid[11] = ENCODE_MAP[((server_id) & 0x1F) as usize]; //server_id[0..2]
 
-        rid[11] = ENCODE_MAP[((flag >> 10) & 0x1F) as usize];
         rid[12] = ENCODE_MAP[((flag >> 10) & 0x1F) as usize];
         rid[13] = ENCODE_MAP[((flag >> 5) & 0x1F) as usize];
+        rid[14] = ENCODE_MAP[(flag & 0x1F) as usize];
         
-        rid[14] = ENCODE_MAP[((RID_SEQUENCE >> 10) & 0x1F) as usize];
         rid[15] = ENCODE_MAP[((RID_SEQUENCE >> 10) & 0x1F) as usize];
         rid[16] = ENCODE_MAP[((RID_SEQUENCE >> 5) & 0x1F) as usize];
         rid[17] = ENCODE_MAP[(RID_SEQUENCE & 0x1F) as usize];
