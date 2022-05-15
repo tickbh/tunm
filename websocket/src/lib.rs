@@ -9,8 +9,6 @@ extern crate url;
 #[macro_use] extern crate log;
 extern crate time;
 
-extern crate td_revent;
-
 mod handler;
 mod result;
 mod connection;

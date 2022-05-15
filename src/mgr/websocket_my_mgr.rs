@@ -3,7 +3,7 @@ use psocket::{TcpSocket, SOCKET};
 use std::any::Any;
 use td_revent::*;
 
-use websocket::{Connection, Handler, Settings, Handshake, Message, CloseCode ,Error, Result, ErrorKind};
+use websocket_simple::{Connection, Handler, Settings, Handshake, Message, CloseCode ,Error, Result, ErrorKind};
 
 use {LuaEngine, NetMsg, SocketEvent, EventMgr, LogUtils, TimeUtils};
 

@@ -17,7 +17,7 @@ extern crate td_rredis;
 extern crate td_rthreadpool;
 extern crate td_revent;
 extern crate td_clua_ext;
-extern crate websocket;
+extern crate websocket_simple;
 extern crate psocket;
 
 #[macro_use] extern crate log;

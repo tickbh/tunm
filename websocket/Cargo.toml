@@ -1,7 +1,11 @@
 [package]
-name = "websocket"
-version = "0.1.0"
+name = "websocket-simple"
+version = "0.1.1"
 authors = ["tickbh <tickdream125@hotmail.com>"]
+
+description = "simple websocket for Rust"
+license = "MIT/Apache-2.0"
+repository = "https://github.com/tickbh/tunm"
 
 [dependencies]
 httparse = "1.1.2"
@@ -9,7 +13,6 @@ log = "0.3.6"
 rand = "0.3.14"
 sha1 = "0.2.0"
 url = "1.2.0"
-td_revent = "0.1.5"
 time = "0.1.33"
 
 [dependencies.libc]
