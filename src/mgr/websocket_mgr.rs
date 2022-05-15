@@ -29,7 +29,7 @@ impl Handler for WebsocketClient {
             addr = format!("{}", ip_addr);
         }
 
-        let mut event = SocketEvent::new(self.out.fd() as SOCKET, addr.to_string(), self.port);
+        let mut event = SocketEvent::new(self.out.connection_id() as SOCKET, addr.to_string(), self.port);
         event.set_cookie(self.cookie);
         event.set_websocket(true);
         event.set_mio(true);
@@ -65,7 +65,7 @@ impl Handler for WebsocketClient {
             },
         };
 
-        LuaEngine::instance().apply_message(self.out.fd() as SOCKET, net_msg);
+        LuaEngine::instance().apply_message(self.out.connection_id() as SOCKET, net_msg);
         Ok(())
     }
 
@@ -102,7 +102,7 @@ impl Handler for WebsocketServer {
         }
         self.open_timeout = None;
 
-        let mut event = SocketEvent::new(self.out.fd() as SOCKET, addr.to_string(), self.port);
+        let mut event = SocketEvent::new(self.out.connection_id() as SOCKET, addr.to_string(), self.port);
         event.set_websocket(true);
         event.set_mio(true);
 
@@ -140,7 +140,7 @@ impl Handler for WebsocketServer {
             },
         };
 
-        LuaEngine::instance().apply_message(self.out.fd() as SOCKET, net_msg);
+        LuaEngine::instance().apply_message(self.out.connection_id() as SOCKET, net_msg);
         Ok(())
     }
 
@@ -166,7 +166,7 @@ impl Handler for WebsocketServer {
     fn on_timeout(&mut self, event: Token) -> Result<()> {
         match event {
             CONNECT => {
-                trace!("wait connecting handshake!!!! on_timeout occur {}", self.out.fd());
+                trace!("wait connecting handshake!!!! on_timeout occur {}", self.out.connection_id());
                 self.open_timeout = None;
                 let _ = self.out.close(CloseCode::Normal);
                 Ok(())
@@ -225,15 +225,15 @@ impl WebSocketMgr {
 
     pub fn on_open(&mut self, sender: Sender) {
         let _data = self.mutex.lock().unwrap();
-        self.connect_ids.insert(sender.fd(), sender);
+        self.connect_ids.insert(sender.connection_id() as SOCKET, sender);
     }
 
     pub fn on_close(&mut self, sender: &Sender, reason: String) {
         let connect = {
             let _data = self.mutex.lock().unwrap();
-            unwrap_or!(self.connect_ids.remove(&sender.fd()), return)
+            unwrap_or!(self.connect_ids.remove(&(sender.connection_id() as i32)), return)
         };
-        EventMgr::instance().add_kick_event(connect.fd() as SOCKET, reason);
+        EventMgr::instance().add_kick_event(connect.connection_id() as SOCKET, reason);
     }
 
 
