@@ -19,16 +19,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in library 'tdengine'",
+            "name": "Debug unit tests in library 'tunm'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
                     "--lib",
-                    "--package=tdengine"
+                    "--package=tunm"
                 ],
                 "filter": {
-                    "name": "tdengine",
+                    "name": "tunm",
                     "kind": "lib"
                 }
             },
@@ -43,7 +43,7 @@
                 "args": [
                     "build",
                     "--example=client",
-                    "--package=tdengine"
+                    "--package=tunm"
                 ],
                 "filter": {
                     "name": "client",
@@ -62,7 +62,7 @@
                     "test",
                     "--no-run",
                     "--example=client",
-                    "--package=tdengine"
+                    "--package=tunm"
                 ],
                 "filter": {
                     "name": "client",
@@ -80,7 +80,7 @@
                 "args": [
                     "build",
                     "--example=net",
-                    "--package=tdengine"
+                    "--package=tunm"
                 ],
                 "filter": {
                     "name": "net",
@@ -99,7 +99,7 @@
                     "test",
                     "--no-run",
                     "--example=net",
-                    "--package=tdengine"
+                    "--package=tunm"
                 ],
                 "filter": {
                     "name": "net",
@@ -117,7 +117,7 @@
                 "args": [
                     "build",
                     "--example=server",
-                    "--package=tdengine"
+                    "--package=tunm"
                 ],
                 "filter": {
                     "name": "server",
@@ -136,7 +136,7 @@
                     "test",
                     "--no-run",
                     "--example=server",
-                    "--package=tdengine"
+                    "--package=tunm"
                 ],
                 "filter": {
                     "name": "server",

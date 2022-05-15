@@ -2,7 +2,7 @@ extern crate mysql as my;
 extern crate log;
 extern crate env_logger;
 #[macro_use(raw_to_ref)]
-extern crate tdengine;
+extern crate tunm;
 
 extern crate td_rthreadpool;
 extern crate td_revent;
@@ -13,7 +13,7 @@ use commander::Commander;
 use env_logger::{Builder, Target};
 use log::{warn, info};
 use td_revent::{EventLoop, EventEntry, EventFlags, CellAny, RetValue};
-use tdengine::{GlobalConfig, LuaEngine, register_custom_func, EventMgr, FileUtils, DbPool, RedisPool, TelnetUtils, LogUtils};
+use tunm::{GlobalConfig, LuaEngine, register_custom_func, EventMgr, FileUtils, DbPool, RedisPool, TelnetUtils, LogUtils};
 
 use std::env;
 
@@ -44,7 +44,7 @@ fn main() {
     let command = Commander::new()
                 .version(&env!("CARGO_PKG_VERSION").to_string())
                 .usage("test")
-                .usage_desc("tdengine server commander.")
+                .usage_desc("tunm server commander.")
                 .option_str("-c, --config [value]", "config data ", Some("config/Gate_GlobalConfig.conf".to_string()))
                 .option_str("-l, --log [value]", "log4rs file config ", Some("config/log4rs.yml".to_string()))
                 .parse_env_or_exit()

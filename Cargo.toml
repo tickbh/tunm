@@ -1,10 +1,10 @@
 [package]
-name = "tdengine"
-version = "0.1.2"
+name = "tunm"
+version = "0.2.0"
 authors = [ "tickbh <tickdream125@hotmail.com>" ]
 
 description = "game server for Rust"
-repository = "https://github.com/tickbh/tdengine"
+repository = "https://github.com/tickbh/tunm"
 readme = "README.md"
 license = "MIT/Apache-2.0"
 keywords = ["gameserver", "server", "lua", "rust_lua"]

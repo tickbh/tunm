@@ -21,7 +21,7 @@ loggers:
   app::backend::db:
     level: trace
     
-  tdengine:
+  tunm:
     level: trace
     appenders:
       - default

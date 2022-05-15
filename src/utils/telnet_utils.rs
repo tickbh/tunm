@@ -404,7 +404,7 @@ impl TelnetUtils {
                 None,
             ));
 
-        let _ = stream.write(b"                        ** WELCOME TO TDENGINE SERVER! **                         \n");
+        let _ = stream.write(b"                        ** WELCOME TO tunm SERVER! **                         \n");
         let _ = stream.write(b"login:");
         // 开启单字符模式和回显
         let _ = stream.write(&[255, 251, 3]);

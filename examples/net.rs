@@ -1,6 +1,6 @@
 extern crate mysql as my;
 #[macro_use(raw_to_ref)]
-extern crate tdengine;
+extern crate tunm;
 
 use std::default::Default;
 
@@ -44,7 +44,7 @@ fn main() {
     // let instance = NetConfig::instance() ;
 
     // let pool = my::Pool::new("mysql://root:123456@localhost:3306").unwrap();
-    // let mut sql_db = tdengine::DbMysql::new(pool);
+    // let mut sql_db = tunm::DbMysql::new(pool);
     // sql_db.execute(r"CREATE TEMPORARY TABLE tmp.payment (
     //                      customer_id int not null,
     //                      amount int not null,

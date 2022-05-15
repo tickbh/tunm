@@ -54,7 +54,7 @@ impl LogUtils {
             file: None,
             mutex: Arc::new(ReentrantMutex::new(0)),
             log_path: String::new(),
-            basename: "TDEngine".to_string(),
+            basename: "tunm".to_string(),
             server_id: "0".to_string(),
             roll_size: 1024 * 1024 * 50,
             flush_interval: 3,
