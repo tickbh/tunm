@@ -34,7 +34,7 @@ end
 
 -- 获取当前进程所占内存
 function get_memory()
-    local memory = memory_use() / 1024
+    local memory = MEMORY_USE() / 1024
     -- (MB)
     return memory
 end

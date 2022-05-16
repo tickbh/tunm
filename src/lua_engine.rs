@@ -241,7 +241,7 @@ impl LuaEngine {
     }
 
     pub fn execute_string(&mut self, func_str: String) -> i32 {
-        self.lua.exec_func1("run_string", func_str)
+        self.lua.exec_func1("RUN_STRING", func_str)
     }
 
     pub fn execute_args_func(&mut self, func: String, args: Vec<String>) -> i32 {

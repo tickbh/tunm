@@ -243,7 +243,7 @@ impl EventMgr {
             if !sock_ev.is_websocket() || !sock_ev.is_mio() {
                 // self.event_loop.unregister_socket(sock_ev.as_raw_socket(), EventFlags::all());
                 self.event_loop
-                    .add_timer(EventEntry::new_timer(200_000,
+                    .add_timer(EventEntry::new_timer(20,
                                                      false,
                                                      Some(Self::kick_callback),
                                                      Some(Box::new(sock_ev))));
