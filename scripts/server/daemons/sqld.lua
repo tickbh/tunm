@@ -179,6 +179,7 @@ function piece_select_limit( table_name, condition )
 end
 
 function select_sql( table_name, condition )
+    table_name = DATA_D.get_real_table_name(table_name)
     local result = "SELECT " .. piece_select_fields(table_name, condition) .. " FROM " .. table_name
     result = result .. piece_where_condition(table_name, condition)
     result = result .. piece_select_order(table_name, condition)
@@ -232,6 +233,7 @@ function piece_insert_sql( table_name, data )
 end
 
 function insert_sql( table_name, data )
+    table_name = DATA_D.get_real_table_name(table_name)
     local sql = piece_insert_sql(table_name, data)
     return "INSERT INTO " .. convert_db_key(table_name) .. sql
 end
@@ -253,6 +255,7 @@ function piece_update_sql(table_name, data)
 end
 
 function update_sql( table_name, data, condition )
+    table_name = DATA_D.get_real_table_name(table_name)
     local sql = piece_update_sql(table_name, data)
     if condition and not condition[_WHERE] then
         local tmp = condition
@@ -264,6 +267,7 @@ function update_sql( table_name, data, condition )
 end
 
 function delete_sql( table_name, condition )
+    table_name = DATA_D.get_real_table_name(table_name)
     if condition and not condition[_WHERE] then
         local tmp = condition
         condition = {}

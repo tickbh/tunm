@@ -2,6 +2,8 @@ use td_rlua::{self, LuaPush, Lua, LuaRead};
 use tunm_proto;
 use td_rredis::{self, Cmd, Script};
 use libc;
+
+use crate::values::NetError;
 use {DbTrait, DbPool, RedisPool};
 use {LuaEngine, NetMsg, LuaWrapperTableValue, RedisWrapperCmd, RedisWrapperResult,
      RedisWrapperMsg, RedisWrapperVecVec};
@@ -30,10 +32,13 @@ fn thread_db_select(db_name: &String, db_type: u8, sql_cmd: &str, cookie: u32) {
     let mut db = db.unwrap();
     let mut net_msg = NetMsg::new();
     let result = db.select(sql_cmd, &mut net_msg);
-    let ret = unwrap_or!(result.ok(), db.get_error_code());
+    let (ret, err_msg) = match result {
+        Ok(val) => (val, None),
+        Err(err) => (1, Some(err.to_string()))
+    };
     net_msg.end_msg(0);
     if cookie != 0 {
-        LuaEngine::instance().apply_db_result(cookie, ret, db.get_error_str(), Some(net_msg));
+        LuaEngine::instance().apply_db_result(cookie, ret, err_msg, Some(net_msg));
     }
     // record sql error
     if ret != 0 {

@@ -15,7 +15,10 @@ user_name_data = {}
 auto_user_rid_data = {}
 
 local function callback_load_user_data(startPos, ret, result_list)
-    ASSERT(ret == 0, "load user data failed")
+    if ret ~= 0 then
+        WARN("load user data failed:%o", result_list)
+        return
+    end
     for _,value in ipairs(result_list) do
         user_rid_data[value.rid] = value
         user_name_data[value.name] = value

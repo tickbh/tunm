@@ -225,7 +225,7 @@ impl WebSocketMgr {
 
     pub fn on_open(&mut self, sender: Sender) {
         let _data = self.mutex.lock().unwrap();
-        self.connect_ids.insert(sender.connection_id() as SOCKET, sender);
+        self.connect_ids.insert(sender.connection_id() as i32, sender);
     }
 
     pub fn on_close(&mut self, sender: &Sender, reason: String) {
