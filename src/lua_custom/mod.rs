@@ -1,5 +1,7 @@
 use td_rlua::Lua;
-use td_clua_ext;
+use luacjson;
+use luasocket;
+use libc;
 
 mod lua_db;
 mod lua_network;
@@ -13,14 +15,16 @@ pub use self::lua_userdata::register_userdata_func;
 pub use self::lua_timer::register_timer_func;
 pub use self::lua_util::register_util_func;
 
-
 pub fn register_custom_func(lua: &mut Lua) {
     register_db_func(lua);
     register_network_func(lua);
     register_userdata_func(lua);
     register_timer_func(lua);
     register_util_func(lua);
+
+    luasocket::enable_socket_core(lua);
+    luacjson::enable_cjson(lua);
     unsafe {
-        td_clua_ext::luaopen_cjson(lua.state());
+        luacjson::luaopen_cjson(lua.state());
     }
 }

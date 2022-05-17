@@ -108,14 +108,14 @@ fn register_netmsg_func(lua: &mut Lua) {
     );
 
     value.create().def(
-        "set_from_svr_id",
-        td_rlua::function2(|net_msg: &mut NetMsg, from_svr_id: u32| {
-            net_msg.set_from_svr_id(from_svr_id);
+        "set_real_fd",
+        td_rlua::function2(|net_msg: &mut NetMsg, real_fd: u32| {
+            net_msg.set_real_fd(real_fd);
         }),
     );
     value.create().def(
-        "get_from_svr_id",
-        td_rlua::function1(|net_msg: &mut NetMsg| -> u32 { net_msg.get_from_svr_id() }),
+        "get_real_fd",
+        td_rlua::function1(|net_msg: &mut NetMsg| -> u32 { net_msg.get_real_fd() }),
     );
 
     value.create().def(
@@ -141,7 +141,7 @@ fn register_netmsg_func(lua: &mut Lua) {
     );
 
     value.create().def(
-        "from_svr_type",
+        "set_from_svr_type",
         td_rlua::function2(|net_msg: &mut NetMsg, from_svr_type: u16| {
             net_msg.set_from_svr_type(from_svr_type);
         }),
@@ -152,14 +152,14 @@ fn register_netmsg_func(lua: &mut Lua) {
     );
 
     value.create().def(
-        "from_svr_id",
-        td_rlua::function2(|net_msg: &mut NetMsg, from_svr_id: u32| {
-            net_msg.set_from_svr_id(from_svr_id);
+        "set_real_fd",
+        td_rlua::function2(|net_msg: &mut NetMsg, real_fd: u32| {
+            net_msg.set_real_fd(real_fd);
         }),
     );
     value.create().def(
-        "get_from_svr_id",
-        td_rlua::function1(|net_msg: &mut NetMsg| -> u32 { net_msg.get_from_svr_id() }),
+        "get_real_fd",
+        td_rlua::function1(|net_msg: &mut NetMsg| -> u32 { net_msg.get_real_fd() }),
     );
 
     value.create().def(

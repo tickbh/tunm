@@ -19,7 +19,7 @@ pub struct NetMsg {
     msg_type: u8, //message type: 0:normal, 1:forward, request, response
     msg_flag: u8, // flag: encode, compress, route, trace, package
     from_svr_type: u16,
-    from_svr_id: u32,
+    real_fd: u32,
     to_svr_type: u16,
     to_svr_id: u32,
     pack_name: String,
@@ -36,7 +36,7 @@ impl NetMsg {
             msg_type: 0u8,
             msg_flag: 0u8,
             from_svr_type: 0u16,
-            from_svr_id: 0u32,
+            real_fd: 0u32,
             to_svr_type: 0u16,
             to_svr_id: 0u32,
             buffer: buffer,
@@ -57,7 +57,7 @@ impl NetMsg {
             msg_type: msg_type,
             msg_flag: 0u8,
             from_svr_type: 0u16,
-            from_svr_id: 0u32,
+            real_fd: 0u32,
             to_svr_type: 0u16,
             to_svr_id: 0u32,
             buffer: buffer,
@@ -84,7 +84,7 @@ impl NetMsg {
             msg_type: 0,
             msg_flag: 0u8,
             from_svr_type: 0u16,
-            from_svr_id: 0u32,
+            real_fd: 0u32,
             to_svr_type: 0u16,
             to_svr_id: 0u32,
             buffer: buffer,
@@ -106,7 +106,7 @@ impl NetMsg {
         let msg_type: u8 = decode_number(&mut buffer, tunm_proto::TYPE_U8)?.into();
         let msg_flag: u8 = decode_number(&mut buffer, tunm_proto::TYPE_U8)?.into();
         let from_svr_type: u16 = decode_number(&mut buffer, tunm_proto::TYPE_U16)?.into();
-        let from_svr_id: u32 = decode_number(&mut buffer, tunm_proto::TYPE_U32)?.into();
+        let real_fd: u32 = decode_number(&mut buffer, tunm_proto::TYPE_U32)?.into();
         let to_svr_type: u16 = decode_number(&mut buffer, tunm_proto::TYPE_U16)?.into();
         let to_svr_id: u32 = decode_number(&mut buffer, tunm_proto::TYPE_U32)?.into();
         if data.len() != length as usize {
@@ -123,7 +123,7 @@ impl NetMsg {
             msg_type: msg_type,
             msg_flag: msg_flag,
             from_svr_type: from_svr_type,
-            from_svr_id: from_svr_id,
+            real_fd: real_fd,
             to_svr_type: to_svr_type,
             to_svr_id: to_svr_id,
             buffer: buffer,
@@ -146,7 +146,7 @@ impl NetMsg {
         let _ = encode_number(&mut self.buffer, &Value::U8(self.msg_type));
         let _ = encode_number(&mut self.buffer, &Value::U8(self.msg_flag));
         let _ = encode_number(&mut self.buffer, &Value::U16(self.from_svr_type));
-        let _ = encode_number(&mut self.buffer, &Value::U32(self.from_svr_id));
+        let _ = encode_number(&mut self.buffer, &Value::U32(self.real_fd));
         let _ = encode_number(&mut self.buffer, &Value::U16(self.to_svr_type));
         let _ = encode_number(&mut self.buffer, &Value::U32(self.to_svr_id));
         self.buffer.set_wpos(wpos);
@@ -165,7 +165,7 @@ impl NetMsg {
         self.msg_type = decode_number(&mut self.buffer, tunm_proto::TYPE_U8)?.into();
         self.msg_flag = decode_number(&mut self.buffer, tunm_proto::TYPE_U8)?.into();
         self.from_svr_type = decode_number(&mut self.buffer, tunm_proto::TYPE_U16)?.into();
-        self.from_svr_id = decode_number(&mut self.buffer, tunm_proto::TYPE_U32)?.into();
+        self.real_fd = decode_number(&mut self.buffer, tunm_proto::TYPE_U32)?.into();
         self.to_svr_type = decode_number(&mut self.buffer, tunm_proto::TYPE_U16)?.into();
         self.to_svr_id = decode_number(&mut self.buffer, tunm_proto::TYPE_U32)?.into();
         self.buffer.set_rpos(HEAD_FILL_UP.len());
@@ -231,12 +231,12 @@ impl NetMsg {
         self.from_svr_type
     }
 
-    pub fn set_from_svr_id(&mut self, from_svr_id: u32) {
-        self.from_svr_id = from_svr_id
+    pub fn set_real_fd(&mut self, real_fd: u32) {
+        self.real_fd = real_fd
     }
 
-    pub fn get_from_svr_id(&self) -> u32 {
-        self.from_svr_id
+    pub fn get_real_fd(&self) -> u32 {
+        self.real_fd
     }
 
     

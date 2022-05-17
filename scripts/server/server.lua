@@ -9,6 +9,7 @@ function update(name)
     -- 回收垃圾
     collectgarbage("collect")
 end
+
 if ENABLE_LUA_HELPER_DEBUG then
     -- 把luasocket添加到相关地方, 先启动luahelper
     require("socket.core")
@@ -17,6 +18,11 @@ end
 math.randomseed(os.time())
 update("global/base/util")
 update("global/base/load_folder")
+
+-- local socket = luaopen_socket_core()
+-- TRACE("socket == %o", socket)
+-- local socket = require("luasocket")
+-- TRACE("SOCKET == %o", socket)
 
 function test_env()
     set_port_map(1, 2)

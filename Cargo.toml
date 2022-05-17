@@ -19,7 +19,7 @@ rustc-serialize = "0.3.16"
 net2   = { version = "0.2.23", default-features = false }
 rust-crypto = "0.2.34"
 tiny_http = { version = "0.11.0", default-features = false } 
-td_rlua = "0.2.1"
+td_rlua = "0.2.2"
 td_revent = "0.3.2"
 td_proto_rust = "0.1.2"
 tunm_proto = "0.1.9"
@@ -37,13 +37,13 @@ ws = "0.9.2"
 commander = "0.1"
 websocket-simple="0.1.1"
 
+luacjson="0.1.2"
+luasocket="0.1.7"
+
 [dependencies.rusqlite]
 version = "0.27.0"
 features = ["bundled"]
 
-[dependencies.td_clua_ext]
-version = "0.1.0"
-path = "td_clua_ext"
 
 #[dependencies.websocket]
 #version = "0.1.1"

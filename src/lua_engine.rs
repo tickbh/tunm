@@ -55,6 +55,7 @@ pub struct LuaEngine {
 /// custom lua load func
 extern "C" fn load_func(lua: *mut td_rlua::lua_State) -> libc::c_int {
     let path: String = unwrap_or!(td_rlua::LuaRead::lua_read(lua), return 0);
+    println!("loading path == {:?}", path);
     let full_path = unwrap_or!(FileUtils::instance().full_path_for_name(&*path), path);
     let full_path = full_path.trim_matches('\"');
     let data = unwrap_or!(FileUtils::get_file_data(&*full_path).ok(), return 0);
