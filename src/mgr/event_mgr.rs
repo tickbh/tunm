@@ -252,13 +252,13 @@ impl EventMgr {
             sock_ev.get_socket_fd()
         };
 
-        LuaEngine::instance().apply_lost_connect(websocket_fd as SOCKET);
+        LuaEngine::instance().apply_lost_connect(websocket_fd as SOCKET, "服务端关闭".to_string());
     }
 
     //由事件管理主动推送关闭的调用
     pub fn notify_connect_lost(&mut self, socket: SOCKET) {
         let _sock_ev = unwrap_or!(self.connect_ids.remove(&socket), return);
-        LuaEngine::instance().apply_lost_connect(socket);
+        LuaEngine::instance().apply_lost_connect(socket, "客户端关闭".to_string());
     }
 
     fn kick_callback(
@@ -268,7 +268,7 @@ impl EventMgr {
     ) -> (RetValue, u64) {
         let sock_ev = any_to_mut!(data.unwrap(), SocketEvent);
         let _ = ev.unregister_socket(sock_ev.as_raw_socket());
-        LuaEngine::instance().apply_lost_connect(sock_ev.as_raw_socket());
+        LuaEngine::instance().apply_lost_connect(sock_ev.as_raw_socket(), "逻辑层主动退出".to_string());
         if sock_ev.is_websocket() {
             WebsocketMyMgr::instance().remove_socket(sock_ev.as_raw_socket());
         }

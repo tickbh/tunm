@@ -62,8 +62,8 @@ function unregister_new_connection_callback(cookie)
 end
 
 -- 连接断开的回调
-function cmd_connection_lost(port_no)
-    TRACE("断开连接(%d)", port_no)
+function cmd_lost_connection(port_no, reason)
+    TRACE("断开连接(%d) 原因(%o)", port_no, reason)
     -- 取得该端口对应的 agent
     local agent = find_agent_by_port(port_no)
     if agent == nil then

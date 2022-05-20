@@ -110,7 +110,7 @@ impl NetMsg {
         let to_svr_type: u16 = decode_number(&mut buffer, tunm_proto::TYPE_U16)?.into();
         let to_svr_id: u32 = decode_number(&mut buffer, tunm_proto::TYPE_U32)?.into();
         if data.len() != length as usize {
-            trace!("data.len() = {:?}, length = {:?}", data.len(), length);
+            trace!("解析消息文件失败, 客户端未按指定的格式发送,字节长度为:{:?}, 解析长度为:{:?}", data.len(), length);
             return Err(make_extension_error("data length not match", None));
         }
         buffer.set_rpos(HEAD_FILL_UP.len());

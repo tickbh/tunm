@@ -309,10 +309,14 @@ impl Handler for Server {
     fn on_message(&mut self, msg: Message) -> Result<()> {
         let net_msg = match msg {
             Message::Text(_text) => {
+                LuaEngine::instance().apply_lost_connect(self.fd, "未受支持的TEXT格式".to_string());
                 return Ok(());
             },
             Message::Binary(data) => {
-                unwrap_or!(NetMsg::new_by_data(&data[..]).ok(), return Ok(()))
+                unwrap_or!(NetMsg::new_by_data(&data[..]).ok(), {
+                    LuaEngine::instance().apply_lost_connect(self.fd, "解析二进制协议失败".to_string());
+                    return Ok(())
+                })
             },
         };
 

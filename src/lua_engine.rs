@@ -38,7 +38,7 @@ enum LuaElem {
     /// cookie, new_fd, client_ip, server_port, websocket
     NewConnection(u32, SOCKET, String, u16, bool),
     /// fd
-    LostConnection(SOCKET),
+    LostConnection(SOCKET, String),
     /// func_str
     ExecString(String),
     /// Args fuc
@@ -128,7 +128,7 @@ impl LuaEngine {
                 LuaElem::NewConnection(cookie, new_fd, client_ip, server_port, websocket) => {
                     self.execute_new_connect(cookie, new_fd, client_ip, server_port, websocket)
                 }
-                LuaElem::LostConnection(lost_fd) => self.execute_lost_connect(lost_fd),
+                LuaElem::LostConnection(lost_fd, reason) => self.execute_lost_connect(lost_fd, reason),
                 LuaElem::ExecString(func_str) => self.execute_string(func_str),
                 LuaElem::ArgsFunc(func, args) => self.execute_args_func(func, args),
             };
@@ -146,9 +146,9 @@ impl LuaEngine {
         self.exec_list.push(LuaElem::NewConnection(cookie, new_fd, client_ip, server_port, websocket));
     }
 
-    pub fn apply_lost_connect(&mut self, lost_fd: SOCKET) {
+    pub fn apply_lost_connect(&mut self, lost_fd: SOCKET, reason: String) {
         let _guard = self.mutex.lock().unwrap();
-        self.exec_list.push(LuaElem::LostConnection(lost_fd));
+        self.exec_list.push(LuaElem::LostConnection(lost_fd, reason));
     }
 
     pub fn apply_db_result(&mut self,
@@ -191,8 +191,8 @@ impl LuaEngine {
         self.lua.exec_func5("cmd_new_connection", cookie, new_fd, client_ip, server_port, websocket)
     }
 
-    pub fn execute_lost_connect(&mut self, lost_fd: SOCKET) -> i32 {
-        self.lua.exec_func1("cmd_connection_lost", lost_fd)
+    pub fn execute_lost_connect(&mut self, lost_fd: SOCKET, reason: String) -> i32 {
+        self.lua.exec_func2("cmd_lost_connection", lost_fd, reason)
     }
 
     pub fn execute_db_result(&mut self,
