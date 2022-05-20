@@ -6,15 +6,12 @@ use td_revent::*;
 use websocket_simple::{Connection, Handler, Settings, Handshake, Message, CloseCode ,Error, Result, ErrorKind};
 
 use {LuaEngine, NetMsg, SocketEvent, EventMgr, LogUtils, TimeUtils};
-use websocket_simple::util::{Token};
 
-const SERVER: Token = Token(1);
 
 #[derive(Clone)]
 pub struct Server {
     fd: SOCKET,
     port: u16,
-    read_time: u64,
 }
 
 pub struct WebsocketMyMgr {
@@ -76,29 +73,29 @@ impl WebsocketMyMgr {
                 return RetValue::OVER;
             });
 
-            connect.handler.set_read_time(TimeUtils::get_time_ms());
+            connect.new_data_received(&data[..]);
+            connect.set_read_time(TimeUtils::get_time_ms());
+
 
             if let Err(err) = connect.read() {
                 trace!("read_callback err occur = {:?}", err);
                 err_str = format!("{:?}", err).to_string();
-                // match err.kind {
-                //     ErrorKind::CloseSingal => {
-                //         close_atsoon = true;
-                //     },
-                //     _ => {
-                //         if connect.is_closing() {
-                //             close_atsoon = true;
-                //         } else {
-                //             let _ = connect.send_close(CloseCode::Abnormal, "read error");
-                //         }
-                //     },
-                // }
+                match err.kind {
+                    ErrorKind::CloseSingal | ErrorKind::OutNotEnough | ErrorKind::Io(_) => {
+                        close_atsoon = true;
+                    },
+                    _ => {
+                        if connect.is_closing() {
+                            close_atsoon = true;
+                        } else {
+                            let _ = connect.send_close(CloseCode::Abnormal, "read error");
+                        }
+                    },
+                }
 
-                close_atsoon = true;
-
-                // if connect.is_over() {
-                //     close_atsoon = true;
-                // }
+                if connect.is_over() {
+                    close_atsoon = true;
+                }
             }
         }
 
@@ -173,15 +170,13 @@ impl WebsocketMyMgr {
         let server = Server {
             fd: socket,
             port: port,
-            read_time: 0,
         };
+        let connect = Connection::new(stream.convert_to_stream(), server, instance.default.clone());
+        instance.connection_fds.insert(socket, connect);
+        instance.record_connection();
 
-        let tcp = ::mio::tcp::TcpStream::from_stream(stream.convert_to_stream()).ok();
-        if tcp.is_some() {
-            let connect = Connection::new(SERVER, tcp.unwrap(), server, instance.default.clone(), socket as u32);
-            instance.connection_fds.insert(socket, connect);
-            instance.record_connection();
-        }
+        // TcpMgr::instance().insert_stream(stream.as_fd(), stream);
+        
         RetValue::OK
     }
 
@@ -239,7 +234,7 @@ impl WebsocketMyMgr {
         let now = TimeUtils::get_time_ms();
         for (fd, connect) in &instance.connection_fds {
             //10分钟未收到read则断开
-            if now - connect.handler.get_read_time() > 600_000 {
+            if now - connect.get_read_time() > 600_000 {
                 close_fds.insert(*fd);
             }
         }
@@ -293,15 +288,6 @@ impl WebsocketMyMgr {
     }
 }
 
-impl Server {
-    pub fn set_read_time(&mut self, read_time: u64) {
-        self.read_time = read_time
-    }
-
-    pub fn get_read_time(&self) -> u64 {
-        self.read_time
-    }
-}
 
 impl Handler for Server {
 
