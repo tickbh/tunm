@@ -1,5 +1,8 @@
 use tunm_proto::Buffer;
 use psocket::{SOCKET};
+use mio::Token;
+use mio::net::{TcpListener, TcpStream};
+use crate::net::AsSocket;
 
 #[derive(Debug)]
 pub struct SocketEvent {
@@ -13,6 +16,8 @@ pub struct SocketEvent {
     websocket: bool,
     local: bool, //is local create fd
     mio: bool,
+    server: Option<TcpListener>,
+    client: Option<TcpStream>,
 }
 
 impl SocketEvent {
@@ -28,6 +33,43 @@ impl SocketEvent {
             websocket: false,
             local: false,
             mio: false,
+            server: None,
+            client: None,
+        }
+    }
+    
+    pub fn new_client(client: TcpStream, server_port: u16) -> SocketEvent {
+        let peer = format!("{}", client.peer_addr().unwrap());
+        SocketEvent {
+            socket_fd: client.as_socket() as SOCKET,
+            cookie: 0,
+            client_ip: peer,
+            server_port: server_port,
+            buffer: Buffer::new(),
+            out_cache: Buffer::new(),
+            online: true,
+            websocket: false,
+            local: false,
+            mio: false,
+            server: None,
+            client: Some(client),
+        }
+    }
+    
+    pub fn new_server(server: TcpListener, server_port: u16) -> SocketEvent {
+        SocketEvent {
+            socket_fd: server.as_socket() as SOCKET,
+            cookie: 0,
+            client_ip: "".to_string(),
+            server_port: server_port,
+            buffer: Buffer::new(),
+            out_cache: Buffer::new(),
+            online: true,
+            websocket: false,
+            local: false,
+            mio: false,
+            server: Some(server),
+            client: None,
         }
     }
 
@@ -93,5 +135,31 @@ impl SocketEvent {
 
     pub fn is_mio(&self) -> bool {
         self.mio
+    }
+
+    
+    pub fn set_server(&mut self, server: TcpListener) {
+        self.server = Some(server);
+    }
+
+    pub fn is_server(&self) -> bool {
+        self.server.is_some()
+    }
+    
+    pub fn as_server(&mut self) -> Option<&mut TcpListener> {
+        self.server.as_mut()
+    }
+
+    
+    pub fn set_client(&mut self, client: TcpStream) {
+        self.client = Some(client);
+    }
+
+    pub fn is_client(&self) -> bool {
+        self.client.is_some()
+    }
+    
+    pub fn as_client(&mut self) -> Option<&mut TcpStream> {
+        self.client.as_mut()
     }
 }

@@ -2,6 +2,7 @@
 mod service_mgr;
 mod http_mgr;
 mod command_mgr;
+mod mio_event_mgr;
 mod event_mgr;
 mod protocol_mgr;
 mod websocket_mgr;
