@@ -185,15 +185,23 @@ impl MioEventMgr {
             }
         };
 
-        // if is_websocket {
-        //     if is_mio {
-        //         return WebSocketMgr::instance().close_fd(fd as i32);
-        //     } else {
-        //         return WebsocketMyMgr::instance().close_fd(fd);
-        //     }
-        // } else {
-        //     self.add_kick_event(fd, reason);
-        // }
+        if let Some(mut socket_event) = self.connect_ids.remove(&fd) {
+            if socket_event.is_server() {
+                let _ = self.poll.registry().deregister(socket_event.as_server().unwrap());
+            } else if socket_event.is_client() {
+                let _ = self.poll.registry().deregister(socket_event.as_client().unwrap());
+            }
+        }
+
+        if is_websocket {
+            if is_mio {
+                return WebSocketMgr::instance().close_fd(fd.0 as i32);
+            } else {
+                return WebsocketMyMgr::instance().close_fd(fd.0 as psocket::SOCKET);
+            }
+        } else {
+            LuaEngine::instance().apply_lost_connect(fd.0 as psocket::SOCKET, reason);
+        }
         true
     }
 
@@ -224,7 +232,7 @@ impl MioEventMgr {
             return;
         }
         let socket_event = socket_event.unwrap();
-        let buffer_len = socket_event.get_in_buffer().len();
+        let buffer_len = socket_event.get_in_buffer().data_len();
         let buffer = socket_event.get_in_buffer();
         loop {
             let message: Option<Vec<u8>> = MioEventMgr::get_next_message(buffer);
@@ -238,7 +246,7 @@ impl MioEventMgr {
                 break;
             }
 
-            // LuaEngine::instance().apply_message(fd, msg.ok().unwrap());
+            LuaEngine::instance().apply_message(fd.0 as psocket::SOCKET, msg.ok().unwrap());
         }
     }
 
@@ -364,7 +372,28 @@ impl MioEventMgr {
         }
     }
 
+    
+    fn read_callback(
+        socket: &mut SocketEvent,
+    ) -> usize {
+        MioEventMgr::instance().try_dispatch_message(socket.as_token());
+        0
+    }
+
+    fn read_end_callback(
+        socket: &mut SocketEvent) {
+        LuaEngine::instance().apply_lost_connect(socket.as_raw_socket(), "客户端关闭".to_string());
+    }
+
+    fn accept_callback(
+        _socket: &mut SocketEvent,
+    ) -> usize {
+        return 0;
+    }
+
+
     pub fn listen_server(&mut self, bind_ip: String, bind_port: u16, accept: Option<AcceptCb>, read: Option<ReadCb>, end: Option<EndCb>)-> Result<usize>  {
+
         let bind_addr = if bind_port == 0 {
             unwrap_or!(format!("{}", bind_ip.trim_matches('\"')).parse().ok(), return Ok(0))
         } else {
@@ -374,9 +403,21 @@ impl MioEventMgr {
         let socket = listener.as_socket();
         self.poll.registry().register(&mut listener, Token(socket), Interest::READABLE)?;
         let mut ev = SocketEvent::new_server(listener, bind_port);
-        ev.set_accept(accept);
-        ev.set_read(read);
-        ev.set_end(end);
+        if accept.is_some() {
+            ev.set_accept(accept);
+        } else {
+            ev.set_accept(Some(Self::accept_callback));
+        }
+        if read.is_some() {
+            ev.set_read(read);
+        } else {
+            ev.set_read(Some(Self::read_callback));
+        }
+        if end.is_some() {
+            ev.set_end(end);
+        } else {
+            ev.set_end(Some(Self::read_end_callback));
+        }
         self.new_socket_server(ev);
         Ok(socket)
     }
@@ -440,10 +481,9 @@ impl MioEventMgr {
                         if socket_event.end.is_some() {
                             ev.set_end(socket_event.end);
                         }
-                        socket_event.call_accept(&mut ev);
-                        
-                        // self.connect_ids.insert(Token(ev.as_raw_socket() as usize) , ev);
-                        self.new_socket_client(ev);
+                        if socket_event.call_accept(&mut ev) != 1 {
+                            self.new_socket_client(ev);
+                        }
                     }
                 } else if self.is_token_client(&token) {
                     let socket_event = self.connect_ids.get_mut(&token).unwrap();
@@ -510,7 +550,6 @@ impl MioEventMgr {
                             self.poll.registry().deregister(socket_event.as_client().unwrap())?;
 
                         }
-
                     }
                 }
             }

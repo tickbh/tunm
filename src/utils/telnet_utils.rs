@@ -384,10 +384,8 @@ impl TelnetUtils {
         // 开启单字符模式和回显
         let _ = mio.write_by_socket_event(socket, &[255, 251, 3]);
         let _ = mio.write_by_socket_event(socket, &[255, 251, 1]);
-
         telnet.clients.insert(socket.as_token(), ClientInfo::new(socket.as_token()));
-
-        return 0;
+        return 1;
     }
     
 

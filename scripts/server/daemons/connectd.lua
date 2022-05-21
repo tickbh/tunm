@@ -10,12 +10,16 @@ local ensure_timer = nil
 local gate_heartbeat_timer = nil
 local server_heartbeat_timer = nil
 local timeout = 60
-local gate_prefix = "{GATE:IP}"
-local redis_gate_prefix = "{GATE:IP}:*"
+local gate_prefix = "GATE_IP"
+local redis_gate_prefix = "GATE_IP:*"
 local gate_match_string = string.format("%s:([%%w.]*):(%%d+):(%%d+)",gate_prefix)
 
-local server_prefix = "{SERVER:TYPE}"
-local redis_server_prefix = "{SERVER:TYPE}:*"
+local client_gate_prefix = "CLIENT_GATE_IP"
+local client_redis_gate_prefix = "CLIENT_IP:*"
+local client_gate_match_string = string.format("%s:([%%w.]*):(%%d+):(%%d+)",client_gate_prefix)
+
+local server_prefix = "SERVER_TYPE"
+local redis_server_prefix = "SERVER_TYPE:*"
 local server_match_string = string.format("%s:([%%w.]*):(%%d+):([%%w.]*)",server_prefix)
 
 local connecting_cache_table = {}
