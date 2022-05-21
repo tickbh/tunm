@@ -97,8 +97,8 @@ impl TelnetUtils {
     }
 
     pub fn check(client: &mut ClientInfo) -> bool {
-        if client.records.len() > 1 && String::from_utf8_lossy(&client.records[0]) == "td" &&
-           String::from_utf8_lossy(&client.records[1]) == "td" {
+        if client.records.len() > 1 && String::from_utf8_lossy(&client.records[0]) == "tunm" &&
+           String::from_utf8_lossy(&client.records[1]) == "tunm" {
             return true;
         }
         return false;
@@ -360,7 +360,6 @@ impl TelnetUtils {
     }
 
     fn read_callback(
-        ev: &mut Poll,
         socket: &mut SocketEvent,
     ) -> usize {
         let telnet = TelnetUtils::instance();
@@ -370,23 +369,21 @@ impl TelnetUtils {
     }
 
     fn read_end_callback(
-        ev: &mut Poll,
         socket: &mut SocketEvent) {
         let telnet = TelnetUtils::instance();
         telnet.remove_client(socket.as_token());
     }
 
     fn accept_callback(
-        ev: &mut Poll,
         socket: &mut SocketEvent,
     ) -> usize {
         let telnet = TelnetUtils::instance();
         let mio = MioEventMgr::instance();
-        let _ = mio.write_to_socket(socket.as_token(), b"                        ** WELCOME TO tunm SERVER! **                         \n");
-        let _ = mio.write_to_socket(socket.as_token(), b"login:");
+        let _ = mio.write_by_socket_event(socket, b"                        ** WELCOME TO tunm SERVER! **                         \r\n");
+        let _ = mio.write_by_socket_event(socket, b"login:");
         // 开启单字符模式和回显
-        let _ = mio.write_to_socket(socket.as_token(), &[255, 251, 3]);
-        let _ = mio.write_to_socket(socket.as_token(), &[255, 251, 1]);
+        let _ = mio.write_by_socket_event(socket, &[255, 251, 3]);
+        let _ = mio.write_by_socket_event(socket, &[255, 251, 1]);
 
         telnet.clients.insert(socket.as_token(), ClientInfo::new(socket.as_token()));
 

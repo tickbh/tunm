@@ -352,6 +352,18 @@ impl MioEventMgr {
         }
     }
 
+    
+    pub fn write_by_socket_event(&mut self, ev: &mut SocketEvent, bytes: &[u8]) -> Result<usize> {
+        if ev.is_client() {
+            let size = ev.get_out_buffer().write(bytes)?;
+            let token = ev.as_token();
+            self.poll.registry().reregister(ev.as_client().unwrap(), token, Interest::READABLE.add(Interest::WRITABLE))?;
+            Ok(size)
+        } else {
+            Ok(0)
+        }
+    }
+
     pub fn listen_server(&mut self, bind_ip: String, bind_port: u16, accept: Option<AcceptCb>, read: Option<ReadCb>, end: Option<EndCb>)-> Result<usize>  {
         let bind_addr = if bind_port == 0 {
             unwrap_or!(format!("{}", bind_ip.trim_matches('\"')).parse().ok(), return Ok(0))
@@ -363,10 +375,26 @@ impl MioEventMgr {
         self.poll.registry().register(&mut listener, Token(socket), Interest::READABLE)?;
         let mut ev = SocketEvent::new_server(listener, bind_port);
         ev.set_accept(accept);
-        ev.set_read(accept);
+        ev.set_read(read);
         ev.set_end(end);
         self.new_socket_server(ev);
         Ok(socket)
+    }
+
+    pub fn is_token_server(&self, token: &Token) -> bool {
+        if let Some(socket_event) = self.connect_ids.get(&token) {
+            return socket_event.is_server()
+        } else {
+            false
+        }
+    }
+
+    pub fn is_token_client(&self, token: &Token) -> bool {
+        if let Some(socket_event) = self.connect_ids.get(&token) {
+            return socket_event.is_client()
+        } else {
+            false
+        }
     }
 
     pub fn run_server(&mut self) -> Result<()> {
@@ -374,13 +402,14 @@ impl MioEventMgr {
         let mut events = Events::with_capacity(128);
         loop {
             self.poll.poll(&mut events, None)?;
-    
             for event in events.iter() {
+                let mut is_need_cose = false;
                 let token = event.token();
-                if let Some(socket_event) = self.connect_ids.get_mut(&token) {
-                    if socket_event.is_server() {
-                        if let Some(server) = socket_event.as_server() {
-                            let (mut connection, address) = match server.accept() {
+                if self.is_token_server(&token) {
+                    loop {
+                        let socket_event = self.connect_ids.get_mut(&token).unwrap();
+                        let (mut connection, address) = {
+                                match socket_event.as_server().unwrap().accept() {
                                 Ok((connection, address)) => (connection, address),
                                 Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
                                     // If we get a `WouldBlock` error we know our
@@ -394,137 +423,96 @@ impl MioEventMgr {
                                     // wrong and we terminate with an error.
                                     return Err(e);
                                 }
-                            };
-                            println!("Accepted connection from: {}", address);
-                            let token = Token(connection.as_socket());
-                            self.poll.registry().register(
-                                &mut connection,
-                                token,
-                                Interest::READABLE.add(Interest::WRITABLE),
-                            )?;
-                            let ev = SocketEvent::new_client(connection, socket_event.get_server_port());
-                            self.new_socket_client(ev);
-                        };
-                        
-                    } else {
-                        if let Some(mut client) = socket_event.as_client() {
-                            if event.is_writable() {
-                                // We can (maybe) write to the connection.
-                                // client.get_out_cache().get_write_data()
-                                match client.write(&[]) {
-                                    // We want to write the entire `DATA` buffer in a single go. If we
-                                    // write less we'll return a short write error (same as
-                                    // `io::Write::write_all` does).
-                                    // Ok(n) if n < DATA.len() => return Err(io::ErrorKind::WriteZero.into()),
-                                    Ok(_) => {
-                                        // After we've written something we'll reregister the connection
-                                        // to only respond to readable events.
-                                        self.poll.registry().reregister(client, token, Interest::READABLE)?
-                                    }
-                                    // Would block "errors" are the OS's way of saying that the
-                                    // connection is not actually ready to perform this I/O operation.
-                                    Err(ref err) if Self::would_block(err) => {}
-                                    // Got interrupted (how rude!), we'll try again.
-                                    // Err(ref err) if Self::interrupted(err) => {
-                                    //     return handle_connection_event(registry, connection, event)
-                                    // }
-                                    // Other errors we'll consider fatal.
-                                    Err(err) => return Err(err),
-                                }
-                            }
-                        
-                            if event.is_readable() {
-                                let mut connection_closed = false;
-                                let mut received_data = vec![0; 4096];
-                                let mut bytes_read = 0;
-                                // We can (maybe) read from the connection.
-                                loop {
-                                    match client.read(&mut received_data[bytes_read..]) {
-                                        Ok(0) => {
-                                            // Reading 0 bytes means the other side has closed the
-                                            // connection or is done writing, then so are we.
-                                            connection_closed = true;
-                                            break;
-                                        }
-                                        Ok(n) => {
-                                            bytes_read += n;
-                                            if bytes_read == received_data.len() {
-                                                received_data.resize(received_data.len() + 1024, 0);
-                                            }
-                                        }
-                                        // Would block "errors" are the OS's way of saying that the
-                                        // connection is not actually ready to perform this I/O operation.
-                                        Err(ref err) if err.kind() == io::ErrorKind::WouldBlock => break,
-                                        Err(ref err) if err.kind() == io::ErrorKind::Interrupted => continue,
-                                        // Other errors we'll consider fatal.
-                                        Err(err) => return Err(err),
-                                    }
-                                }
-                        
-                                if bytes_read != 0 {
-                                    let received_data = &received_data[..bytes_read];
-                                    if let Ok(str_buf) = from_utf8(received_data) {
-                                        println!("Received data: {}", str_buf.trim_end());
-                                    } else {
-                                        println!("Received (none UTF-8) data: {:?}", received_data);
-                                    }
-                                }
-                        
-                                if connection_closed {
-                                    println!("Connection closed");
-                                    return Ok(());
-                                }
                             }
                         };
+                        
+                        println!("Accepted connection from: {}", address);
+                        let client_token = Token(connection.as_socket());
+                        self.poll.registry().register(
+                            &mut connection,
+                            client_token,
+                            Interest::READABLE,
+                        )?;
+                        let mut ev = SocketEvent::new_client(connection, socket_event.get_server_port());
+                        if socket_event.read.is_some() {
+                            ev.set_read(socket_event.read);
+                        }
+                        if socket_event.end.is_some() {
+                            ev.set_end(socket_event.end);
+                        }
+                        socket_event.call_accept(&mut ev);
+                        
+                        // self.connect_ids.insert(Token(ev.as_raw_socket() as usize) , ev);
+                        self.new_socket_client(ev);
+                    }
+                } else if self.is_token_client(&token) {
+                    let socket_event = self.connect_ids.get_mut(&token).unwrap();
+                    let mut is_read_data = false;
+                    if event.is_writable() {
+                        // We can (maybe) write to the connection.
+                        // client.get_out_cache().get_write_data()
+                        match socket_event.write_data() {
+                            // We want to write the entire `DATA` buffer in a single go. If we
+                            // write less we'll return a short write error (same as
+                            // `io::Write::write_all` does).
+                            // Ok(n) if n < DATA.len() => return Err(io::ErrorKind::WriteZero.into()),
+                            Ok(true) => {
+                                // After we've written something we'll reregister the connection
+                                // to only respond to readable events.
+                                self.poll.registry().reregister(socket_event.as_client().unwrap(), token, Interest::READABLE)?
+                            }
+                            Ok(false) => {
+                            }
+                            // Would block "errors" are the OS's way of saying that the
+                            // connection is not actually ready to perform this I/O operation.
+                            Err(ref err) if Self::would_block(err) => {}
+                            // Got interrupted (how rude!), we'll try again.
+                            // Err(ref err) if Self::interrupted(err) => {
+                            //     return handle_connection_event(registry, connection, event)
+                            // }
+                            // Other errors we'll consider fatal.
+                            Err(err) => is_need_cose = true,
+                        }
+                    }
+                
+                    if event.is_readable() {
+                        loop {
+                            match socket_event.read_data() {
+                                Ok(true) => {
+                                    // Reading 0 bytes means the other side has closed the
+                                    // connection or is done writing, then so are we.
+                                    is_need_cose = true;
+                                    break;
+                                }
+                                Ok(false) => {
+                                    is_read_data = true;
+                                    break;
+                                }
+                                Err(err) => {
+                                    is_need_cose = true;
+                                    break;
+                                },
+                            }
+                        }
+
+                        if is_read_data {
+                            socket_event.call_read();
+                        }
                     }
                 }
+                if is_need_cose {
+                    if let Some(mut socket_event) = self.connect_ids.remove(&token) {
+                        socket_event.call_end();
 
-                // match event.token() {
-                //     SERVER => loop {
-                //         // Received an event for the TCP server socket, which
-                //         // indicates we can accept an connection.
-                //         let (mut connection, address) = match server.accept() {
-                //             Ok((connection, address)) => (connection, address),
-                //             Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
-                //                 // If we get a `WouldBlock` error we know our
-                //                 // listener has no more incoming connections queued,
-                //                 // so we can return to polling and wait for some
-                //                 // more.
-                //                 break;
-                //             }
-                //             Err(e) => {
-                //                 // If it was any other kind of error, something went
-                //                 // wrong and we terminate with an error.
-                //                 return Err(e);
-                //             }
-                //         };
-    
-                //         println!("Accepted connection from: {}", address);
-    
-                //         let token = next(&mut unique_token);
-                //         poll.registry().register(
-                //             &mut connection,
-                //             token,
-                //             Interest::READABLE.add(Interest::WRITABLE),
-                //         )?;
-    
-                //         connections.insert(token, connection);
-                //     },
-                //     token => {
-                //         // Maybe received an event for a TCP connection.
-                //         let done = if let Some(connection) = connections.get_mut(&token) {
-                //             handle_connection_event(poll.registry(), connection, event)?
-                //         } else {
-                //             // Sporadic events happen, we can safely ignore them.
-                //             false
-                //         };
-                //         if done {
-                //             if let Some(mut connection) = connections.remove(&token) {
-                //                 poll.registry().deregister(&mut connection)?;
-                //             }
-                //         }
-                //     }
-                // }
+                        if socket_event.is_server() {
+                            self.poll.registry().deregister(socket_event.as_server().unwrap())?;
+                        } else if socket_event.is_client() {
+                            self.poll.registry().deregister(socket_event.as_client().unwrap())?;
+
+                        }
+
+                    }
+                }
             }
         }
         Ok(())

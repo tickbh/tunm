@@ -4,11 +4,13 @@ use mio::{Poll, Token};
 use mio::net::{TcpListener, TcpStream};
 use crate::net::AsSocket;
 
+use std::io::{self, Read, Write};
+use std::io::Result;
 
-pub type AcceptCb = fn(ev: &mut Poll, &mut SocketEvent) -> usize;
-pub type ReadCb = fn(ev: &mut Poll, &mut SocketEvent) -> usize;
-pub type WriteCb = fn(ev: &mut Poll, &mut SocketEvent) -> usize;
-pub type EndCb = fn(ev: &mut Poll, &mut SocketEvent);
+pub type AcceptCb = fn(&mut SocketEvent) -> usize;
+pub type ReadCb = fn(&mut SocketEvent) -> usize;
+pub type WriteCb = fn(&mut SocketEvent) -> usize;
+pub type EndCb = fn(&mut SocketEvent);
 
 // #[derive(Debug)]
 pub struct SocketEvent {
@@ -24,10 +26,10 @@ pub struct SocketEvent {
     mio: bool,
     server: Option<TcpListener>,
     client: Option<TcpStream>,
-    accept: Option<AcceptCb>,
-    read: Option<ReadCb>,
-    write: Option<WriteCb>,
-    end: Option<EndCb>,
+    pub accept: Option<AcceptCb>,
+    pub read: Option<ReadCb>,
+    pub write: Option<WriteCb>,
+    pub end: Option<EndCb>,
 }
 
 impl SocketEvent {
@@ -174,7 +176,6 @@ impl SocketEvent {
     pub fn as_server(&mut self) -> Option<&mut TcpListener> {
         self.server.as_mut()
     }
-
     
     pub fn set_client(&mut self, client: TcpStream) {
         self.client = Some(client);
@@ -187,14 +188,49 @@ impl SocketEvent {
     pub fn as_client(&mut self) -> Option<&mut TcpStream> {
         self.client.as_mut()
     }
+    
+    pub fn read_data(&mut self) -> Result<bool> {
+        let mut bytes_read = 0;
+        loop {
+            match self.client.as_mut().unwrap().read(self.in_buffer.get_read_array(2048)) {
+                Ok(0) => {
+                    return Ok(true);
+                }
+                Ok(n) => {
+                    bytes_read += n;
+                    self.in_buffer.write_offset(n);
+                    if bytes_read > 655360 {
+                        trace!("too big data");
+                        return Ok(true);
+                    }
+
+                    //  else if bytes_read < 2048 {
+                    //     break;
+                    // }
+                }
+                // Would block "errors" are the OS's way of saying that the
+                // connection is not actually ready to perform this I/O operation.
+                Err(ref err) if err.kind() == io::ErrorKind::WouldBlock => break,
+                Err(ref err) if err.kind() == io::ErrorKind::Interrupted => continue,
+                // Other errors we'll consider fatal.
+                Err(err) => return Ok(true),
+            }
+        }
+        Ok(false)
+    }
+
+    pub fn write_data(&mut self) -> Result<bool> {
+        let size = self.client.as_mut().unwrap().write(self.out_buffer.get_write_data())?;
+        Ok(self.out_buffer.read_offset(size))
+    }
 
     pub fn set_accept(&mut self, accept: Option<AcceptCb>) {
         self.accept = accept;
     }
 
-    pub fn call_accept(&self, poll: &mut Poll, client: &mut SocketEvent) -> usize {
+    pub fn call_accept(&self, client: &mut SocketEvent) -> usize {
         if self.accept.is_some() {
-            self.accept.as_ref().unwrap()(poll, client)
+            self.accept.as_ref().unwrap()(client)
         } else {
             0
         }
@@ -204,9 +240,9 @@ impl SocketEvent {
         self.read = read;
     }
     
-    pub fn call_read(&self, poll: &mut Poll, client: &mut SocketEvent) -> usize {
+    pub fn call_read(&mut self) -> usize {
         if self.read.is_some() {
-            self.read.as_ref().unwrap()(poll, client)
+            self.read.as_ref().clone().unwrap()(self)
         } else {
             0
         }
@@ -217,9 +253,9 @@ impl SocketEvent {
         self.write = write;
     }
 
-    pub fn call_write(&self, poll: &mut Poll, client: &mut SocketEvent) -> usize {
+    pub fn call_write(&mut self, client: &mut SocketEvent) -> usize {
         if self.write.is_some() {
-            self.write.as_ref().unwrap()(poll, client)
+            self.write.as_ref().unwrap()(client)
         } else {
             0
         }
@@ -229,9 +265,9 @@ impl SocketEvent {
         self.end = end;
     }
     
-    pub fn call_end(&self, poll: &mut Poll, client: &mut SocketEvent) {
+    pub fn call_end(&mut self) {
         if self.end.is_some() {
-            self.end.as_ref().unwrap()(poll, client);
+            self.end.as_ref().clone().unwrap()(self);
         }
     }
 }
