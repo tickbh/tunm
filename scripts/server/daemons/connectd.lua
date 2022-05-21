@@ -128,7 +128,7 @@ local function init_network_status()
         TRACE("listen websocket server:%o", "0.0.0.0:" .. GATE_WEBSOCKET_PORT)
         
         listen_http("0.0.0.0:" .. GATE_HTTP_PORT)
-        listen_websocket("0.0.0.0", tonumber(GATE_WEBSOCKET_PORT))
+        listen_mio_websocket("0.0.0.0", tonumber(GATE_WEBSOCKET_PORT))
         
         CURRENT_IP = GET_LOCALIP_ADDR() or "127.0.0.1"
         gate_heartbeat_network()

@@ -93,11 +93,6 @@ impl MioEventMgr {
     pub fn new_socket_server(&mut self, ev: SocketEvent) -> bool {
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
-        LuaEngine::instance().apply_new_connect(ev.get_cookie(),
-                                                ev.as_raw_socket(),
-                                                ev.get_client_ip(),
-                                                ev.get_server_port(),
-                                                ev.is_websocket());
         self.connect_ids.insert(Token(ev.as_raw_socket() as usize) , ev);
         true
     }

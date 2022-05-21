@@ -11,7 +11,7 @@ use psocket::SOCKET;
 use ws::{Builder, Settings, CloseCode, Sender, Handler, Handshake, Message, Result, Error, ErrorKind};
 use ws::util::{Token, Timeout};
 
-use {LuaEngine, NetMsg, SocketEvent, EventMgr, MSG_TYPE_TEXT, LogUtils, log_utils};
+use {LuaEngine, NetMsg, SocketEvent, EventMgr, MioEventMgr, MSG_TYPE_TEXT, LogUtils, log_utils};
 
 const CONNECT: Token = Token(1);
 
@@ -34,7 +34,7 @@ impl Handler for WebsocketClient {
         event.set_websocket(true);
         event.set_mio(true);
 
-        EventMgr::instance().new_socket_event(event);
+        MioEventMgr::instance().new_socket_event(event);
         WebSocketMgr::instance().on_open(self.out.clone());
         Ok(())
     }
@@ -42,26 +42,14 @@ impl Handler for WebsocketClient {
     fn on_message(&mut self, msg: Message) -> Result<()> {
         let net_msg = match msg {
             Message::Text(_text) => {
-                // let mut first = 0;
-                // let mut last = 0;
-                // let data = &text.as_bytes();
-                // for i in 0 .. data.len() {
-                //     if data[i] == '"' as u8 {
-                //         if first == 0 {
-                //             first = i;
-                //         } else if last == 0 {
-                //             last = i;
-                //             break;
-                //         }
-                //     }
-                // }
-                // let name = String::from_utf8_lossy(&data[first + 1 .. last]).to_string();
-                // NetMsg::new_by_detail(MSG_TYPE_TEXT, name, &text.as_bytes()[..])
-                println!("Not support text protocol");
+                LuaEngine::instance().apply_lost_connect(self.out.connection_id() as SOCKET, "未受支持的TEXT格式".to_string());
                 return Ok(());
             },
             Message::Binary(data) => {
-                unwrap_or!(NetMsg::new_by_proto_data(&data[..]).ok(), return Ok(()))
+                unwrap_or!(NetMsg::new_by_data(&data[..]).ok(), {
+                    LuaEngine::instance().apply_lost_connect(self.out.connection_id() as SOCKET, "解析二进制协议失败".to_string());
+                    return Ok(())
+                })
             },
         };
 
@@ -113,30 +101,15 @@ impl Handler for WebsocketServer {
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
         let net_msg = match msg {
-            Message::Text(text) => {
-                let mut first = 0;
-                let mut last = 0;
-                let data = &text.as_bytes();
-                for i in 0 .. data.len() {
-                    if data[i] == '"' as u8 {
-                        if first == 0 {
-                            first = i;
-                        } else if last == 0 {
-                            last = i;
-                            break;
-                        }
-                    }
-                }
-                let name = if last > first {
-                    String::from_utf8_lossy(&data[first + 1 .. last]).to_string()
-                } else {
-                    String::new()
-                };
-                NetMsg::new_by_detail(MSG_TYPE_TEXT, name, &text.as_bytes()[..])
-
+            Message::Text(_text) => {
+                LuaEngine::instance().apply_lost_connect(self.out.connection_id() as SOCKET, "未受支持的TEXT格式".to_string());
+                return Ok(());
             },
             Message::Binary(data) => {
-                unwrap_or!(NetMsg::new_by_proto_data(&data[..]).ok(), return Ok(()))
+                unwrap_or!(NetMsg::new_by_data(&data[..]).ok(), {
+                    LuaEngine::instance().apply_lost_connect(self.out.connection_id() as SOCKET, "解析二进制协议失败".to_string());
+                    return Ok(())
+                })
             },
         };
 
