@@ -165,7 +165,7 @@ impl EventMgr {
             return;
         }
         let socket_event = socket_event.unwrap();
-        let _ = socket_event.get_buffer().write(data);
+        let _ = socket_event.get_in_buffer().write(data);
         self.try_dispatch_message(fd);
     }
 
@@ -178,8 +178,8 @@ impl EventMgr {
             return;
         }
         let socket_event = socket_event.unwrap();
-        let buffer_len = socket_event.get_buffer().len();
-        let buffer = socket_event.get_buffer();
+        let buffer_len = socket_event.get_in_buffer().len();
+        let buffer = socket_event.get_in_buffer();
         loop {
             let message: Option<Vec<u8>> = EventMgr::get_next_message(buffer);
             if message.is_none() {

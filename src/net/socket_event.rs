@@ -1,23 +1,33 @@
 use tunm_proto::Buffer;
 use psocket::{SOCKET};
-use mio::Token;
+use mio::{Poll, Token};
 use mio::net::{TcpListener, TcpStream};
 use crate::net::AsSocket;
 
-#[derive(Debug)]
+
+pub type AcceptCb = fn(ev: &mut Poll, &mut SocketEvent) -> usize;
+pub type ReadCb = fn(ev: &mut Poll, &mut SocketEvent) -> usize;
+pub type WriteCb = fn(ev: &mut Poll, &mut SocketEvent) -> usize;
+pub type EndCb = fn(ev: &mut Poll, &mut SocketEvent);
+
+// #[derive(Debug)]
 pub struct SocketEvent {
     socket_fd: SOCKET,
     cookie: u32,
     client_ip: String,
     server_port: u16,
-    buffer: Buffer,
-    out_cache: Buffer,
+    pub in_buffer: Buffer,
+    pub out_buffer: Buffer,
     online: bool,
     websocket: bool,
     local: bool, //is local create fd
     mio: bool,
     server: Option<TcpListener>,
     client: Option<TcpStream>,
+    accept: Option<AcceptCb>,
+    read: Option<ReadCb>,
+    write: Option<WriteCb>,
+    end: Option<EndCb>,
 }
 
 impl SocketEvent {
@@ -27,14 +37,18 @@ impl SocketEvent {
             cookie: 0,
             client_ip: client_ip,
             server_port: server_port,
-            buffer: Buffer::new(),
-            out_cache: Buffer::new(),
+            in_buffer: Buffer::new(),
+            out_buffer: Buffer::new(),
             online: true,
             websocket: false,
             local: false,
             mio: false,
             server: None,
             client: None,
+            accept: None,
+            read: None,
+            write: None,
+            end: None,
         }
     }
     
@@ -45,14 +59,18 @@ impl SocketEvent {
             cookie: 0,
             client_ip: peer,
             server_port: server_port,
-            buffer: Buffer::new(),
-            out_cache: Buffer::new(),
+            in_buffer: Buffer::new(),
+            out_buffer: Buffer::new(),
             online: true,
             websocket: false,
             local: false,
             mio: false,
             server: None,
             client: Some(client),
+            accept: None,
+            read: None,
+            write: None,
+            end: None,
         }
     }
     
@@ -62,14 +80,18 @@ impl SocketEvent {
             cookie: 0,
             client_ip: "".to_string(),
             server_port: server_port,
-            buffer: Buffer::new(),
-            out_cache: Buffer::new(),
+            in_buffer: Buffer::new(),
+            out_buffer: Buffer::new(),
             online: true,
             websocket: false,
             local: false,
             mio: false,
             server: Some(server),
             client: None,
+            accept: None,
+            read: None,
+            write: None,
+            end: None,
         }
     }
 
@@ -79,6 +101,10 @@ impl SocketEvent {
     
     pub fn as_raw_socket(&self) -> SOCKET {
         self.socket_fd
+    }
+
+    pub fn as_token(&self) -> Token {
+        Token(self.socket_fd as usize)
     }
 
     pub fn get_client_ip(&self) -> String {
@@ -97,12 +123,12 @@ impl SocketEvent {
         self.cookie = cookie;
     }
 
-    pub fn get_buffer(&mut self) -> &mut Buffer {
-        &mut self.buffer
+    pub fn get_in_buffer(&mut self) -> &mut Buffer {
+        &mut self.in_buffer
     }
 
-    pub fn get_out_cache(&mut self) -> &mut Buffer {
-        &mut self.out_cache
+    pub fn get_out_buffer(&mut self) -> &mut Buffer {
+        &mut self.out_buffer
     }
 
     pub fn set_online(&mut self, online: bool) {
@@ -136,7 +162,6 @@ impl SocketEvent {
     pub fn is_mio(&self) -> bool {
         self.mio
     }
-
     
     pub fn set_server(&mut self, server: TcpListener) {
         self.server = Some(server);
@@ -161,5 +186,52 @@ impl SocketEvent {
     
     pub fn as_client(&mut self) -> Option<&mut TcpStream> {
         self.client.as_mut()
+    }
+
+    pub fn set_accept(&mut self, accept: Option<AcceptCb>) {
+        self.accept = accept;
+    }
+
+    pub fn call_accept(&self, poll: &mut Poll, client: &mut SocketEvent) -> usize {
+        if self.accept.is_some() {
+            self.accept.as_ref().unwrap()(poll, client)
+        } else {
+            0
+        }
+    }
+    
+    pub fn set_read(&mut self, read: Option<ReadCb>) {
+        self.read = read;
+    }
+    
+    pub fn call_read(&self, poll: &mut Poll, client: &mut SocketEvent) -> usize {
+        if self.read.is_some() {
+            self.read.as_ref().unwrap()(poll, client)
+        } else {
+            0
+        }
+    }
+
+    
+    pub fn set_write(&mut self, write: Option<WriteCb>) {
+        self.write = write;
+    }
+
+    pub fn call_write(&self, poll: &mut Poll, client: &mut SocketEvent) -> usize {
+        if self.write.is_some() {
+            self.write.as_ref().unwrap()(poll, client)
+        } else {
+            0
+        }
+    }
+    
+    pub fn set_end(&mut self, end: Option<EndCb>) {
+        self.end = end;
+    }
+    
+    pub fn call_end(&self, poll: &mut Poll, client: &mut SocketEvent) {
+        if self.end.is_some() {
+            self.end.as_ref().unwrap()(poll, client);
+        }
     }
 }

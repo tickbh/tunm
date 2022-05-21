@@ -18,7 +18,7 @@ use std::sync::Arc;
 use td_rthreadpool::ReentrantMutex;
 use tunm_proto::{self, Buffer, decode_number};
 
-use crate::net::AsSocket;
+use crate::net::{AsSocket, AcceptCb, ReadCb, EndCb};
 
 use mio::event::Event;
 use mio::net::{TcpListener, TcpStream};
@@ -211,7 +211,7 @@ impl MioEventMgr {
             return;
         }
         let socket_event = socket_event.unwrap();
-        let _ = socket_event.get_buffer().write(data);
+        let _ = socket_event.get_in_buffer().write(data);
         self.try_dispatch_message(fd);
     }
 
@@ -224,8 +224,8 @@ impl MioEventMgr {
             return;
         }
         let socket_event = socket_event.unwrap();
-        let buffer_len = socket_event.get_buffer().len();
-        let buffer = socket_event.get_buffer();
+        let buffer_len = socket_event.get_in_buffer().len();
+        let buffer = socket_event.get_in_buffer();
         loop {
             let message: Option<Vec<u8>> = MioEventMgr::get_next_message(buffer);
             if message.is_none() {
@@ -338,6 +338,37 @@ impl MioEventMgr {
     //                                                             None));
     // }
 
+    pub fn write_to_socket(&mut self, socket: Token, bytes: &[u8]) -> Result<usize> {
+        if let Some(socket_event) = self.connect_ids.get_mut(&socket) {
+            if socket_event.is_client() {
+                let size = socket_event.get_out_buffer().write(bytes)?;
+                self.poll.registry().reregister(socket_event.as_client().unwrap(), socket, Interest::READABLE.add(Interest::WRITABLE))?;
+                Ok(size)
+            } else {
+                Ok(0)
+            }
+        } else {
+            Ok(0)
+        }
+    }
+
+    pub fn listen_server(&mut self, bind_ip: String, bind_port: u16, accept: Option<AcceptCb>, read: Option<ReadCb>, end: Option<EndCb>)-> Result<usize>  {
+        let bind_addr = if bind_port == 0 {
+            unwrap_or!(format!("{}", bind_ip.trim_matches('\"')).parse().ok(), return Ok(0))
+        } else {
+            unwrap_or!(format!("{}:{}", bind_ip.trim_matches('\"'), bind_port).parse().ok(), return Ok(0))
+        };
+        let mut listener = TcpListener::bind(bind_addr).unwrap();
+        let socket = listener.as_socket();
+        self.poll.registry().register(&mut listener, Token(socket), Interest::READABLE)?;
+        let mut ev = SocketEvent::new_server(listener, bind_port);
+        ev.set_accept(accept);
+        ev.set_read(accept);
+        ev.set_end(end);
+        self.new_socket_server(ev);
+        Ok(socket)
+    }
+
     pub fn run_server(&mut self) -> Result<()> {
 
         let mut events = Events::with_capacity(128);
@@ -348,7 +379,7 @@ impl MioEventMgr {
                 let token = event.token();
                 if let Some(socket_event) = self.connect_ids.get_mut(&token) {
                     if socket_event.is_server() {
-                        if let Some(mut server) = socket_event.as_server() {
+                        if let Some(server) = socket_event.as_server() {
                             let (mut connection, address) = match server.accept() {
                                 Ok((connection, address)) => (connection, address),
                                 Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
@@ -373,7 +404,6 @@ impl MioEventMgr {
                             )?;
                             let ev = SocketEvent::new_client(connection, socket_event.get_server_port());
                             self.new_socket_client(ev);
-                            // self.client_tcp.insert(token, connection);
                         };
                         
                     } else {

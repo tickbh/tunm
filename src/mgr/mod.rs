@@ -13,6 +13,7 @@ pub use self::service_mgr::ServiceMgr;
 pub use self::http_mgr::HttpMgr;
 pub use self::command_mgr::CommandMgr;
 pub use self::event_mgr::EventMgr;
+pub use self::mio_event_mgr::MioEventMgr;
 pub use self::protocol_mgr::ProtocolMgr;
 pub use self::websocket_mgr::{WebSocketMgr, WebsocketClient};
 pub use self::websocket_my_mgr::WebsocketMyMgr;

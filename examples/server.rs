@@ -9,11 +9,11 @@ extern crate td_revent;
 
 extern crate commander;
 use commander::Commander;
-
+use std::thread;
 use env_logger::{Builder, Target};
 use log::{warn, info};
 use td_revent::{EventLoop, EventEntry, EventFlags, CellAny, RetValue};
-use tunm::{GlobalConfig, LuaEngine, register_custom_func, EventMgr, FileUtils, DbPool, RedisPool, TelnetUtils, LogUtils};
+use tunm::{GlobalConfig, LuaEngine, register_custom_func, EventMgr, MioEventMgr, FileUtils, DbPool, RedisPool, TelnetUtils, LogUtils};
 
 use std::env;
 
@@ -39,8 +39,6 @@ pub fn get() -> Option<String> {
 
 fn main() {
 
-
-    
     let command = Commander::new()
                 .version(&env!("CARGO_PKG_VERSION").to_string())
                 .usage("test")
@@ -100,7 +98,12 @@ fn main() {
     }
     EventMgr::instance().get_event_loop().add_timer(EventEntry::new_timer(5 * 60 * 1000, true, Some(check_server_status), None)); 
 
-    let _ = EventMgr::instance().get_event_loop().run();
+
+    thread::spawn(move || {
+        let _ = EventMgr::instance().get_event_loop().run();
+    });
+
+    let _ = MioEventMgr::instance().run_server();
 
     println!("Finish Server!");
 }
