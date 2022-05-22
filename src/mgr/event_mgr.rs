@@ -4,6 +4,9 @@ use std::boxed::Box;
 use psocket::SOCKET;
 use std::any::Any;
 
+use tunm_timer::{Factory, RetTimer, Timer, Handler};
+use crate::{MioEventMgr};
+
 use SocketEvent;
 use LuaEngine;
 use NetMsg;
@@ -24,6 +27,20 @@ pub struct EventMgr {
     event_loop: EventLoop,
     lua_exec_id: u32,
     exit: bool,
+}
+
+pub struct TimeHandle {
+    timer_name: String,
+}
+
+impl Factory for TimeHandle {
+    fn on_trigger(&mut self, timer: &mut Timer<Self>, id: u64) -> RetTimer {
+        if self.timer_name == "MIO" {
+            let _ = MioEventMgr::instance().run_one_server();
+        }
+        println!("ontigger = {:}", id);
+        RetTimer::Ok
+    }
 }
 
 impl EventMgr {
@@ -290,5 +307,9 @@ impl EventMgr {
                                                                 true,
                                                                 Some(Self::lua_exec_callback),
                                                                 None));
+    }
+
+    pub fn run_timer(&mut self) {
+        
     }
 }

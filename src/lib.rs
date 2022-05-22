@@ -21,6 +21,7 @@ extern crate luasocket;
 extern crate websocket_simple;
 extern crate psocket;
 extern crate mio;
+extern crate tunm_timer;
 
 #[macro_use] extern crate log;
 

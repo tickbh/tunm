@@ -103,7 +103,7 @@ fn main() {
         let _ = EventMgr::instance().get_event_loop().run();
     });
 
-    let err = MioEventMgr::instance().run_server();
+    let err = MioEventMgr::instance().run_timer();
 
     println!("Finish Server! {:?}", err);
 }
