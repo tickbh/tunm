@@ -117,7 +117,7 @@ impl EventMgr {
 
         if is_websocket {
             if is_mio {
-                return WebSocketMgr::instance().send_message(fd as i32, net_msg);
+                return WebSocketMgr::instance().send_message(fd as usize, net_msg);
             } else {
                 return WebsocketMyMgr::instance().send_message(fd, net_msg);
             }
@@ -141,7 +141,7 @@ impl EventMgr {
 
         if is_websocket {
             if is_mio {
-                return WebSocketMgr::instance().close_fd(fd as i32);
+                return WebSocketMgr::instance().close_fd(fd as usize);
             } else {
                 return WebsocketMyMgr::instance().close_fd(fd);
             }

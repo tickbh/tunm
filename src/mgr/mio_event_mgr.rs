@@ -190,7 +190,7 @@ impl MioEventMgr {
 
         if is_websocket {
             if is_mio {
-                return WebSocketMgr::instance().close_fd(fd.0 as i32);
+                return WebSocketMgr::instance().close_fd(fd.0 as usize);
             } else {
                 return WebsocketMyMgr::instance().close_fd(fd.0 as psocket::SOCKET);
             }
@@ -454,7 +454,11 @@ impl MioEventMgr {
                                     // more.
                                     break;
                                 }
+                                Err(ref err) if Self::interrupted(err) => {
+                                    continue;
+                                }
                                 Err(e) => {
+                                    println!("error ==== {:?}", e);
                                     // If it was any other kind of error, something went
                                     // wrong and we terminate with an error.
                                     return Err(e);
@@ -502,9 +506,9 @@ impl MioEventMgr {
                             // connection is not actually ready to perform this I/O operation.
                             Err(ref err) if Self::would_block(err) => {}
                             // Got interrupted (how rude!), we'll try again.
-                            // Err(ref err) if Self::interrupted(err) => {
-                            //     return handle_connection_event(registry, connection, event)
-                            // }
+                            Err(ref err) if Self::interrupted(err) => {
+
+                            }
                             // Other errors we'll consider fatal.
                             Err(err) => is_need_cose = true,
                         }

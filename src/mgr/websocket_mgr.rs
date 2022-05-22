@@ -36,19 +36,21 @@ impl Handler for WebsocketClient {
         event.set_mio(true);
 
         MioEventMgr::instance().new_socket_event(event);
-        WebSocketMgr::instance().on_open(self.out.clone());
+        WebSocketMgr::instance().on_open(self.socket, self.out.clone());
         Ok(())
     }
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
         let net_msg = match msg {
             Message::Text(_text) => {
-                LuaEngine::instance().apply_lost_connect(self.socket as SOCKET, "未受支持的TEXT格式".to_string());
+                WebSocketMgr::instance().on_close(self.socket, &self.out, "未受支持的TEXT格式".to_string());
+                // LuaEngine::instance().apply_lost_connect(self.socket as SOCKET, "未受支持的TEXT格式".to_string());
                 return Ok(());
             },
             Message::Binary(data) => {
                 unwrap_or!(NetMsg::new_by_data(&data[..]).ok(), {
-                    LuaEngine::instance().apply_lost_connect(self.socket as SOCKET, "解析二进制协议失败".to_string());
+                    WebSocketMgr::instance().on_close(self.socket, &self.out, "解析二进制协议失败".to_string());
+                    // LuaEngine::instance().apply_lost_connect(self.socket as SOCKET, "解析二进制协议失败".to_string());
                     return Ok(())
                 })
             },
@@ -59,12 +61,12 @@ impl Handler for WebsocketClient {
     }
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {
-        WebSocketMgr::instance().on_close(&self.out, format!("WebSocket closing for ({:?}) {}", code, reason).to_string());
+        WebSocketMgr::instance().on_close(self.socket, &self.out, format!("WebSocket closing for ({:?}) {}", code, reason).to_string());
     }
 
     fn on_error(&mut self, err: Error) {
         // Shutdown on any error
-        WebSocketMgr::instance().on_close(&self.out, format!("Shutting down server for error: {}", err).to_string());
+        WebSocketMgr::instance().on_close(self.socket, &self.out, format!("Shutting down server for error: {}", err).to_string());
     }
 
 }
@@ -98,20 +100,22 @@ impl Handler for WebsocketServer {
         event.set_websocket(true);
         event.set_mio(true);
 
-        EventMgr::instance().new_socket_event(event);
-        WebSocketMgr::instance().on_open(self.out.clone());
+        MioEventMgr::instance().new_socket_event(event);
+        WebSocketMgr::instance().on_open(self.socket, self.out.clone());
         Ok(())
     }
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
         let net_msg = match msg {
             Message::Text(_text) => {
-                LuaEngine::instance().apply_lost_connect(self.socket as SOCKET, "未受支持的TEXT格式".to_string());
+                WebSocketMgr::instance().on_close(self.socket, &self.out, "未受支持的TEXT格式".to_string());
+                // LuaEngine::instance().apply_lost_connect(self.socket as SOCKET, "未受支持的TEXT格式".to_string());
                 return Ok(());
             },
             Message::Binary(data) => {
                 unwrap_or!(NetMsg::new_by_data(&data[..]).ok(), {
-                    LuaEngine::instance().apply_lost_connect(self.socket as SOCKET, "解析二进制协议失败".to_string());
+                    WebSocketMgr::instance().on_close(self.socket, &self.out, "解析二进制协议失败".to_string());
+                    // LuaEngine::instance().apply_lost_connect(self.socket as SOCKET, "解析二进制协议失败".to_string());
                     return Ok(())
                 })
             },
@@ -127,7 +131,7 @@ impl Handler for WebsocketServer {
         }
         self.open_timeout = None;
 
-        WebSocketMgr::instance().on_close(&self.out, format!("WebSocket closing for ({:?}) {}", code, reason).to_string());
+        WebSocketMgr::instance().on_close(self.socket, &self.out, format!("WebSocket closing for ({:?}) {}", code, reason).to_string());
     }
 
     fn on_error(&mut self, err: Error) {
@@ -137,7 +141,7 @@ impl Handler for WebsocketServer {
         self.open_timeout = None;
 
         // Shutdown on any error
-        WebSocketMgr::instance().on_close(&self.out, format!("Shutting down server for error: {}", err).to_string());
+        WebSocketMgr::instance().on_close(self.socket, &self.out, format!("Shutting down server for error: {}", err).to_string());
     }
 
     fn on_timeout(&mut self, event: Token) -> Result<()> {
@@ -177,7 +181,7 @@ impl Handler for WebsocketServer {
 
 pub struct WebSocketMgr {
     port: u16,
-    connect_ids: HashMap<i32, Sender>,
+    connect_ids: HashMap<usize, Sender>,
     mutex: Arc<ReentrantMutex<u32>>,
 }
 
@@ -200,21 +204,25 @@ impl WebSocketMgr {
         }
     }
 
-    pub fn on_open(&mut self, sender: Sender) {
+    pub fn on_open(&mut self, socket: usize, sender: Sender) {
         let _data = self.mutex.lock().unwrap();
-        self.connect_ids.insert(sender.connection_id() as i32, sender);
+        self.connect_ids.insert(socket, sender);
     }
 
-    pub fn on_close(&mut self, sender: &Sender, reason: String) {
+    pub fn on_close(&mut self, socket: usize, sender: &Sender, reason: String) {
         let connect = {
             let _data = self.mutex.lock().unwrap();
-            unwrap_or!(self.connect_ids.remove(&(sender.connection_id() as i32)), return)
+            unwrap_or!(self.connect_ids.remove(&socket), {
+                // let _ = sender.close_with_reason(CloseCode::Abnormal, reason);
+                let _ = sender.shutdown();
+                return;
+            })
         };
-        EventMgr::instance().add_kick_event(connect.connection_id() as SOCKET, reason);
+        MioEventMgr::instance().add_kick_event(::mio::Token(connect.connection_id() as usize), reason);
     }
 
 
-    pub fn close_fd(&mut self, fd: i32) -> bool {
+    pub fn close_fd(&mut self, fd: usize) -> bool {
         let _data = self.mutex.lock().unwrap();
         if !self.connect_ids.contains_key(&fd) {
             return false;
@@ -229,7 +237,7 @@ impl WebSocketMgr {
         true
     }
 
-    pub fn send_message(&mut self, fd: i32, net_msg: &mut NetMsg) -> bool {
+    pub fn send_message(&mut self, fd: usize, net_msg: &mut NetMsg) -> bool {
         let _data = self.mutex.lock().unwrap();
         if !self.connect_ids.contains_key(&fd) {
             return false;

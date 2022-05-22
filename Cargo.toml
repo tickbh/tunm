@@ -38,7 +38,7 @@ mio = "0.8.3"
 # websocket-simple="0.1.1"
 
 luacjson="0.1.2"
-luasocket="0.1.7"
+luasocket="0.1.9"
 
 
 #ws = "0.9.2"
