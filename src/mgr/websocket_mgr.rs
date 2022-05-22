@@ -18,6 +18,7 @@ const CONNECT: Token = Token(1);
 pub struct WebsocketClient {
     pub out: Sender,
     pub port: u16,
+    pub socket: usize,
     pub cookie: u32,
 }
 
@@ -29,7 +30,7 @@ impl Handler for WebsocketClient {
             addr = format!("{}", ip_addr);
         }
 
-        let mut event = SocketEvent::new(self.out.connection_id() as SOCKET, addr.to_string(), self.port);
+        let mut event = SocketEvent::new(self.socket as SOCKET, addr.to_string(), self.port);
         event.set_cookie(self.cookie);
         event.set_websocket(true);
         event.set_mio(true);
@@ -42,18 +43,18 @@ impl Handler for WebsocketClient {
     fn on_message(&mut self, msg: Message) -> Result<()> {
         let net_msg = match msg {
             Message::Text(_text) => {
-                LuaEngine::instance().apply_lost_connect(self.out.connection_id() as SOCKET, "未受支持的TEXT格式".to_string());
+                LuaEngine::instance().apply_lost_connect(self.socket as SOCKET, "未受支持的TEXT格式".to_string());
                 return Ok(());
             },
             Message::Binary(data) => {
                 unwrap_or!(NetMsg::new_by_data(&data[..]).ok(), {
-                    LuaEngine::instance().apply_lost_connect(self.out.connection_id() as SOCKET, "解析二进制协议失败".to_string());
+                    LuaEngine::instance().apply_lost_connect(self.socket as SOCKET, "解析二进制协议失败".to_string());
                     return Ok(())
                 })
             },
         };
 
-        LuaEngine::instance().apply_message(self.out.connection_id() as SOCKET, net_msg);
+        LuaEngine::instance().apply_message(self.socket as SOCKET, net_msg);
         Ok(())
     }
 
@@ -74,6 +75,7 @@ impl Handler for WebsocketClient {
 struct WebsocketServer {
     out: Sender,
     port: u16,
+    socket: usize,
     open_timeout: Option<Timeout>,
 }
 
@@ -85,12 +87,14 @@ impl Handler for WebsocketServer {
             addr = format!("{}", ip_addr);
         }
 
+        self.socket = shake.socket;
+
         if let Some(t) = self.open_timeout.take() {
             self.out.cancel(t)?
         }
         self.open_timeout = None;
 
-        let mut event = SocketEvent::new(self.out.connection_id() as SOCKET, addr.to_string(), self.port);
+        let mut event = SocketEvent::new(shake.socket as SOCKET, addr.to_string(), self.port);
         event.set_websocket(true);
         event.set_mio(true);
 
@@ -102,18 +106,18 @@ impl Handler for WebsocketServer {
     fn on_message(&mut self, msg: Message) -> Result<()> {
         let net_msg = match msg {
             Message::Text(_text) => {
-                LuaEngine::instance().apply_lost_connect(self.out.connection_id() as SOCKET, "未受支持的TEXT格式".to_string());
+                LuaEngine::instance().apply_lost_connect(self.socket as SOCKET, "未受支持的TEXT格式".to_string());
                 return Ok(());
             },
             Message::Binary(data) => {
                 unwrap_or!(NetMsg::new_by_data(&data[..]).ok(), {
-                    LuaEngine::instance().apply_lost_connect(self.out.connection_id() as SOCKET, "解析二进制协议失败".to_string());
+                    LuaEngine::instance().apply_lost_connect(self.socket as SOCKET, "解析二进制协议失败".to_string());
                     return Ok(())
                 })
             },
         };
 
-        LuaEngine::instance().apply_message(self.out.connection_id() as SOCKET, net_msg);
+        LuaEngine::instance().apply_message(self.socket as SOCKET, net_msg);
         Ok(())
     }
 
@@ -139,7 +143,7 @@ impl Handler for WebsocketServer {
     fn on_timeout(&mut self, event: Token) -> Result<()> {
         match event {
             CONNECT => {
-                trace!("wait connecting handshake!!!! on_timeout occur {}", self.out.connection_id());
+                trace!("wait connecting handshake!!!! on_timeout occur {}", self.socket);
                 self.open_timeout = None;
                 let _ = self.out.close(CloseCode::Normal);
                 Ok(())
@@ -253,6 +257,7 @@ impl WebSocketMgr {
                     let server = WebsocketServer {
                         out: out,
                         port: port,
+                        socket: 0,
                         open_timeout: None,
                     };
                     let _ = server.out.timeout(15_000, CONNECT).ok();

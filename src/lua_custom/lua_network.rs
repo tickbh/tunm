@@ -124,6 +124,7 @@ fn new_websocket_connect(ip: String, port: u16, _timeout: i32, cookie: u32) -> i
             WebsocketClient {
                 out: sender,
                 port: port,
+                socket: 0,
                 cookie: cookie,
             }
         }).unwrap();
