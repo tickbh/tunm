@@ -45,8 +45,16 @@ pub struct TimeHandle {
 
 impl Factory for TimeHandle {
     fn on_trigger(&mut self, timer: &mut Timer<Self>, id: u64) -> RetTimer {
-        if self.timer_name == "MIO" {
-            let _ = MioEventMgr::instance().run_one_server();
+        match &*self.timer_name {
+            "MIO" => {
+                let _ = MioEventMgr::instance().run_one_server();
+            }
+            "lua_set" => {
+                LuaEngine::instance().apply_args_func("timer_event_dispatch".to_string(), vec![id.to_string()]);
+            }
+            _ => {
+                println!("unknow name {}", self.timer_name);
+            }
         }
         println!("ontigger = {:}", id);
         RetTimer::Ok
@@ -578,6 +586,19 @@ impl MioEventMgr {
         loop {
             self.run_one_server()?;
         }
+    }
+
+
+    pub fn delete_timer(&mut self, time_id: u64) {
+        let _ = self.timer.del_timer(time_id);
+    }
+
+    pub fn add_timer_step(&mut self, timer_name: String, tick_step: u64, is_repeat: bool, at_once: bool) -> u64 {
+        self.timer.add_timer(Handler::new_step_ms(
+            TimeHandle {
+                timer_name: timer_name,
+            }, tick_step, is_repeat, at_once
+        ))
     }
 
     pub fn add_server_to_timer(&mut self) {

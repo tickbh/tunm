@@ -1,6 +1,6 @@
 use td_revent::{EventLoop, EventEntry};
 use td_rlua::{self, Lua};
-use {EventMgr, LuaEngine};
+use {EventMgr, LuaEngine, MioEventMgr};
 use td_revent::{RetValue, CellAny};
 
 // timer return no success(0) will no be repeat
@@ -14,25 +14,20 @@ fn time_callback(
 }
 
 fn timer_event_del(time: u32) -> u32 {
-    let event_loop = EventMgr::instance().get_event_loop();
-    let _ = event_loop.del_timer(time);
+    MioEventMgr::instance().delete_timer(time as u64);
     0
 }
 
-fn timer_event_set(time: u32, repeat: bool) -> u32 {
-    let event_loop = EventMgr::instance().get_event_loop();
+fn timer_event_set(time: u32, repeat: bool, at_once: bool) -> u32 {
     trace!("entry debug = {:?}", EventEntry::new_timer(time as u64,
         repeat,
         Some(time_callback),
         None));
-    let timer_id = event_loop.add_timer(EventEntry::new_timer(time as u64,
-                                                              repeat,
-                                                              Some(time_callback),
-                                                              None));
-    timer_id
+    
+    MioEventMgr::instance().add_timer_step("lua_set".to_string(), time as u64, repeat, at_once) as u32
 }
 
 pub fn register_timer_func(lua: &mut Lua) {
     lua.set("timer_event_del", td_rlua::function1(timer_event_del));
-    lua.set("timer_event_set", td_rlua::function2(timer_event_set));
+    lua.set("timer_event_set", td_rlua::function3(timer_event_set));
 }

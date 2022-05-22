@@ -40,11 +40,11 @@ function get_callback_info()
 end
 
 -- 设置定时器
-function set_timer(timeout, callback, arg, is_repeat)
+function set_timer(timeout, callback, arg, is_repeat, at_once)
 
     ASSERT(timeout > 0, "超时时间必须>0");
     -- 创建一个新的 timer
-    local id = timer_event_set(timeout, is_repeat or false);
+    local id = timer_event_set(timeout, is_repeat or false, at_once or false);
     if not id then
         ASSERT(false, "设置定时器失败。");
     end
