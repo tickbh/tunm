@@ -20,6 +20,8 @@ extern crate luasocket;
 extern crate psocket;
 extern crate mio;
 extern crate tunm_timer;
+extern crate serde;
+extern crate serde_json;
 
 #[macro_use] extern crate log;
 

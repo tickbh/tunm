@@ -1,9 +1,8 @@
-use rustc_serialize::json;
+use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 use FileUtils;
 /// it will read config for file
-#[allow(deprecated)]
-#[derive(RustcDecodable, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GlobalConfig {
     pub lua_macros: HashMap<String, String>,
     pub start_lua: String,
@@ -31,7 +30,7 @@ impl GlobalConfig {
     }
 
     pub fn change_instance(file_data: &str) -> bool {
-        let field: Result<GlobalConfig, _> = json::decode(file_data);
+        let field: Result<GlobalConfig, _> = serde_json::from_str(file_data);
         let config = unwrap_or!(field.ok(), return false);
         unsafe {
             if EL != 0 as *mut _ {
