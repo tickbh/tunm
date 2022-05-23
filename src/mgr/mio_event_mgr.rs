@@ -61,7 +61,6 @@ impl Factory for TimeHandle {
                 println!("unknow name {}", self.timer_name);
             }
         }
-        println!("ontigger = {:}", id);
         RetTimer::Ok
     }
 }
@@ -605,7 +604,7 @@ impl MioEventMgr {
 
 
     pub fn run_timer(&mut self) {
-        self.add_server_to_timer();
+        // self.add_server_to_timer();
         self.timer.run_loop_timer();
     }
 

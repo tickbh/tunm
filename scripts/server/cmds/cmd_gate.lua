@@ -12,6 +12,7 @@ function cmd_agent_identity(agent, code_type, code_id, password)
     TRACE("cmd_agent_identity == code_type = %o, code_id = %o, password = %o", code_type, code_id, password)
     if code_type == SERVER_TYPE_CLIENT then
         agent:set_code_type(code_type, 0)
+        agent:set_authed(true)
         return
     end
 

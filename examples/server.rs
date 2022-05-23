@@ -89,19 +89,10 @@ fn main() {
     MioEventMgr::instance().add_lua_excute();
 
 
-    //timer check server status, example db connect is idle 
-    // fn check_server_status(
-    //     ev: &mut EventLoop,
-    //     _timer: u32, _ : Option<&mut CellAny>) -> (RetValue, u64) {
-    //     DbPool::instance().check_connect_timeout();
-    //     (RetValue::OK, 0)
-    // }
-    // EventMgr::instance().get_event_loop().add_timer(EventEntry::new_timer(5 * 60 * 1000, true, Some(check_server_status), None)); 
 
-
-    // thread::spawn(move || {
-    //     let _ = EventMgr::instance().get_event_loop().run();
-    // });
+    thread::spawn(move || {
+        let _ = MioEventMgr::instance().run_server();
+    });
 
     let err = MioEventMgr::instance().run_timer();
 

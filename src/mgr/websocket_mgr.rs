@@ -98,7 +98,7 @@ impl Handler for WebsocketServer {
         }
         self.open_timeout = None;
 
-        self.unique = format!("WS:{}", self.out.token().0);
+        self.unique = format!("WS:{}", self.out.connection_id());
         let mut event = SocketEvent::new(self.unique.clone(), addr.to_string(), self.port);
         event.set_websocket(true);
         event.set_mio(true);
