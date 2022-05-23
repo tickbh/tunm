@@ -15,7 +15,6 @@ extern crate td_rlua;
 extern crate tunm_proto;
 extern crate td_rredis;
 extern crate td_rthreadpool;
-extern crate td_revent;
 extern crate luacjson;
 extern crate luasocket;
 extern crate psocket;

@@ -20,7 +20,6 @@ net2   = { version = "0.2.23", default-features = false }
 rust-crypto = "0.2.34"
 tiny_http = { version = "0.11.0", default-features = false } 
 td_rlua = "0.2.2"
-td_revent = "0.3.2"
 td_proto_rust = "0.1.2"
 tunm_proto = "0.1.12"
 td_rredis = "0.1.0"

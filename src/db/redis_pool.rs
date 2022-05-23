@@ -3,7 +3,11 @@ use std::net::TcpStream;
 use td_rredis::{Cluster, PubSub, Msg};
 use std::sync::mpsc::{channel, Receiver};
 
-use td_revent::FromFd;
+#[cfg(unix)]
+use std::os::unix::io::{FromRawFd, RawFd};
+#[cfg(windows)]
+use std::os::windows::io::{FromRawSocket, RawSocket};
+
 use std::sync::{Arc, Mutex};
 use ThreadUtils;
 static REDIS_SUB_POOL_NAME: &'static str = "redis_sub";
@@ -77,6 +81,22 @@ impl RedisPool {
         false
     }
 
+    #[cfg(unix)]
+    fn drop_fd(fd: i32) {
+        unsafe {
+            drop(TcpStream::from_raw_fd(fd as RawFd));
+        }
+    }
+
+    
+    #[cfg(windows)]
+    fn drop_fd(fd: i32) {
+        unsafe {
+            drop(TcpStream::from_raw_socket(fd as RawSocket));
+        }
+
+    }
+
     pub fn get_sub_connection(&mut self) -> Option<&mut PubSub> {
         // if self.is_sub_work() {
         //     return self.sub_connect.as_mut();
@@ -97,7 +117,11 @@ impl RedisPool {
         }
         if new_fd != 0 {
             if self.sub_fd != 0 {
-                drop(TcpStream::from_fd(self.sub_fd));
+                if cfg!(unix) {
+                    Self::drop_fd(self.sub_fd);
+                } else {
+                    Self::drop_fd(self.sub_fd);
+                }
             }
             self.sub_fd = new_fd;
         }

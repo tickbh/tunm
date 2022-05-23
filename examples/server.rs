@@ -4,7 +4,6 @@ extern crate env_logger;
 extern crate tunm;
 
 extern crate td_rthreadpool;
-extern crate td_revent;
 
 extern crate commander;
 use commander::Commander;
