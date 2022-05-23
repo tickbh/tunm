@@ -1,7 +1,7 @@
 #[macro_use(raw_to_ref)]
 extern crate tunm;
 
-use tunm::{GlobalConfig, LuaEngine, register_custom_func, EventMgr, FileUtils, DbPool, RedisPool};
+use tunm::{GlobalConfig, LuaEngine, register_custom_func, MioEventMgr, FileUtils, DbPool, RedisPool};
 
 use std::env;
 
@@ -42,8 +42,8 @@ fn main() {
 
     register_custom_func(lua);
     let _ : Option<()> = LuaEngine::instance().get_lua().exec_string(format!("require '{:?}'", global_config.start_lua));
-    EventMgr::instance().add_lua_excute();
-    let _ = EventMgr::instance().get_event_loop().run();
+    MioEventMgr::instance().add_lua_excute();
+    let _ = MioEventMgr::instance().get_event_loop().run();
 
     println!("Finish Server!");
 }

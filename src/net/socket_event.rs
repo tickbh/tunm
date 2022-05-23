@@ -14,9 +14,10 @@ pub type EndCb = fn(&mut SocketEvent);
 
 // #[derive(Debug)]
 pub struct SocketEvent {
-    socket_fd: SOCKET,
+    unique: String,
     cookie: u32,
     client_ip: String,
+    token: Token,
     server_port: u16,
     pub in_buffer: Buffer,
     pub out_buffer: Buffer,
@@ -33,11 +34,12 @@ pub struct SocketEvent {
 }
 
 impl SocketEvent {
-    pub fn new(socket_fd: SOCKET, client_ip: String, server_port: u16) -> SocketEvent {
+    pub fn new(unique: String, client_ip: String, server_port: u16) -> SocketEvent {
         SocketEvent {
-            socket_fd: socket_fd,
+            unique: unique,
             cookie: 0,
             client_ip: client_ip,
+            token: Token(0),
             server_port: server_port,
             in_buffer: Buffer::new(),
             out_buffer: Buffer::new(),
@@ -55,11 +57,13 @@ impl SocketEvent {
     }
     
     pub fn new_client(client: TcpStream, server_port: u16) -> SocketEvent {
+        let token = Token(client.as_socket() as usize);
         let peer = format!("{}", client.peer_addr().unwrap());
         SocketEvent {
-            socket_fd: client.as_socket() as SOCKET,
+            unique: Self::token_to_unique(&token), 
             cookie: 0,
             client_ip: peer,
+            token: token,
             server_port: server_port,
             in_buffer: Buffer::new(),
             out_buffer: Buffer::new(),
@@ -77,10 +81,12 @@ impl SocketEvent {
     }
     
     pub fn new_server(server: TcpListener, server_port: u16) -> SocketEvent {
+        let token = Token(server.as_socket() as usize);
         SocketEvent {
-            socket_fd: server.as_socket() as SOCKET,
+            unique: Self::token_to_unique(&token),
             cookie: 0,
             client_ip: "".to_string(),
+            token: token,
             server_port: server_port,
             in_buffer: Buffer::new(),
             out_buffer: Buffer::new(),
@@ -97,16 +103,25 @@ impl SocketEvent {
         }
     }
 
-    pub fn get_socket_fd(&self) -> i32 {
-        self.socket_fd as i32
+    pub fn get_unique(&self) -> &String {
+        &self.unique
     }
     
-    pub fn as_raw_socket(&self) -> SOCKET {
-        self.socket_fd
+    // pub fn as_raw_socket(&self) -> SOCKET {
+    //     self.unique
+    // }
+
+    pub fn token_to_unique(token: &Token) -> String {
+        format!("NM:{}", token.0)
+    }
+
+    pub fn unique_to_token(unique: &String) -> Token {
+        let s = unique.get(3..).unwrap_or("0");
+        Token(s.parse::<usize>().ok().unwrap_or(0))
     }
 
     pub fn as_token(&self) -> Token {
-        Token(self.socket_fd as usize)
+        self.token
     }
 
     pub fn get_client_ip(&self) -> String {

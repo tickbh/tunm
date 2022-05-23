@@ -13,8 +13,7 @@ use SocketEvent;
 use LuaEngine;
 use NetMsg;
 use WebSocketMgr;
-use WebsocketMyMgr;
-use LogUtils;
+use DbPool;
 
 use std::sync::Arc;
 use td_rthreadpool::ReentrantMutex;
@@ -29,7 +28,7 @@ use mio::{Events, Interest, Poll, Registry, Token};
 static mut EL: *mut MioEventMgr = 0 as *mut _;
 static mut READ_DATA: [u8; 65536] = [0; 65536];
 pub struct MioEventMgr {
-    connect_ids: HashMap<Token, SocketEvent>,
+    connect_ids: HashMap<String, SocketEvent>,
     
     mutex: Arc<ReentrantMutex<i32>>,
     timer: Timer<TimeHandle>,
@@ -51,6 +50,12 @@ impl Factory for TimeHandle {
             }
             "lua_set" => {
                 LuaEngine::instance().apply_args_func("timer_event_dispatch".to_string(), vec![id.to_string()]);
+            }
+            "LUA_EXEC" => {
+                LuaEngine::instance().execute_lua();
+            }
+            "CHECK_DB" => {
+                DbPool::instance().check_connect_timeout();
             }
             _ => {
                 println!("unknow name {}", self.timer_name);
@@ -110,18 +115,18 @@ impl MioEventMgr {
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
         LuaEngine::instance().apply_new_connect(ev.get_cookie(),
-                                                ev.as_raw_socket(),
+                                                ev.get_unique().clone(),
                                                 ev.get_client_ip(),
                                                 ev.get_server_port(),
                                                 ev.is_websocket());
-        self.connect_ids.insert(Token(ev.as_raw_socket() as usize) , ev);
+        self.connect_ids.insert(ev.get_unique().clone(), ev);
         true
     }
     
     pub fn new_socket_server(&mut self, ev: SocketEvent) -> bool {
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
-        self.connect_ids.insert(Token(ev.as_raw_socket() as usize) , ev);
+        self.connect_ids.insert(ev.get_unique().clone(), ev);
         true
     }
     
@@ -129,11 +134,11 @@ impl MioEventMgr {
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
         LuaEngine::instance().apply_new_connect(ev.get_cookie(),
-                                                ev.as_raw_socket(),
+                                                ev.get_unique().clone(),
                                                 ev.get_client_ip(),
                                                 ev.get_server_port(),
                                                 ev.is_websocket());
-        self.connect_ids.insert(Token(ev.as_raw_socket() as usize) , ev);
+        self.connect_ids.insert(ev.get_unique().clone() , ev);
         true
     }
 
@@ -151,10 +156,10 @@ impl MioEventMgr {
     //     let _ = self.event_loop.unregister_socket(sock);
     // }
 
-    pub fn write_data(&mut self, fd: Token, data: &[u8]) -> bool {
+    pub fn write_data(&mut self, unique: &String, data: &[u8]) -> bool {
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
-        if !self.connect_ids.contains_key(&fd) {
+        if !self.connect_ids.contains_key(unique) {
             return false;
         }
         return true;
@@ -165,7 +170,7 @@ impl MioEventMgr {
         // }
     }
 
-    pub fn send_netmsg(&mut self, fd: Token, net_msg: &mut NetMsg) -> bool {
+    pub fn send_netmsg(&mut self, unique: &String, net_msg: &mut NetMsg) -> bool {
         let _ = net_msg.read_head();
         if net_msg.get_pack_len() != net_msg.len() as u32 {
             println!("error!!!!!!!! net_msg.get_pack_len() = {:?}, net_msg.len() = {:?}", net_msg.get_pack_len(), net_msg.len());
@@ -174,41 +179,32 @@ impl MioEventMgr {
         let (is_websocket, is_mio) = {
             let mutex = self.mutex.clone();
             let _guard = mutex.lock().unwrap();
-            if !self.connect_ids.contains_key(&fd) {
+            if !self.connect_ids.contains_key(unique) {
                 return false;
             } else {
-                let socket_event = self.connect_ids.get_mut(&fd).unwrap();
+                let socket_event = self.connect_ids.get_mut(unique).unwrap();
                 (socket_event.is_websocket(), socket_event.is_mio())
             }
         };
 
         return true;
 
-        // if is_websocket {
-        //     if is_mio {
-        //         return WebSocketMgr::instance().send_message(fd as i32, net_msg);
-        //     } else {
-        //         return WebsocketMyMgr::instance().send_message(fd, net_msg);
-        //     }
-        // } else {
-        //     let data = net_msg.get_buffer().get_data();
-        //     self.write_data(fd, data)
-        // }
+
     }
 
-    pub fn close_fd(&mut self, fd: Token, reason: String) -> bool {
-        let (is_websocket, is_mio) = {
+    pub fn close_fd(&mut self, unique: &String, reason: String) -> bool {
+        let (is_websocket, unique) = {
             let mutex = self.mutex.clone();
             let _guard = mutex.lock().unwrap();
-            if !self.connect_ids.contains_key(&fd) {
+            if !self.connect_ids.contains_key(unique) {
                 return false;
             } else {
-                let socket_event = self.connect_ids.get_mut(&fd).unwrap();
-                (socket_event.is_websocket(), socket_event.is_mio())
+                let socket_event = self.connect_ids.get_mut(unique).unwrap();
+                (socket_event.is_websocket(), socket_event.get_unique().clone())
             }
         };
 
-        if let Some(mut socket_event) = self.connect_ids.remove(&fd) {
+        if let Some(mut socket_event) = self.connect_ids.remove(&unique) {
             if socket_event.is_server() {
                 let _ = self.poll.registry().deregister(socket_event.as_server().unwrap());
             } else if socket_event.is_client() {
@@ -217,40 +213,36 @@ impl MioEventMgr {
         }
 
         if is_websocket {
-            if is_mio {
-                return WebSocketMgr::instance().close_fd(fd.0 as usize);
-            } else {
-                return WebsocketMyMgr::instance().close_fd(fd.0 as psocket::SOCKET);
-            }
+            return WebSocketMgr::instance().close_fd(&unique);
         } else {
-            LuaEngine::instance().apply_lost_connect(fd.0 as psocket::SOCKET, reason);
+            LuaEngine::instance().apply_lost_connect(unique.clone(), reason);
         }
         true
     }
 
-    pub fn get_socket_event(&mut self, fd: Token) -> Option<&mut SocketEvent> {
+    pub fn get_socket_event(&mut self, unique: &String) -> Option<&mut SocketEvent> {
     let _guard = self.mutex.lock().unwrap();
-        self.connect_ids.get_mut(&fd)
+        self.connect_ids.get_mut(unique)
     }
 
-    pub fn data_recieved(&mut self, fd: Token, data: &[u8]) {
+    pub fn data_recieved(&mut self, unique: &String, data: &[u8]) {
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
 
-        let socket_event = MioEventMgr::instance().get_socket_event(fd);
+        let socket_event = MioEventMgr::instance().get_socket_event(unique);
         if socket_event.is_none() {
             return;
         }
         let socket_event = socket_event.unwrap();
         let _ = socket_event.get_in_buffer().write(data);
-        self.try_dispatch_message(fd);
+        self.try_dispatch_message(unique);
     }
 
-    pub fn try_dispatch_message(&mut self, fd: Token) {
+    pub fn try_dispatch_message(&mut self, unique: &String) {
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
 
-        let socket_event = MioEventMgr::instance().get_socket_event(fd);
+        let socket_event = MioEventMgr::instance().get_socket_event(unique);
         if socket_event.is_none() {
             return;
         }
@@ -264,12 +256,12 @@ impl MioEventMgr {
             }
             let msg = NetMsg::new_by_data(&message.unwrap()[..]);
             if msg.is_err() {
-                println!("message error kick fd {:?} msg = {:?}, buffer = {}", fd, msg.err(), buffer_len);
-                self.add_kick_event(fd, "Message Dispatch Error".to_string());
+                println!("message error kick fd {:?} msg = {:?}, buffer = {}", unique, msg.err(), buffer_len);
+                self.add_kick_event(unique, "Message Dispatch Error".to_string());
                 break;
             }
 
-            LuaEngine::instance().apply_message(fd.0 as psocket::SOCKET, msg.ok().unwrap());
+            LuaEngine::instance().apply_message(unique, msg.ok().unwrap());
         }
     }
 
@@ -288,9 +280,9 @@ impl MioEventMgr {
         Some(buffer.drain_collect(length as usize))
     }
 
-    pub fn exist_socket_event(&self, fd: Token) -> bool {
+    pub fn exist_socket_event(&self, unique: &String) -> bool {
         let _guard = self.mutex.lock().unwrap();
-        self.connect_ids.contains_key(&fd)
+        self.connect_ids.contains_key(unique)
     }
 
     pub fn all_socket_size(&self) -> usize {
@@ -303,12 +295,12 @@ impl MioEventMgr {
         self.connect_ids.len();
     }
 
-    pub fn remove_connection(&mut self, fd:Token) {
+    pub fn remove_connection(&mut self, unique: String) {
         let _guard = self.mutex.lock().unwrap();
-        let _sock_ev = unwrap_or!(self.connect_ids.remove(&fd), return);
+        let _sock_ev = unwrap_or!(self.connect_ids.remove(&unique), return);
     }
 
-    pub fn add_kick_event(&mut self, fd: Token, reason: String) {
+    pub fn add_kick_event(&mut self, unique: &String, reason: String) {
         // println!("add kick event fd = {} reason = {}", fd, reason);
         // let websocket_fd = {
         //     let _guard = self.mutex.lock().unwrap();
@@ -361,19 +353,15 @@ impl MioEventMgr {
     //     (RetValue::OK, 0)
     // }
 
-    // pub fn add_lua_excute(&mut self) {
-    //     self.lua_exec_id = self.event_loop
-    //                            .add_timer(EventEntry::new_timer(1,
-    //                                                             true,
-    //                                                             Some(Self::lua_exec_callback),
-    //                                                             None));
-    // }
+    pub fn add_lua_excute(&mut self) {
+        let _ = self.add_timer_step("LUA_EXEC".to_string(), 1, true, false);
+    }
 
-    pub fn write_to_socket(&mut self, socket: Token, bytes: &[u8]) -> Result<usize> {
-        if let Some(socket_event) = self.connect_ids.get_mut(&socket) {
+    pub fn write_to_socket(&mut self, unique: &String, bytes: &[u8]) -> Result<usize> {
+        if let Some(socket_event) = self.connect_ids.get_mut(unique) {
             if socket_event.is_client() {
                 let size = socket_event.get_out_buffer().write(bytes)?;
-                self.poll.registry().reregister(socket_event.as_client().unwrap(), socket, Interest::READABLE.add(Interest::WRITABLE))?;
+                self.poll.registry().reregister(socket_event.as_client().unwrap(), SocketEvent::unique_to_token(unique), Interest::READABLE.add(Interest::WRITABLE))?;
                 Ok(size)
             } else {
                 Ok(0)
@@ -399,13 +387,13 @@ impl MioEventMgr {
     fn read_callback(
         socket: &mut SocketEvent,
     ) -> usize {
-        MioEventMgr::instance().try_dispatch_message(socket.as_token());
+        MioEventMgr::instance().try_dispatch_message(socket.get_unique());
         0
     }
 
     fn read_end_callback(
         socket: &mut SocketEvent) {
-        LuaEngine::instance().apply_lost_connect(socket.as_raw_socket(), "客户端关闭".to_string());
+        LuaEngine::instance().apply_lost_connect(socket.get_unique().clone(), "客户端关闭".to_string());
     }
 
     fn accept_callback(
@@ -445,16 +433,16 @@ impl MioEventMgr {
         Ok(socket)
     }
 
-    pub fn is_token_server(&self, token: &Token) -> bool {
-        if let Some(socket_event) = self.connect_ids.get(&token) {
+    pub fn is_unique_server(&self, unique: &String) -> bool {
+        if let Some(socket_event) = self.connect_ids.get(unique) {
             return socket_event.is_server()
         } else {
             false
         }
     }
 
-    pub fn is_token_client(&self, token: &Token) -> bool {
-        if let Some(socket_event) = self.connect_ids.get(&token) {
+    pub fn is_unique_client(&self, unique: &String) -> bool {
+        if let Some(socket_event) = self.connect_ids.get(unique) {
             return socket_event.is_client()
         } else {
             false
@@ -467,10 +455,10 @@ impl MioEventMgr {
         self.poll.poll(&mut events, None)?;
         for event in events.iter() {
             let mut is_need_cose = false;
-            let token = event.token();
-            if self.is_token_server(&token) {
+            let unique = SocketEvent::token_to_unique(&event.token()) ;
+            if self.is_unique_server(&unique) {
                 loop {
-                    let socket_event = self.connect_ids.get_mut(&token).unwrap();
+                    let socket_event = self.connect_ids.get_mut(&unique).unwrap();
                     let (mut connection, address) = {
                             match socket_event.as_server().unwrap().accept() {
                             Ok((connection, address)) => (connection, address),
@@ -511,8 +499,8 @@ impl MioEventMgr {
                         self.new_socket_client(ev);
                     }
                 }
-            } else if self.is_token_client(&token) {
-                let socket_event = self.connect_ids.get_mut(&token).unwrap();
+            } else if self.is_unique_client(&unique) {
+                let socket_event = self.connect_ids.get_mut(&unique).unwrap();
                 let mut is_read_data = false;
                 if event.is_writable() {
                     // We can (maybe) write to the connection.
@@ -525,7 +513,7 @@ impl MioEventMgr {
                         Ok(true) => {
                             // After we've written something we'll reregister the connection
                             // to only respond to readable events.
-                            self.poll.registry().reregister(socket_event.as_client().unwrap(), token, Interest::READABLE)?
+                            self.poll.registry().reregister(socket_event.as_client().unwrap(), event.token(), Interest::READABLE)?
                         }
                         Ok(false) => {
                         }
@@ -567,7 +555,7 @@ impl MioEventMgr {
                 }
             }
             if is_need_cose {
-                if let Some(mut socket_event) = self.connect_ids.remove(&token) {
+                if let Some(mut socket_event) = self.connect_ids.remove(&unique) {
                     socket_event.call_end();
 
                     if socket_event.is_server() {
@@ -607,6 +595,14 @@ impl MioEventMgr {
                 timer_name: "MIO".to_string(),
             }, 10, true, false));
     }
+    
+    pub fn add_check_db_timer(&mut self) {
+        self.timer.add_timer(Handler::new_step_ms(
+            TimeHandle {
+                timer_name: "CHECK_DB".to_string(),
+            }, 5 * 60 * 1000, true, false));
+    }
+
 
     pub fn run_timer(&mut self) {
         self.add_server_to_timer();

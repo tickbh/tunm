@@ -13,7 +13,7 @@ use std::thread;
 use env_logger::{Builder, Target};
 use log::{warn, info};
 use td_revent::{EventLoop, EventEntry, EventFlags, CellAny, RetValue};
-use tunm::{GlobalConfig, LuaEngine, register_custom_func, EventMgr, MioEventMgr, FileUtils, DbPool, RedisPool, TelnetUtils, LogUtils};
+use tunm::{GlobalConfig, LuaEngine, register_custom_func, MioEventMgr, FileUtils, DbPool, RedisPool, TelnetUtils, LogUtils};
 
 use std::env;
 
@@ -86,22 +86,22 @@ fn main() {
 
     register_custom_func(lua);
     let _ : Option<()> = LuaEngine::instance().get_lua().exec_string(format!("require '{:?}'", global_config.start_lua));
-    EventMgr::instance().add_lua_excute();
+    MioEventMgr::instance().add_lua_excute();
 
 
     //timer check server status, example db connect is idle 
-    fn check_server_status(
-        ev: &mut EventLoop,
-        _timer: u32, _ : Option<&mut CellAny>) -> (RetValue, u64) {
-        DbPool::instance().check_connect_timeout();
-        (RetValue::OK, 0)
-    }
-    EventMgr::instance().get_event_loop().add_timer(EventEntry::new_timer(5 * 60 * 1000, true, Some(check_server_status), None)); 
+    // fn check_server_status(
+    //     ev: &mut EventLoop,
+    //     _timer: u32, _ : Option<&mut CellAny>) -> (RetValue, u64) {
+    //     DbPool::instance().check_connect_timeout();
+    //     (RetValue::OK, 0)
+    // }
+    // EventMgr::instance().get_event_loop().add_timer(EventEntry::new_timer(5 * 60 * 1000, true, Some(check_server_status), None)); 
 
 
-    thread::spawn(move || {
-        let _ = EventMgr::instance().get_event_loop().run();
-    });
+    // thread::spawn(move || {
+    //     let _ = EventMgr::instance().get_event_loop().run();
+    // });
 
     let err = MioEventMgr::instance().run_timer();
 

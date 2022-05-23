@@ -30,15 +30,15 @@ static mut EL: *mut LuaEngine = 0 as *mut _;
 /// the type of lua call type
 enum LuaElem {
     /// fd, msg
-    Message(SOCKET, NetMsg),
+    Message(String, NetMsg),
     /// cookie, ret, err_msg, msg
     DbResult(u32, i32, Option<String>, Option<NetMsg>),
     /// cookie, value
     RedisResult(u32, Option<RedisResult<Value>>),
     /// cookie, new_fd, client_ip, server_port, websocket
-    NewConnection(u32, SOCKET, String, u16, bool),
+    NewConnection(u32, String, String, u16, bool),
     /// fd
-    LostConnection(SOCKET, String),
+    LostConnection(String, String),
     /// func_str
     ExecString(String),
     /// Args fuc
@@ -120,7 +120,7 @@ impl LuaEngine {
         }
         for elem in temp_list {
             let _ = match elem {
-                LuaElem::Message(fd, net_msg) => self.execute_message(fd, net_msg),
+                LuaElem::Message(unique, net_msg) => self.execute_message(unique, net_msg),
                 LuaElem::DbResult(cookie, ret, err_msg, net_msg) => {
                     self.execute_db_result(cookie, ret, err_msg, net_msg)
                 }
@@ -128,7 +128,7 @@ impl LuaEngine {
                 LuaElem::NewConnection(cookie, new_fd, client_ip, server_port, websocket) => {
                     self.execute_new_connect(cookie, new_fd, client_ip, server_port, websocket)
                 }
-                LuaElem::LostConnection(lost_fd, reason) => self.execute_lost_connect(lost_fd, reason),
+                LuaElem::LostConnection(unique, reason) => self.execute_lost_connect(unique, reason),
                 LuaElem::ExecString(func_str) => self.execute_string(func_str),
                 LuaElem::ArgsFunc(func, args) => self.execute_args_func(func, args),
             };
@@ -138,17 +138,17 @@ impl LuaEngine {
 
     pub fn apply_new_connect(&mut self,
                              cookie: u32,
-                             new_fd: SOCKET,
+                             unique: String,
                              client_ip: String,
                              server_port: u16,
                              websocket: bool) {
         let _guard = self.mutex.lock().unwrap();
-        self.exec_list.push(LuaElem::NewConnection(cookie, new_fd, client_ip, server_port, websocket));
+        self.exec_list.push(LuaElem::NewConnection(cookie, unique, client_ip, server_port, websocket));
     }
 
-    pub fn apply_lost_connect(&mut self, lost_fd: SOCKET, reason: String) {
+    pub fn apply_lost_connect(&mut self, unique: String, reason: String) {
         let _guard = self.mutex.lock().unwrap();
-        self.exec_list.push(LuaElem::LostConnection(lost_fd, reason));
+        self.exec_list.push(LuaElem::LostConnection(unique, reason));
     }
 
     pub fn apply_db_result(&mut self,
@@ -165,9 +165,9 @@ impl LuaEngine {
         self.exec_list.push(LuaElem::RedisResult(cookie, result));
     }
 
-    pub fn apply_message(&mut self, fd: SOCKET, net_msg: NetMsg) {
+    pub fn apply_message(&mut self, unique: &String, net_msg: NetMsg) {
         let _guard = self.mutex.lock().unwrap();
-        self.exec_list.push(LuaElem::Message(fd, net_msg));
+        self.exec_list.push(LuaElem::Message(unique.clone(), net_msg));
     }
 
     pub fn apply_exec_string(&mut self, func_str: String) {
@@ -183,16 +183,16 @@ impl LuaEngine {
 
     pub fn execute_new_connect(&mut self,
                                cookie: u32,
-                               new_fd: SOCKET,
+                               unique: String,
                                client_ip: String,
                                server_port: u16,
                                websocket: bool)
                                -> i32 {
-        self.lua.exec_func5("cmd_new_connection", cookie, new_fd, client_ip, server_port, websocket)
+        self.lua.exec_func5("cmd_new_connection", cookie, unique, client_ip, server_port, websocket)
     }
 
-    pub fn execute_lost_connect(&mut self, lost_fd: SOCKET, reason: String) -> i32 {
-        self.lua.exec_func2("cmd_lost_connection", lost_fd, reason)
+    pub fn execute_lost_connect(&mut self, unique: String, reason: String) -> i32 {
+        self.lua.exec_func2("cmd_lost_connection", unique, reason)
     }
 
     pub fn execute_db_result(&mut self,
@@ -232,11 +232,11 @@ impl LuaEngine {
         }
     }
 
-    pub fn execute_message(&mut self, fd: SOCKET, mut net_msg: NetMsg) -> i32 {
+    pub fn execute_message(&mut self, unique: String, mut net_msg: NetMsg) -> i32 {
         net_msg.set_read_data();
         unwrap_or!(net_msg.read_head().ok(), return -1);
         self.lua.exec_func3("global_dispatch_command",
-                            fd,
+                            unique,
                             net_msg.get_pack_name().clone(),
                             net_msg)
     }

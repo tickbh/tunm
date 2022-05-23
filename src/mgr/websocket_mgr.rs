@@ -11,14 +11,15 @@ use psocket::SOCKET;
 use ws::{Builder, Settings, CloseCode, Sender, Handler, Handshake, Message, Result, Error, ErrorKind};
 use ws::util::{Token, Timeout};
 
-use {LuaEngine, NetMsg, SocketEvent, EventMgr, MioEventMgr, MSG_TYPE_TEXT, LogUtils, log_utils};
+
+use {LuaEngine, NetMsg, SocketEvent, MioEventMgr, MSG_TYPE_TEXT, LogUtils, log_utils};
 
 const CONNECT: Token = Token(1);
 
 pub struct WebsocketClient {
     pub out: Sender,
     pub port: u16,
-    pub socket: usize,
+    pub unique: String,
     pub cookie: u32,
 }
 
@@ -29,44 +30,46 @@ impl Handler for WebsocketClient {
         if let Some(ip_addr) = shake.remote_addr()? {
             addr = format!("{}", ip_addr);
         }
+        
+        self.unique = format!("WS:{}", self.out.token().0);
 
-        let mut event = SocketEvent::new(self.socket as SOCKET, addr.to_string(), self.port);
+        let mut event = SocketEvent::new(self.unique.clone(), addr.to_string(), self.port);
         event.set_cookie(self.cookie);
         event.set_websocket(true);
         event.set_mio(true);
 
         MioEventMgr::instance().new_socket_event(event);
-        WebSocketMgr::instance().on_open(self.socket, self.out.clone());
+        WebSocketMgr::instance().on_open(&self.unique, self.out.clone());
         Ok(())
     }
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
         let net_msg = match msg {
             Message::Text(_text) => {
-                WebSocketMgr::instance().on_close(self.socket, &self.out, "未受支持的TEXT格式".to_string());
-                // LuaEngine::instance().apply_lost_connect(self.socket as SOCKET, "未受支持的TEXT格式".to_string());
+                WebSocketMgr::instance().on_close(&self.unique, &self.out, "未受支持的TEXT格式".to_string());
+                // LuaEngine::instance().apply_lost_connect(&self.unique as SOCKET, "未受支持的TEXT格式".to_string());
                 return Ok(());
             },
             Message::Binary(data) => {
                 unwrap_or!(NetMsg::new_by_data(&data[..]).ok(), {
-                    WebSocketMgr::instance().on_close(self.socket, &self.out, "解析二进制协议失败".to_string());
-                    // LuaEngine::instance().apply_lost_connect(self.socket as SOCKET, "解析二进制协议失败".to_string());
+                    WebSocketMgr::instance().on_close(&self.unique, &self.out, "解析二进制协议失败".to_string());
+                    // LuaEngine::instance().apply_lost_connect(&self.unique as SOCKET, "解析二进制协议失败".to_string());
                     return Ok(())
                 })
             },
         };
 
-        LuaEngine::instance().apply_message(self.socket as SOCKET, net_msg);
+        LuaEngine::instance().apply_message(&self.unique, net_msg);
         Ok(())
     }
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {
-        WebSocketMgr::instance().on_close(self.socket, &self.out, format!("WebSocket closing for ({:?}) {}", code, reason).to_string());
+        WebSocketMgr::instance().on_close(&self.unique, &self.out, format!("WebSocket closing for ({:?}) {}", code, reason).to_string());
     }
 
     fn on_error(&mut self, err: Error) {
         // Shutdown on any error
-        WebSocketMgr::instance().on_close(self.socket, &self.out, format!("Shutting down server for error: {}", err).to_string());
+        WebSocketMgr::instance().on_close(&self.unique, &self.out, format!("Shutting down server for error: {}", err).to_string());
     }
 
 }
@@ -77,7 +80,7 @@ impl Handler for WebsocketClient {
 struct WebsocketServer {
     out: Sender,
     port: u16,
-    socket: usize,
+    unique: String,
     open_timeout: Option<Timeout>,
 }
 
@@ -89,39 +92,39 @@ impl Handler for WebsocketServer {
             addr = format!("{}", ip_addr);
         }
 
-        self.socket = shake.socket;
 
         if let Some(t) = self.open_timeout.take() {
             self.out.cancel(t)?
         }
         self.open_timeout = None;
 
-        let mut event = SocketEvent::new(shake.socket as SOCKET, addr.to_string(), self.port);
+        self.unique = format!("WS:{}", self.out.token().0);
+        let mut event = SocketEvent::new(self.unique.clone(), addr.to_string(), self.port);
         event.set_websocket(true);
         event.set_mio(true);
 
         MioEventMgr::instance().new_socket_event(event);
-        WebSocketMgr::instance().on_open(self.socket, self.out.clone());
+        WebSocketMgr::instance().on_open(&self.unique, self.out.clone());
         Ok(())
     }
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
         let net_msg = match msg {
             Message::Text(_text) => {
-                WebSocketMgr::instance().on_close(self.socket, &self.out, "未受支持的TEXT格式".to_string());
-                // LuaEngine::instance().apply_lost_connect(self.socket as SOCKET, "未受支持的TEXT格式".to_string());
+                WebSocketMgr::instance().on_close(&self.unique, &self.out, "未受支持的TEXT格式".to_string());
+                // LuaEngine::instance().apply_lost_connect(&self.unique as SOCKET, "未受支持的TEXT格式".to_string());
                 return Ok(());
             },
             Message::Binary(data) => {
                 unwrap_or!(NetMsg::new_by_data(&data[..]).ok(), {
-                    WebSocketMgr::instance().on_close(self.socket, &self.out, "解析二进制协议失败".to_string());
+                    WebSocketMgr::instance().on_close(&self.unique, &self.out, "解析二进制协议失败".to_string());
                     // LuaEngine::instance().apply_lost_connect(self.socket as SOCKET, "解析二进制协议失败".to_string());
                     return Ok(())
                 })
             },
         };
 
-        LuaEngine::instance().apply_message(self.socket as SOCKET, net_msg);
+        LuaEngine::instance().apply_message(&self.unique, net_msg);
         Ok(())
     }
 
@@ -131,7 +134,7 @@ impl Handler for WebsocketServer {
         }
         self.open_timeout = None;
 
-        WebSocketMgr::instance().on_close(self.socket, &self.out, format!("WebSocket closing for ({:?}) {}", code, reason).to_string());
+        WebSocketMgr::instance().on_close(&self.unique, &self.out, format!("WebSocket closing for ({:?}) {}", code, reason).to_string());
     }
 
     fn on_error(&mut self, err: Error) {
@@ -141,13 +144,13 @@ impl Handler for WebsocketServer {
         self.open_timeout = None;
 
         // Shutdown on any error
-        WebSocketMgr::instance().on_close(self.socket, &self.out, format!("Shutting down server for error: {}", err).to_string());
+        WebSocketMgr::instance().on_close(&self.unique, &self.out, format!("Shutting down server for error: {}", err).to_string());
     }
 
     fn on_timeout(&mut self, event: Token) -> Result<()> {
         match event {
             CONNECT => {
-                trace!("wait connecting handshake!!!! on_timeout occur {}", self.socket);
+                trace!("wait connecting handshake!!!! on_timeout occur {}", self.unique);
                 self.open_timeout = None;
                 let _ = self.out.close(CloseCode::Normal);
                 Ok(())
@@ -181,7 +184,7 @@ impl Handler for WebsocketServer {
 
 pub struct WebSocketMgr {
     port: u16,
-    connect_ids: HashMap<usize, Sender>,
+    connect_ids: HashMap<String, Sender>,
     mutex: Arc<ReentrantMutex<u32>>,
 }
 
@@ -204,46 +207,46 @@ impl WebSocketMgr {
         }
     }
 
-    pub fn on_open(&mut self, socket: usize, sender: Sender) {
+    pub fn on_open(&mut self, unique: &String, sender: Sender) {
         let _data = self.mutex.lock().unwrap();
-        self.connect_ids.insert(socket, sender);
+        self.connect_ids.insert(unique.clone(), sender);
     }
 
-    pub fn on_close(&mut self, socket: usize, sender: &Sender, reason: String) {
+    pub fn on_close(&mut self, unique: &String, sender: &Sender, reason: String) {
         let connect = {
             let _data = self.mutex.lock().unwrap();
-            unwrap_or!(self.connect_ids.remove(&socket), {
+            unwrap_or!(self.connect_ids.remove(unique), {
                 // let _ = sender.close_with_reason(CloseCode::Abnormal, reason);
                 let _ = sender.shutdown();
                 return;
             })
         };
-        MioEventMgr::instance().add_kick_event(::mio::Token(connect.connection_id() as usize), reason);
+        MioEventMgr::instance().add_kick_event(unique, reason);
     }
 
 
-    pub fn close_fd(&mut self, fd: usize) -> bool {
+    pub fn close_fd(&mut self, unique: &String) -> bool {
         let _data = self.mutex.lock().unwrap();
-        if !self.connect_ids.contains_key(&fd) {
+        if !self.connect_ids.contains_key(unique) {
             return false;
         }
 
-        let info = format!("Server active Websocket ready close fd {:?}", fd);
+        let info = format!("Server active Websocket ready close unique {:?}", unique);
         trace!("{}", info);
         LogUtils::instance().append(2, &*info);
 
-        let sender = self.connect_ids.get_mut(&fd).unwrap();
+        let sender = self.connect_ids.get_mut(unique).unwrap();
         let _ = sender.close(CloseCode::Normal);
         true
     }
 
-    pub fn send_message(&mut self, fd: usize, net_msg: &mut NetMsg) -> bool {
+    pub fn send_message(&mut self, unique: &String, net_msg: &mut NetMsg) -> bool {
         let _data = self.mutex.lock().unwrap();
-        if !self.connect_ids.contains_key(&fd) {
+        if !self.connect_ids.contains_key(unique) {
             return false;
         }
 
-        let sender = self.connect_ids.get_mut(&fd).unwrap();
+        let sender = self.connect_ids.get_mut(unique).unwrap();
         let _ = sender.send(Message::binary(&net_msg.get_buffer().get_data()[12..]));
 
         // let msg = unwrap_or!(ProtocolMgr::instance().convert_string(LuaEngine::instance().get_lua().state(), net_msg).ok(), return false);
@@ -265,7 +268,7 @@ impl WebSocketMgr {
                     let server = WebsocketServer {
                         out: out,
                         port: port,
-                        socket: 0,
+                        unique: String::new(),
                         open_timeout: None,
                     };
                     let _ = server.out.timeout(15_000, CONNECT).ok();

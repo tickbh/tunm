@@ -4,18 +4,18 @@ use td_revent::*;
 use ws;
 use mio::Token;
 use mio::net::TcpStream;
-use {MioEventMgr, ServiceMgr, ProtocolMgr, NetMsg, ThreadUtils, 
-    HttpMgr, WebSocketMgr, WebsocketMyMgr, SocketEvent,
+use {MioEventMgr, ProtocolMgr, NetMsg, ThreadUtils, 
+    HttpMgr, WebSocketMgr, SocketEvent,
     LuaUtils, WebsocketClient, GlobalConfig};
 
 static LUA_POOL_NAME: &'static str = "lua";
 static TEST_WEBSOCKET_POOL_NAME: &'static str = "test_webscoket";
 
-fn close_fd(fd: usize) {
-    MioEventMgr::instance().close_fd(Token(fd as usize), "Script Close".to_string());
+fn close_fd(unique: String) {
+    MioEventMgr::instance().close_fd(&unique, "Script Close".to_string());
 }
 
-fn forward_to_port(fd: usize, net_msg: &mut NetMsg) -> i32 {
+fn forward_to_port(unique: String, net_msg: &mut NetMsg) -> i32 {
     if net_msg.len() < NetMsg::min_len() {
         println!("forward_to_port {:?}", net_msg.len());
         return -1;
@@ -27,7 +27,7 @@ fn forward_to_port(fd: usize, net_msg: &mut NetMsg) -> i32 {
                  net_msg.len());
         return -1;
     }
-    let success = MioEventMgr::instance().send_netmsg(Token(fd as usize), net_msg);
+    let success = MioEventMgr::instance().send_netmsg(&unique, net_msg);
     if success {
         0
     } else {
@@ -35,8 +35,8 @@ fn forward_to_port(fd: usize, net_msg: &mut NetMsg) -> i32 {
     }
 }
 
-fn send_msg_to_port(fd: usize, net_msg: &mut NetMsg) -> i32 {
-    let success = MioEventMgr::instance().send_netmsg(Token(fd as usize), net_msg);
+fn send_msg_to_port(unique: String, net_msg: &mut NetMsg) -> i32 {
+    let success = MioEventMgr::instance().send_netmsg(&unique, net_msg);
     if success {
         0
     } else {
@@ -83,7 +83,7 @@ fn get_message_type(msg: String) -> String {
 
 
 fn stop_server() -> i32 {
-    ServiceMgr::instance().stop_listener();
+    // ServiceMgr::instance().stop_listener();
     MioEventMgr::instance().kick_all_socket();
     0
 }
@@ -105,7 +105,7 @@ fn new_connect(ip: String, port: u16, _timeout: i32, cookie: u32) -> i32 {
             event.set_local(true);
             MioEventMgr::instance().new_socket_event(event);
         } else {
-            let mut event = SocketEvent::new(0 , "".to_string(), 0);
+            let mut event = SocketEvent::new("FAIL".to_string(), "".to_string(), 0);
             event.set_cookie(cookie);
             MioEventMgr::instance().new_socket_event(event);
             // TODO remove cookie
@@ -124,7 +124,7 @@ fn new_websocket_connect(ip: String, port: u16, _timeout: i32, cookie: u32) -> i
             WebsocketClient {
                 out: sender,
                 port: port,
-                socket: 0,
+                unique: String::new(),
                 cookie: cookie,
             }
         }).unwrap();
@@ -161,7 +161,7 @@ fn listen_mio_websocket(url: String, port: u16) {
 }
 
 fn listen_websocket(url: String, port: u16) {
-    WebsocketMyMgr::instance().start_listen(url, port);
+    WebSocketMgr::instance().start_listen(url, port);
 }
 
 pub fn register_network_func(lua: &mut Lua) {

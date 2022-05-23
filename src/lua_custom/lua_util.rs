@@ -5,7 +5,7 @@ use std::net::UdpSocket;
 use crypto;
 use libc;
 use td_rlua::{self, Lua, lua_State, LuaPush, LuaRead};
-use {FileUtils, TelnetUtils, CommandMgr, LogUtils, EventMgr, TimeUtils};
+use {MioEventMgr, FileUtils, TelnetUtils, CommandMgr, LogUtils, TimeUtils};
 use sys_info;
 use {MaJiang, LuaEngine};
 
@@ -224,7 +224,7 @@ fn system_mem_info() -> HashMap<String, u32> {
 }
 
 fn native_all_socket_size() -> usize {
-    EventMgr::instance().all_socket_size()
+    MioEventMgr::instance().all_socket_size()
 }
 
 fn do_hotfix_file(path: String) -> i32 {
@@ -232,7 +232,7 @@ fn do_hotfix_file(path: String) -> i32 {
 }
 
 fn shutdown_server() {
-    EventMgr::instance().shutdown_event();
+    MioEventMgr::instance().shutdown_event();
 }
 
 fn sleep_ms(ms: u32) {

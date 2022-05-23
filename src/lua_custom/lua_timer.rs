@@ -1,6 +1,6 @@
 use td_revent::{EventLoop, EventEntry};
 use td_rlua::{self, Lua};
-use {EventMgr, LuaEngine, MioEventMgr};
+use {LuaEngine, MioEventMgr};
 use td_revent::{RetValue, CellAny};
 
 // timer return no success(0) will no be repeat
