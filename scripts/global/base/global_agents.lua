@@ -9,6 +9,9 @@ local port_map = {};
 --{GateType = {1=true,3=true}, LogicType={2=true, 3=true}, ClientType={4=true}}
 local type_fds = {};
 
+local forward_idx = 1
+local forwards_unique = {}
+setmetatable(forwards_unique, { __mode = "v" });
 -- setmetatable(agents, { __mode = "v" });
 
 -- 定义公共接口，按照字母顺序排序
@@ -141,4 +144,26 @@ function find_port_by_code(code_type, code_id)
         return -1
     end
     return find_agent_by_port(type_fds[code_type][code_id] or -1) 
+end
+
+-- 根据 port_no 找 agent　对象
+function find_agent_by_forward(port_no)
+    return forwards_unique[port_no];
+end
+
+function get_agent_forward_map(agent)
+    local unique = agent:get_forward_unique()
+    if unique == -1 then
+        while true do
+            forward_idx = forward_idx + 1
+            forward_idx = bit32.band(forward_idx, 0xffffffff);
+            forward_idx = (forward_idx == 0 and 1 or forward_idx);
+            if not forwards_unique[forward_idx] then
+                agent:set_forward_unique(forward_idx)
+                forwards_unique[forward_idx] = agent
+                return forward_idx
+            end
+        end
+    end
+    return 0
 end

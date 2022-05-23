@@ -15,6 +15,7 @@ function AGENT_TDCLS:create()
     self.fport_no = -1;
     self.timer_id = -1;
     self.client_ip = -1;
+    self.forward_unique = -1;
     self.server_type = 0;
     self.client_seq = -1;
     self.server_seq = 234;
@@ -157,9 +158,10 @@ end
 function AGENT_TDCLS:send_net_msg(net_msg)
     TRACE("AGENT_TDCLS:send_net_msg %o", self.fport_no)
     if self.fport_no ~= -1 then
-        net_msg:end_msg(self.fport_no)
+        net_msg:set_real_fd(self.fport_no)
+        net_msg:end_msg()
     else
-        net_msg:end_msg(0)
+        net_msg:end_msg()
     end
 
 
@@ -384,7 +386,10 @@ end
 
 function AGENT_TDCLS:forward_server_message(net_msg, client_port)
     net_msg:set_msg_flag(MSG_FLAG_FORWARD)
-    net_msg:end_msg(client_port)
+    net_msg:set_from_svr_type(tonmumber(CODE_TYPE))
+    net_msg:set_from_svr_id(tonmumber(CODE_ID))
+    net_msg:set_real_fd(client_port)
+    net_msg:end_msg()
     -- 缓存中没消息，直接发送该消息
     local _, ret = pcall(send_msg_to_port, self.port_no, net_msg);
     return ret
@@ -407,4 +412,12 @@ end
 
 function AGENT_TDCLS:is_websocket()
     return self.websocket
+end
+
+function AGENT_TDCLS:set_forward_unique(unique)
+    self.forward_unique = unique
+end
+
+function AGENT_TDCLS:get_forward_unique()
+    return self.forward_unique
 end

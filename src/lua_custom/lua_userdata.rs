@@ -55,7 +55,7 @@ fn register_netmsg_func(lua: &mut Lua) {
     let mut value = LuaStruct::<NetMsg>::new_light(lua.state());
     value
         .create()
-        .def("end_msg", td_rlua::function2(NetMsg::end_msg));
+        .def("end_msg", td_rlua::function1(NetMsg::end_msg));
     value.create().def(
         "read_head",
         td_rlua::function1(|net_msg: &mut NetMsg| {
@@ -63,14 +63,14 @@ fn register_netmsg_func(lua: &mut Lua) {
         }),
     );
     value.create().def(
-        "set_seq_fd",
-        td_rlua::function2(|net_msg: &mut NetMsg, seq_fd: u16| {
-            net_msg.set_seq_fd(seq_fd);
+        "set_from_svr_id",
+        td_rlua::function2(|net_msg: &mut NetMsg, from_svr_id: u32| {
+            net_msg.set_from_svr_id(from_svr_id);
         }),
     );
     value.create().def(
-        "get_seq_fd",
-        td_rlua::function1(|net_msg: &mut NetMsg| -> u16 { net_msg.get_seq_fd() }),
+        "get_from_svr_id",
+        td_rlua::function1(|net_msg: &mut NetMsg| -> u32 { net_msg.get_from_svr_id() }),
     );
 
     value.create().def(

@@ -18,7 +18,7 @@ impl EngineProtocol for ProtoRt {
         let mut net_msg = NetMsg::new();
         unwrap_or!(tunm_proto::encode_proto(net_msg.get_buffer(), &name, value).ok(),
                    return None);
-        net_msg.end_msg(0);
+        net_msg.end_msg();
         if net_msg.len() > 0xFFFFFF {
             println!("pack message({}) size > 0xFFFF fail!", name);
             return None;

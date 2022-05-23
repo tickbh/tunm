@@ -44,6 +44,7 @@ fn main() {
                 .usage("test")
                 .usage_desc("tunm server commander.")
                 .option_str("-c, --config [value]", "config data ", Some("config/Gate_GlobalConfig.conf".to_string()))
+                .option_str("-s, --search [value]", "search data ", Some("scripts/".to_string()))
                 .option_str("-l, --log [value]", "log4rs file config ", Some("config/log4rs.yml".to_string()))
                 .parse_env_or_exit()
                 ;
@@ -78,7 +79,11 @@ fn main() {
 
     LogUtils::instance().set_log_path("log/".to_string());
 
-    FileUtils::instance().add_search_path("scripts/");
+    if let Some(path) = command.get_str("s") {
+        FileUtils::instance().add_search_path(&*path);
+    }
+
+    // FileUtils::instance().add_search_path("scripts/");
     let telnet_addr = global_config.telnet_addr.clone().unwrap_or(String::new());
     if telnet_addr.len() > 2 {
         TelnetUtils::instance().listen(&*telnet_addr);

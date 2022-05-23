@@ -36,7 +36,7 @@ fn thread_db_select(db_name: &String, db_type: u8, sql_cmd: &str, cookie: u32) {
         Ok(val) => (val, None),
         Err(err) => (1, Some(err.to_string()))
     };
-    net_msg.end_msg(0);
+    net_msg.end_msg();
     if cookie != 0 {
         LuaEngine::instance().apply_db_result(cookie, ret, err_msg, Some(net_msg));
     }
@@ -83,7 +83,7 @@ fn thread_db_insert(db_name: &String, db_type: u8, sql_cmd: &str, cookie: u32) {
     let mut db = db.unwrap();
     let mut net_msg = NetMsg::new();
     let result = db.insert(sql_cmd, &mut net_msg);
-    net_msg.end_msg(0);
+    net_msg.end_msg();
     let ret = unwrap_or!(result.ok(), db.get_error_code());
     if cookie != 0 {
         LuaEngine::instance().apply_db_result(cookie, ret, db.get_error_str(), Some(net_msg));
