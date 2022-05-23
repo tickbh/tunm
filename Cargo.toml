@@ -15,7 +15,6 @@ keywords = ["gameserver", "server", "lua", "rust_lua"]
 libc = "^0.2"
 time = "0.3.9"
 chrono = "0.4.19"
-rustc-serialize = "0.3.16"
 net2   = { version = "0.2.23", default-features = false }
 rust-crypto = "0.2.34"
 tiny_http = { version = "0.11.0", default-features = false } 

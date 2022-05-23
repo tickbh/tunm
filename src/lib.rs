@@ -1,7 +1,6 @@
 extern crate libc;
 extern crate net2;
 extern crate crypto;
-extern crate rustc_serialize;
 extern crate mysql;
 extern crate tiny_http;
 extern crate sys_info;
