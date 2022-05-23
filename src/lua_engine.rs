@@ -55,6 +55,7 @@ pub struct LuaEngine {
 /// custom lua load func
 extern "C" fn load_func(lua: *mut td_rlua::lua_State) -> libc::c_int {
     let path: String = unwrap_or!(td_rlua::LuaRead::lua_read(lua), return 0);
+    let path = path.trim_matches('\"').to_string();
     println!("loading path == {:?}", path);
     let full_path = unwrap_or!(FileUtils::instance().full_path_for_name(&*path), path);
     let full_path = full_path.trim_matches('\"');
@@ -146,9 +147,9 @@ impl LuaEngine {
         self.exec_list.push(LuaElem::NewConnection(cookie, unique, client_ip, server_port, websocket));
     }
 
-    pub fn apply_lost_connect(&mut self, unique: String, reason: String) {
+    pub fn apply_lost_connect(&mut self, unique: &String, reason: String) {
         let _guard = self.mutex.lock().unwrap();
-        self.exec_list.push(LuaElem::LostConnection(unique, reason));
+        self.exec_list.push(LuaElem::LostConnection(unique.to_string(), reason));
     }
 
     pub fn apply_db_result(&mut self,

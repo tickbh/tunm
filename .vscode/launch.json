@@ -75,19 +75,19 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug example 'net'",
+            "name": "Client",
             "cargo": {
                 "args": [
                     "build",
-                    "--example=net",
+                    "--example=server",
                     "--package=tunm"
                 ],
                 "filter": {
-                    "name": "net",
+                    "name": "server",
                     "kind": "example"
                 }
             },
-            "args": [],
+            "args": ["-c", "config/Client_GlobalConfig.conf", "-s", "D:/game/poker_server/scripts/"],
             "cwd": "${workspaceFolder}"
         },
         {
@@ -117,14 +117,14 @@
                 "args": [
                     "build",
                     "--example=server",
-                    "--package=tunm"
+                    "--package=tunm",
                 ],
                 "filter": {
                     "name": "server",
                     "kind": "example"
                 }
             },
-            "args": [],
+            "args": ["-s", "D:/game/poker_server/scripts/"],
             "cwd": "${workspaceFolder}"
         },
         {

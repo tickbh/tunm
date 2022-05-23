@@ -111,14 +111,14 @@ impl Handler for WebsocketServer {
     fn on_message(&mut self, msg: Message) -> Result<()> {
         let net_msg = match msg {
             Message::Text(_text) => {
-                WebSocketMgr::instance().on_close(&self.unique, &self.out, "未受支持的TEXT格式".to_string());
-                // LuaEngine::instance().apply_lost_connect(&self.unique as SOCKET, "未受支持的TEXT格式".to_string());
+                // WebSocketMgr::instance().on_close(&self.unique, &self.out, "未受支持的TEXT格式".to_string());
+                LuaEngine::instance().apply_lost_connect(&self.unique, "未受支持的TEXT格式".to_string());
                 return Ok(());
             },
             Message::Binary(data) => {
                 unwrap_or!(NetMsg::new_by_data(&data[..]).ok(), {
-                    WebSocketMgr::instance().on_close(&self.unique, &self.out, "解析二进制协议失败".to_string());
-                    // LuaEngine::instance().apply_lost_connect(self.socket as SOCKET, "解析二进制协议失败".to_string());
+                    // WebSocketMgr::instance().on_close(&self.unique, &self.out, "解析二进制协议失败".to_string());
+                    LuaEngine::instance().apply_lost_connect(&self.unique, "解析二进制协议失败".to_string());
                     return Ok(())
                 })
             },
@@ -247,10 +247,8 @@ impl WebSocketMgr {
         }
 
         let sender = self.connect_ids.get_mut(unique).unwrap();
-        let _ = sender.send(Message::binary(&net_msg.get_buffer().get_data()[12..]));
-
-        // let msg = unwrap_or!(ProtocolMgr::instance().convert_string(LuaEngine::instance().get_lua().state(), net_msg).ok(), return false);
-        // sender.send(Message::Text(msg));
+        net_msg.get_buffer().set_rpos(0);
+        let _ = sender.send(Message::binary(&net_msg.get_buffer().get_write_data()[26..]));
         true
     }
 

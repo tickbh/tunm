@@ -101,7 +101,6 @@ impl NetMsg {
         let mut buffer = Buffer::new();
         let _ = buffer.write(&data);
         let length: u32 = decode_number(&mut buffer, tunm_proto::TYPE_U32)?.into();
-        let seq_fd: u16 = decode_number(&mut buffer, tunm_proto::TYPE_U16)?.into();
         let cookie: u32 = decode_number(&mut buffer, tunm_proto::TYPE_U32)?.into();
         let msg_type: u8 = decode_number(&mut buffer, tunm_proto::TYPE_U8)?.into();
         let msg_flag: u8 = decode_number(&mut buffer, tunm_proto::TYPE_U8)?.into();
@@ -137,7 +136,7 @@ impl NetMsg {
     }
 
     pub fn end_msg(&mut self) {
-        self.length = self.buffer.len() as u32;
+        self.length = self.buffer.data_len() as u32;
         let wpos = self.buffer.get_wpos();
         self.buffer.set_wpos(0);
         let _ = encode_number(&mut self.buffer, &Value::U32(self.length));
@@ -148,7 +147,7 @@ impl NetMsg {
         let _ = encode_number(&mut self.buffer, &Value::U32(self.from_svr_id));
         let _ = encode_number(&mut self.buffer, &Value::U16(self.to_svr_type));
         let _ = encode_number(&mut self.buffer, &Value::U32(self.to_svr_id));
-        let _ = encode_number(&mut self.buffer, &Value::U32(self.to_svr_id));
+        let _ = encode_number(&mut self.buffer, &Value::U32(self.real_fd));
         self.buffer.set_wpos(wpos);
     }
 
@@ -167,6 +166,7 @@ impl NetMsg {
         self.real_fd = decode_number(&mut self.buffer, tunm_proto::TYPE_U32)?.into();
         self.to_svr_type = decode_number(&mut self.buffer, tunm_proto::TYPE_U16)?.into();
         self.to_svr_id = decode_number(&mut self.buffer, tunm_proto::TYPE_U32)?.into();
+        self.real_fd = decode_number(&mut self.buffer, tunm_proto::TYPE_U32)?.into();
         self.buffer.set_rpos(HEAD_FILL_UP.len());
         self.pack_name = decode_str_raw(&mut self.buffer, tunm_proto::TYPE_STR)?.into();
         self.buffer.set_rpos(rpos);
@@ -187,7 +187,7 @@ impl NetMsg {
     }
 
     pub fn len(&self) -> usize {
-        self.buffer.len()
+        self.buffer.get_wpos()
     }
 
     pub fn set_rpos(&mut self, rpos: usize) {

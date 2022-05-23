@@ -141,6 +141,31 @@ impl MioEventMgr {
         true
     }
 
+    
+    pub fn new_socket_local(&mut self, mut ev: SocketEvent) -> bool {
+        let mutex = self.mutex.clone();
+        let _guard = mutex.lock().unwrap();
+        if ev.is_client() {
+            let token = ev.as_token();
+            let _ = self.poll.registry().register(ev.as_client().unwrap(), token, Interest::READABLE);
+        }
+
+        if ev.read.is_none() {
+            ev.set_read(Some(Self::read_callback));
+        }
+        if ev.end.is_none() {
+            ev.set_end(Some(Self::read_end_callback));
+        }
+        LuaEngine::instance().apply_new_connect(ev.get_cookie(),
+                                                ev.get_unique().clone(),
+                                                ev.get_client_ip(),
+                                                ev.get_server_port(),
+                                                ev.is_websocket());
+        self.connect_ids.insert(ev.get_unique().clone() , ev);
+        true
+    }
+
+
     // pub fn receive_socket_event(&mut self, ev: SocketEvent) -> bool {
     //     let mutex = self.mutex.clone();
     //     let _guard = mutex.lock().unwrap();
@@ -175,19 +200,23 @@ impl MioEventMgr {
             println!("error!!!!!!!! net_msg.get_pack_len() = {:?}, net_msg.len() = {:?}", net_msg.get_pack_len(), net_msg.len());
             return false;
         }
-        let (is_websocket, is_mio) = {
+        let is_websocket = {
             let mutex = self.mutex.clone();
             let _guard = mutex.lock().unwrap();
             if !self.connect_ids.contains_key(unique) {
                 return false;
             } else {
                 let socket_event = self.connect_ids.get_mut(unique).unwrap();
-                (socket_event.is_websocket(), socket_event.is_mio())
+                socket_event.is_websocket()
             }
         };
-
-        return true;
-
+        
+        if is_websocket {
+            return WebSocketMgr::instance().send_message(unique, net_msg);
+        } else {
+            net_msg.get_buffer().set_rpos(0);
+            return self.write_to_socket(unique, &net_msg.get_buffer().get_write_data()[..]).ok().unwrap_or(false);
+        }
 
     }
 
@@ -214,7 +243,7 @@ impl MioEventMgr {
         if is_websocket {
             return WebSocketMgr::instance().close_fd(&unique);
         } else {
-            LuaEngine::instance().apply_lost_connect(unique.clone(), reason);
+            LuaEngine::instance().apply_lost_connect(&unique, reason);
         }
         true
     }
@@ -356,29 +385,33 @@ impl MioEventMgr {
         let _ = self.add_timer_step("LUA_EXEC".to_string(), 1, true, false);
     }
 
-    pub fn write_to_socket(&mut self, unique: &String, bytes: &[u8]) -> Result<usize> {
+    pub fn write_to_socket(&mut self, unique: &String, bytes: &[u8]) -> Result<bool> {
         if let Some(socket_event) = self.connect_ids.get_mut(unique) {
             if socket_event.is_client() {
-                let size = socket_event.get_out_buffer().write(bytes)?;
-                self.poll.registry().reregister(socket_event.as_client().unwrap(), SocketEvent::unique_to_token(unique), Interest::READABLE.add(Interest::WRITABLE))?;
-                Ok(size)
+                // let size = socket_event.get_out_buffer().write(bytes)?;
+                // let token = socket_event.as_token();
+                // self.poll.registry().reregister(socket_event.as_client().unwrap(), token, Interest::READABLE.add(Interest::WRITABLE))?;
+                // Ok(size == bytes.len())
+                let _ = socket_event.get_out_buffer().write(bytes)?;
+                socket_event.write_data()
             } else {
-                Ok(0)
+                Ok(false)
             }
         } else {
-            Ok(0)
+            Ok(false)
         }
     }
 
     
-    pub fn write_by_socket_event(&mut self, ev: &mut SocketEvent, bytes: &[u8]) -> Result<usize> {
+    pub fn write_by_socket_event(&mut self, ev: &mut SocketEvent, bytes: &[u8]) -> Result<bool> {
         if ev.is_client() {
             let size = ev.get_out_buffer().write(bytes)?;
             let token = ev.as_token();
-            self.poll.registry().reregister(ev.as_client().unwrap(), token, Interest::READABLE.add(Interest::WRITABLE))?;
-            Ok(size)
+            let all = ev.write_data()?;
+            // self.poll.registry().reregister(ev.as_client().unwrap(), token, Interest::READABLE.add(Interest::WRITABLE))?;
+            Ok(all)
         } else {
-            Ok(0)
+            Ok(false)
         }
     }
 
@@ -392,7 +425,7 @@ impl MioEventMgr {
 
     fn read_end_callback(
         socket: &mut SocketEvent) {
-        LuaEngine::instance().apply_lost_connect(socket.get_unique().clone(), "客户端关闭".to_string());
+        LuaEngine::instance().apply_lost_connect(&socket.get_unique(), "客户端关闭".to_string());
     }
 
     fn accept_callback(
@@ -501,32 +534,39 @@ impl MioEventMgr {
             } else if self.is_unique_client(&unique) {
                 let socket_event = self.connect_ids.get_mut(&unique).unwrap();
                 let mut is_read_data = false;
-                if event.is_writable() {
-                    // We can (maybe) write to the connection.
-                    // client.get_out_cache().get_write_data()
-                    match socket_event.write_data() {
-                        // We want to write the entire `DATA` buffer in a single go. If we
-                        // write less we'll return a short write error (same as
-                        // `io::Write::write_all` does).
-                        // Ok(n) if n < DATA.len() => return Err(io::ErrorKind::WriteZero.into()),
-                        Ok(true) => {
-                            // After we've written something we'll reregister the connection
-                            // to only respond to readable events.
-                            self.poll.registry().reregister(socket_event.as_client().unwrap(), event.token(), Interest::READABLE)?
-                        }
-                        Ok(false) => {
-                        }
-                        // Would block "errors" are the OS's way of saying that the
-                        // connection is not actually ready to perform this I/O operation.
-                        Err(ref err) if Self::would_block(err) => {}
-                        // Got interrupted (how rude!), we'll try again.
-                        Err(ref err) if Self::interrupted(err) => {
-
-                        }
-                        // Other errors we'll consider fatal.
-                        Err(err) => is_need_cose = true,
-                    }
-                }
+                // if event.is_writable() {
+                //     // We can (maybe) write to the connection.
+                //     // client.get_out_cache().get_write_data()
+                //     loop {
+                //         match socket_event.write_data() {
+                //             // We want to write the entire `DATA` buffer in a single go. If we
+                //             // write less we'll return a short write error (same as
+                //             // `io::Write::write_all` does).
+                //             // Ok(n) if n < DATA.len() => return Err(io::ErrorKind::WriteZero.into()),
+                //             Ok(true) => {
+                //                 // After we've written something we'll reregister the connection
+                //                 // to only respond to readable events.
+                //                 self.poll.registry().reregister(socket_event.as_client().unwrap(), event.token(), Interest::READABLE)?;
+                //             }
+                //             Ok(false) => {
+                //             }
+                //             // Would block "errors" are the OS's way of saying that the
+                //             // connection is not actually ready to perform this I/O operation.
+                //             Err(ref err) if Self::would_block(err) => {
+                //                 break;
+                //             }
+                //             // Got interrupted (how rude!), we'll try again.
+                //             Err(ref err) if Self::interrupted(err) => {
+    
+                //             }
+                //             // Other errors we'll consider fatal.
+                //             Err(err) => {
+                //                 is_need_cose = true;
+                //                 break;
+                //             },
+                //         }
+                //     }
+                // }
             
                 if event.is_readable() {
                     loop {

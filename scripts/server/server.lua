@@ -1,5 +1,5 @@
 
-
+assert(false, "no enable")
 -- 更新一个文件，强制重新载入
 function update(name)
     name = string.gsub(name, ".lua", "") .. ".lua"

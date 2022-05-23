@@ -103,7 +103,7 @@ fn new_connect(ip: String, port: u16, _timeout: i32, cookie: u32) -> i32 {
             let mut event = SocketEvent::new_client(new_socket, 0);
             event.set_cookie(cookie);
             event.set_local(true);
-            MioEventMgr::instance().new_socket_event(event);
+            MioEventMgr::instance().new_socket_local(event);
         } else {
             let mut event = SocketEvent::new("FAIL".to_string(), "".to_string(), 0);
             event.set_cookie(cookie);
