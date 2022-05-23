@@ -1,11 +1,4 @@
 use std::collections::HashMap;
-use std::io::{Write};
-use std::any::Any;
-use std::io::Result;
-
-use mio::{Poll, Token};
-
-use td_revent::*;
 
 use crate::net::SocketEvent;
 use {MioEventMgr, LuaEngine};

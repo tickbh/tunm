@@ -1,7 +1,6 @@
 use td_rlua::Lua;
 use luacjson;
 use luasocket;
-use libc;
 
 mod lua_db;
 mod lua_network;

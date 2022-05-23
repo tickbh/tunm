@@ -50,8 +50,3 @@ ws = { branch="new", git = "https://github.com/tickbh/ws-rs.git"}
 version = "0.27.0"
 features = ["bundled"]
 
-
-[dependencies.websocket-simple]
-version = "0.1.1"
-path = "websocket"
-#features = ["ssl"]

@@ -32,68 +32,53 @@ impl NetUtils {
                     }
                 }
                 td_rlua::LUA_TTABLE => {
-                    unsafe {
-                        if !td_rlua::lua_istable(lua, index) {
-                            return None;
-                        }
-                        let len = td_rlua::lua_rawlen(lua, index);
-                        if len > 0 {
-                            let mut val: Vec<Value> = Vec::new();
-                            for i in 1..(len + 1) {
-                                td_rlua::lua_pushnumber(lua, i as f64);
-                                let new_index = if index < 0 {
-                                    index - 1
-                                } else {
-                                    index
-                                };
-                                td_rlua::lua_gettable(lua, new_index);
-                                let sub_val = NetUtils::lua_read_value(lua,
-                                                                       -1);
-                                if sub_val.is_none() {
-                                    return None;
-                                }
-                                val.push(sub_val.unwrap());
-                                td_rlua::lua_pop(lua, 1);
+                    if !td_rlua::lua_istable(lua, index) {
+                        return None;
+                    }
+                    let len = td_rlua::lua_rawlen(lua, index);
+                    if len > 0 {
+                        let mut val: Vec<Value> = Vec::new();
+                        for i in 1..(len + 1) {
+                            td_rlua::lua_pushnumber(lua, i as f64);
+                            let new_index = if index < 0 {
+                                index - 1
+                            } else {
+                                index
+                            };
+                            td_rlua::lua_gettable(lua, new_index);
+                            let sub_val = NetUtils::lua_read_value(lua,
+                                                                    -1);
+                            if sub_val.is_none() {
+                                return None;
                             }
-                            Some(Value::from(val))
+                            val.push(sub_val.unwrap());
+                            td_rlua::lua_pop(lua, 1);
+                        }
+                        Some(Value::from(val))
+                    } else {
+                        let mut val: HashMap<Value, Value> = HashMap::new();
+                        td_rlua::lua_pushnil(lua);
+                        let t = if index < 0 {
+                            index - 1
                         } else {
-                            let mut val: HashMap<Value, Value> = HashMap::new();
-                            unsafe {
-                                td_rlua::lua_pushnil(lua);
-                                let t = if index < 0 {
-                                    index - 1
-                                } else {
-                                    index
-                                };
-        
-                                let mut sure_idx = 0u32;
-                                
-                                while td_rlua::lua_istable(lua, t) && td_rlua::lua_next(lua, t) != 0 {
-                                    sure_idx += 1;
-                                    let sub_val = unwrap_or!(NetUtils::lua_read_value(lua, -1), return None);
-                                    let value = if td_rlua::lua_isnumber(lua, -2) != 0 {
-                                        let idx: u32 = unwrap_or!(LuaRead::lua_read_at_position(lua, -2),
-                                        return None);
-                                        // if sure_idx == idx {
-                                        //     arr.push(sub_val);
-                                        //     continue;
-                                        // }
-                                        Value::from(idx)
-                                    } else {
-                                        let key: String = unwrap_or!(LuaRead::lua_read_at_position(lua, -2),
-                                        return None);
-                                        Value::from(key)
-                                    };
-                                    val.insert(value, sub_val);
-                                    td_rlua::lua_pop(lua, 1);
-                                }
-                            }
-                            // if arr.len() != 0 {
-                            //     Some(Value::from(arr))
-                            // } else {
-                            Some(Value::from(val))
-                            // }
+                            index
+                        };
+
+                        while td_rlua::lua_istable(lua, t) && td_rlua::lua_next(lua, t) != 0 {
+                            let sub_val = unwrap_or!(NetUtils::lua_read_value(lua, -1), return None);
+                            let value = if td_rlua::lua_isnumber(lua, -2) != 0 {
+                                let idx: u32 = unwrap_or!(LuaRead::lua_read_at_position(lua, -2),
+                                return None);
+                                Value::from(idx)
+                            } else {
+                                let key: String = unwrap_or!(LuaRead::lua_read_at_position(lua, -2),
+                                return None);
+                                Value::from(key)
+                            };
+                            val.insert(value, sub_val);
+                            td_rlua::lua_pop(lua, 1);
                         }
+                        Some(Value::from(val))
                     }
                 }
                 _ => Some(Value::Nil),

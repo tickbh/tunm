@@ -6,13 +6,12 @@ use std::collections::HashMap;
 use std::thread;
 use std::sync::Arc;
 use td_rthreadpool::ReentrantMutex;
-use psocket::SOCKET;
 
 use ws::{Builder, Settings, CloseCode, Sender, Handler, Handshake, Message, Result, Error, ErrorKind};
 use ws::util::{Token, Timeout};
 
 
-use {LuaEngine, NetMsg, SocketEvent, MioEventMgr, MSG_TYPE_TEXT, LogUtils, log_utils};
+use crate::{LuaEngine, NetMsg, SocketEvent, MioEventMgr, LogUtils, log_utils};
 
 const CONNECT: Token = Token(1);
 
@@ -213,7 +212,7 @@ impl WebSocketMgr {
     }
 
     pub fn on_close(&mut self, unique: &String, sender: &Sender, reason: String) {
-        let connect = {
+        let _connect = {
             let _data = self.mutex.lock().unwrap();
             unwrap_or!(self.connect_ids.remove(unique), {
                 // let _ = sender.close_with_reason(CloseCode::Abnormal, reason);

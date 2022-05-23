@@ -11,7 +11,6 @@ use std::sync::Arc;
 use td_rthreadpool::ReentrantMutex;
 use td_rredis::{RedisResult, Value};
 use super::{LuaWrapperTableValue, RedisWrapperResult};
-use psocket::SOCKET;
 
 const AES_KEY: [u8; 32] = [
             0x60, 0x3d, 0xeb, 0x10, 0x15, 0xca, 0x71, 0xbe,

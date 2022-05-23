@@ -2,6 +2,7 @@ use rustc_serialize::json;
 use std::collections::HashMap;
 use FileUtils;
 /// it will read config for file
+#[allow(deprecated)]
 #[derive(RustcDecodable, Debug)]
 pub struct GlobalConfig {
     pub lua_macros: HashMap<String, String>,

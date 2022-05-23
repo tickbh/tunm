@@ -3,7 +3,6 @@ use tunm_proto;
 use td_rredis::{self, Cmd, Script};
 use libc;
 
-use crate::values::NetError;
 use {DbTrait, DbPool, RedisPool};
 use {LuaEngine, NetMsg, LuaWrapperTableValue, RedisWrapperCmd, RedisWrapperResult,
      RedisWrapperMsg, RedisWrapperVecVec};

@@ -128,12 +128,6 @@ fn get_file_str(path: String) -> String {
     unwrap_or!(FileUtils::get_file_str(&*full_path), String::new())
 }
 
-fn get_msg_type(name: String) -> String {
-    // let proto = NetConfig::instance().get_proto_msg_type(&name);
-    // proto.map(|s| s.clone()).unwrap_or("".to_string())
-    String::new()
-}
-
 fn time_ms() -> u32 {
     TimeUtils::get_time_ms() as u32
 }

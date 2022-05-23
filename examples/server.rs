@@ -1,7 +1,6 @@
 extern crate mysql as my;
 extern crate log;
 extern crate env_logger;
-#[macro_use(raw_to_ref)]
 extern crate tunm;
 
 extern crate td_rthreadpool;
@@ -10,9 +9,7 @@ extern crate td_revent;
 extern crate commander;
 use commander::Commander;
 use std::thread;
-use env_logger::{Builder, Target};
-use log::{warn, info};
-use td_revent::{EventLoop, EventEntry, EventFlags, CellAny, RetValue};
+use log::{warn};
 use tunm::{GlobalConfig, LuaEngine, register_custom_func, MioEventMgr, FileUtils, DbPool, RedisPool, TelnetUtils, LogUtils};
 
 use std::env;

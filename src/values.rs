@@ -102,19 +102,21 @@ impl From<(ErrorKind, &'static str, String)> for NetError {
     }
 }
 
+// impl fmt::Display for NetError {
+//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//         match self.repr {
+//             ErrorRepr::WithDescription(_, desc) => write!(f, "{}", desc),
+//             ErrorRepr::WithDescriptionAndDetail(_, desc, _) => write!(f, "{}", desc),
+//             ErrorRepr::ExtensionError(_, _) => write!(f, "{}", "extension error"),
+//             ErrorRepr::IoError(ref err) => write!(f, "{}", err),
+//             ErrorRepr::RpError(ref err) => write!(f, "{}", err),
+//             ErrorRepr::MysqlError(ref err) => write!(f, "{}", err),
+//         }
+//     }
+// }
 
 
 impl error::Error for NetError {
-    fn description(&self) -> &str {
-        match self.repr {
-            ErrorRepr::WithDescription(_, desc) => desc,
-            ErrorRepr::WithDescriptionAndDetail(_, desc, _) => desc,
-            ErrorRepr::ExtensionError(_, _) => "extension error",
-            ErrorRepr::IoError(ref err) => err.description(),
-            ErrorRepr::RpError(ref err) => err.description(),
-            ErrorRepr::MysqlError(ref err) => err.description(),
-        }
-    }
 
     fn cause(&self) -> Option<&dyn error::Error> {
         match self.repr {

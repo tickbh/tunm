@@ -1,6 +1,5 @@
 use tunm_proto::Buffer;
-use psocket::{SOCKET};
-use mio::{Poll, Token};
+use mio::{Token};
 use mio::net::{TcpListener, TcpStream};
 use crate::net::AsSocket;
 
@@ -128,6 +127,10 @@ impl SocketEvent {
         self.client_ip.clone()
     }
 
+    pub fn set_client_ip(&mut self, client_ip: String) {
+        self.client_ip = client_ip;
+    }
+
     pub fn get_server_port(&self) -> u16 {
         self.server_port
     }
@@ -228,7 +231,7 @@ impl SocketEvent {
                 Err(ref err) if err.kind() == io::ErrorKind::WouldBlock => break,
                 Err(ref err) if err.kind() == io::ErrorKind::Interrupted => continue,
                 // Other errors we'll consider fatal.
-                Err(err) => return Ok(true),
+                Err(_err) => return Ok(true),
             }
         }
         Ok(false)

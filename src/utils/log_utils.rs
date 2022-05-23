@@ -3,7 +3,6 @@ use std::fs::{self, File};
 use std::path::Path;
 use std::sync::Arc;
 
-use time;
 use chrono::prelude::*;
 use td_rthreadpool::ReentrantMutex;
 

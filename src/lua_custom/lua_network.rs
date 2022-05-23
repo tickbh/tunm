@@ -1,12 +1,10 @@
 use libc;
 use td_rlua::{self, Lua, LuaPush};
-use td_revent::*;
 use ws;
-use mio::Token;
 use mio::net::TcpStream;
 use {MioEventMgr, ProtocolMgr, NetMsg, ThreadUtils, 
     HttpMgr, WebSocketMgr, SocketEvent,
-    LuaUtils, WebsocketClient, GlobalConfig};
+    LuaUtils, WebsocketClient};
 
 static LUA_POOL_NAME: &'static str = "lua";
 static TEST_WEBSOCKET_POOL_NAME: &'static str = "test_webscoket";
@@ -77,11 +75,6 @@ extern "C" fn pack_raw_message(lua: *mut td_rlua::lua_State) -> libc::c_int {
     }
 }
 
-fn get_message_type(msg: String) -> String {
-    return String::new();
-}
-
-
 fn stop_server() -> i32 {
     // ServiceMgr::instance().stop_listener();
     MioEventMgr::instance().kick_all_socket();
@@ -102,6 +95,7 @@ fn new_connect(ip: String, port: u16, _timeout: i32, cookie: u32) -> i32 {
             }
             let mut event = SocketEvent::new_client(new_socket, 0);
             event.set_cookie(cookie);
+            event.set_client_ip(peer_ip);
             event.set_local(true);
             MioEventMgr::instance().new_socket_local(event);
         } else {
@@ -172,7 +166,6 @@ pub fn register_network_func(lua: &mut Lua) {
     lua.register("pack_message", pack_message);
     lua.register("del_message", del_message);
     lua.register("pack_raw_message", pack_raw_message);
-    lua.set("get_message_type", td_rlua::function1(get_message_type));
 
     lua.register("listen_server", listen_server);
     lua.set("stop_server", td_rlua::function0(stop_server));

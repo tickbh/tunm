@@ -9,7 +9,7 @@ pub struct LuaUtils {
 
 impl LuaUtils {
     pub fn read_str_to_vec(lua: *mut lua_State, index: i32) -> Option<Vec<u8>> {
-        let mut size: libc::size_t = unsafe { mem::uninitialized() };
+        let mut size: libc::size_t = unsafe { mem::MaybeUninit::uninit().assume_init() };
         let c_str_raw = unsafe { td_rlua::lua_tolstring(lua, index, &mut size) };
         if c_str_raw.is_null() {
             return None;

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use super::DbTrait;
 use {NetResult, NetMsg, TimeUtils};
 
-use tunm_proto::{self, Value, encode_proto};
+use tunm_proto::{Value, encode_proto};
 
 use rusqlite;
 use rusqlite::{Connection, params};

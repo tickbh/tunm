@@ -18,7 +18,6 @@ extern crate td_rthreadpool;
 extern crate td_revent;
 extern crate luacjson;
 extern crate luasocket;
-extern crate websocket_simple;
 extern crate psocket;
 extern crate mio;
 extern crate tunm_timer;

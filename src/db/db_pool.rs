@@ -10,7 +10,6 @@ use std::fs;
 
 use {NetResult, NetMsg};
 
-use time;
 use mysql::{self, Opts, OptsBuilder};
 
 use rusqlite::{Connection};

@@ -1,14 +1,12 @@
 use std::collections::HashMap;
-use std::io::prelude::*;
 use std::boxed::Box;
-use std::any::Any;
-use std::io::{self, Read, Write};
-use std::str::from_utf8;
+use std::io::{self, Write};
 
 use std::io::Result;
 
 use tunm_timer::{Factory, RetTimer, Timer, Handler};
 
+use crate::{LogUtils};
 use SocketEvent;
 use LuaEngine;
 use NetMsg;
@@ -21,9 +19,8 @@ use tunm_proto::{self, Buffer, decode_number};
 
 use crate::net::{AsSocket, AcceptCb, ReadCb, EndCb};
 
-use mio::event::Event;
-use mio::net::{TcpListener, TcpStream};
-use mio::{Events, Interest, Poll, Registry, Token};
+use mio::net::{TcpListener};
+use mio::{Events, Interest, Poll, Token};
 
 static mut EL: *mut MioEventMgr = 0 as *mut _;
 static mut READ_DATA: [u8; 65536] = [0; 65536];
@@ -33,17 +30,35 @@ pub struct MioEventMgr {
     mutex: Arc<ReentrantMutex<i32>>,
     timer: Timer<TimeHandle>,
     poll: Poll,
-    lua_exec_id: u32,
     exit: bool,
 }
 
 
 pub struct TimeHandle {
     timer_name: String,
+    unique: String,
+}
+
+impl TimeHandle {
+    pub fn new(timer_name: String) -> TimeHandle {
+        TimeHandle {
+            timer_name,
+            unique: String::new(),
+        }
+    }
+    
+    #[allow(unused)]
+    pub fn new_unique(timer_name: String, unique: String) -> TimeHandle {
+        TimeHandle {
+            timer_name,
+            unique,
+        }
+    }
+
 }
 
 impl Factory for TimeHandle {
-    fn on_trigger(&mut self, timer: &mut Timer<Self>, id: u64) -> RetTimer {
+    fn on_trigger(&mut self, _timer: &mut Timer<Self>, id: u64) -> RetTimer {
         match &*self.timer_name {
             "MIO" => {
                 let _ = MioEventMgr::instance().run_one_server();
@@ -56,6 +71,9 @@ impl Factory for TimeHandle {
             }
             "CHECK_DB" => {
                 DbPool::instance().check_connect_timeout();
+            }
+            "KICK_SOCKET" => {
+                LuaEngine::instance().apply_lost_connect(&self.unique, "定时关闭".to_string());
             }
             _ => {
                 println!("unknow name {}", self.timer_name);
@@ -72,7 +90,6 @@ impl MioEventMgr {
             connect_ids: HashMap::new(),
             mutex: Arc::new(ReentrantMutex::new(0)),
             poll: Poll::new().ok().unwrap(),
-            lua_exec_id: 0,
             timer: Timer::new(100),
             exit: false,
         }
@@ -179,20 +196,6 @@ impl MioEventMgr {
     //     let _sock_ev = self.connect_ids.remove(&sock);
     //     let _ = self.event_loop.unregister_socket(sock);
     // }
-
-    pub fn write_data(&mut self, unique: &String, data: &[u8]) -> bool {
-        let mutex = self.mutex.clone();
-        let _guard = mutex.lock().unwrap();
-        if !self.connect_ids.contains_key(unique) {
-            return false;
-        }
-        return true;
-        // let event_loop = MioEventMgr::instance().get_event_loop();
-        // match event_loop.send_socket(&fd, data) {
-        //     Ok(_len) => return true,
-        //     Err(_) => return false,
-        // }
-    }
 
     pub fn send_netmsg(&mut self, unique: &String, net_msg: &mut NetMsg) -> bool {
         let _ = net_msg.read_head();
@@ -329,27 +332,20 @@ impl MioEventMgr {
     }
 
     pub fn add_kick_event(&mut self, unique: &String, reason: String) {
-        // println!("add kick event fd = {} reason = {}", fd, reason);
-        // let websocket_fd = {
-        //     let _guard = self.mutex.lock().unwrap();
-        //     let info = format!("Close Fd {} by Reason {}", fd, reason);
-        //     println!("{}", info);
-        //     LogUtils::instance().append(2, &*info);
+        let _guard = self.mutex.lock().unwrap();
+        let info = format!("Close Fd {} by Reason {}", unique, reason);
+        println!("{}", info);
+        LogUtils::instance().append(2, &*info);
 
-        //     let sock_ev = unwrap_or!(self.connect_ids.remove(&fd), return);
-        //     if !sock_ev.is_websocket() || !sock_ev.is_mio() {
-        //         // self.event_loop.unregister_socket(sock_ev.as_raw_socket(), EventFlags::all());
-        //         self.event_loop
-        //             .add_timer(EventEntry::new_timer(20,
-        //                                              false,
-        //                                              Some(Self::kick_callback),
-        //                                              Some(Box::new(sock_ev))));
-        //         return;
-        //     }
-        //     sock_ev.get_socket_fd()
-        // };
+        let sock_ev = unwrap_or!(self.connect_ids.remove(unique), return);
+        if !sock_ev.is_websocket() || !sock_ev.is_mio() {
+            let _ = self.timer.add_timer(Handler::new_step_ms(
+                TimeHandle::new_unique("KICK_SOCKET".to_string(), unique.clone()), 20, false, false
+            ));
+            return;
+        }
 
-        // LuaEngine::instance().apply_lost_connect(websocket_fd as Token, "服务端关闭".to_string());
+        LuaEngine::instance().apply_lost_connect(&unique, "服务端关闭".to_string());
     }
 
     // //由事件管理主动推送关闭的调用
@@ -405,10 +401,8 @@ impl MioEventMgr {
     
     pub fn write_by_socket_event(&mut self, ev: &mut SocketEvent, bytes: &[u8]) -> Result<bool> {
         if ev.is_client() {
-            let size = ev.get_out_buffer().write(bytes)?;
-            let token = ev.as_token();
+            let _ = ev.get_out_buffer().write(bytes)?;
             let all = ev.write_data()?;
-            // self.poll.registry().reregister(ev.as_client().unwrap(), token, Interest::READABLE.add(Interest::WRITABLE))?;
             Ok(all)
         } else {
             Ok(false)
@@ -494,7 +488,7 @@ impl MioEventMgr {
                     let (mut connection, address) = {
                             match socket_event.as_server().unwrap().accept() {
                             Ok((connection, address)) => (connection, address),
-                            Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+                            Err(ref err) if Self::would_block(err) => {
                                 // If we get a `WouldBlock` error we know our
                                 // listener has no more incoming connections queued,
                                 // so we can return to polling and wait for some
@@ -581,7 +575,7 @@ impl MioEventMgr {
                                 is_read_data = true;
                                 break;
                             }
-                            Err(err) => {
+                            Err(_err) => {
                                 is_need_cose = true;
                                 break;
                             },
@@ -622,24 +616,18 @@ impl MioEventMgr {
 
     pub fn add_timer_step(&mut self, timer_name: String, tick_step: u64, is_repeat: bool, at_once: bool) -> u64 {
         self.timer.add_timer(Handler::new_step_ms(
-            TimeHandle {
-                timer_name: timer_name,
-            }, tick_step, is_repeat, at_once
+            TimeHandle::new(timer_name), tick_step, is_repeat, at_once
         ))
     }
 
     pub fn add_server_to_timer(&mut self) {
         self.timer.add_timer(Handler::new_step(
-            TimeHandle {
-                timer_name: "MIO".to_string(),
-            }, 10, true, false));
+            TimeHandle::new("MIO".to_string()), 10, true, false));
     }
     
     pub fn add_check_db_timer(&mut self) {
         self.timer.add_timer(Handler::new_step_ms(
-            TimeHandle {
-                timer_name: "CHECK_DB".to_string(),
-            }, 5 * 60 * 1000, true, false));
+            TimeHandle::new("CHECK_DB".to_string()), 5 * 60 * 1000, true, false));
     }
 
 

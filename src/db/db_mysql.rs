@@ -1,14 +1,12 @@
 use std::collections::HashMap;
-use std::str::FromStr;
 
 use super::DbTrait;
 use {NetResult, NetMsg, ErrorKind, TimeUtils};
 
-use tunm_proto::{self, Value, encode_proto};
+use tunm_proto::{Value, encode_proto};
 use chrono::prelude::*;
-use url;
 use mysql;
-use mysql::{Conn, Result as MyResult, QueryResult, Opts};
+use mysql::{Conn, Opts};
 use mysql::prelude::*;
 
 
@@ -36,19 +34,6 @@ impl DbMysql {
         }
     }
 
-    // pub fn is_io_error<'a, 't, 'tc>(value: &MyResult<QueryResult<'a, 't, 'tc>>) -> bool {
-    //     match value {
-    //         &Err(ref val) => {
-    //             match val {
-    //                 &mysql::Error::IoError(_) => return true,
-    //                 _ => (),
-    //             }
-    //         }
-    //         _ => (),
-    //     }
-    //     false
-    // }
-
     pub fn check_connect(&mut self) -> NetResult<()> {
         if !self.conn.ping() {
             self.is_connect = false;
@@ -63,15 +48,13 @@ impl DbMysql {
     pub fn from_url_basic(url: &str) -> Option<Opts> {
         Opts::from_url(url).ok()
     }
-
 }
-
 
 impl DbTrait for DbMysql {
     fn select(&mut self, sql_cmd: &str, msg: &mut NetMsg) -> NetResult<i32> {
         self.check_connect()?;
         let mut value = self.conn.query_iter(sql_cmd)?;
-        let mut success: i32 = 0;
+        let success: i32 = 0;
 
         while let Some(val) = value.iter() {
             
@@ -81,7 +64,7 @@ impl DbTrait for DbMysql {
             for (_, row) in val.enumerate() {
                 // row.ok().unwrap().columns()
                 let mut hash = HashMap::<Value, Value>::new();
-                let mut row = row.unwrap();
+                let row = row.unwrap();
                 
                 for column in row.columns_ref() {
                     let name = column.name_str().to_string();
@@ -107,7 +90,7 @@ impl DbTrait for DbMysql {
                             mysql::Value::Double(sub_val) => {
                                 Value::from(sub_val as f64)
                             }
-                            mysql::Value::Date(year, month, day, hour, minutes, seconds, micro) => {
+                            mysql::Value::Date(year, month, day, hour, minutes, seconds, _micro) => {
                                 let dt = Utc.ymd((year + 1970) as i32, month as u32, day as u32).and_hms(hour as u32, minutes as u32, seconds as u32); // `2014-07-08T09:10:11Z`
                                 Value::from(dt.timestamp() as u32)
                             }
