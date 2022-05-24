@@ -101,7 +101,7 @@ fn new_connect(ip: String, port: u16, _timeout: i32, cookie: u32) -> i32 {
         } else {
             let mut event = SocketEvent::new("FAIL".to_string(), "".to_string(), 0);
             event.set_cookie(cookie);
-            MioEventMgr::instance().new_socket_event(event);
+            MioEventMgr::instance().new_socket_event_lua(event);
             // TODO remove cookie
             println!("failed to connect server ip = {:?}, port = {:?}", ip, port);
         }

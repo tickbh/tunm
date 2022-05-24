@@ -37,7 +37,7 @@ impl Handler for WebsocketClient {
         event.set_websocket(true);
         event.set_mio(true);
 
-        MioEventMgr::instance().new_socket_event(event);
+        MioEventMgr::instance().new_socket_event_lua(event);
         WebSocketMgr::instance().on_open(&self.unique, self.out.clone());
         Ok(())
     }
@@ -102,7 +102,7 @@ impl Handler for WebsocketServer {
         event.set_websocket(true);
         event.set_mio(true);
 
-        MioEventMgr::instance().new_socket_event(event);
+        MioEventMgr::instance().new_socket_event_lua(event);
         WebSocketMgr::instance().on_open(&self.unique, self.out.clone());
         Ok(())
     }

@@ -1,0 +1,30 @@
+start_lua: server/server.lua
+telnet_addr: 127.0.0.1:9009
+lua_macros:
+  SERVER_ID: 1
+  _DEBUG: true
+  SERVER_TYPE: game
+  CODE_TYPE: 3
+  CODE_ID: 1
+  ENABLE_ROOM: true
+  GATE_IP: 127.0.0.1
+  IS_SINGLE: true
+  CHECK_PACK: true
+  VERSION: 1
+  GATE_WEBSOCKET_PORT: 11331
+  GATE_HTTP_PORT: 11330
+  GATE_CLIENT_PORT: 11329
+  GATE_LOGIC_PORT: 11326
+  CURRENT_IP: 127.0.0.1
+  LOG_LEVEL: 5
+  DB_SUFFIX: ""
+  TABLE_SUFFIX: engine_
+  DB_TYPE: mysql
+  ENABLE_TEST: true
+  ENABLE_DATABASE_SYNC: true
+  LUA_HELPER_DEBUG_PORT: 8818
+  SECRET_KEY: tunm_will_be_good
+db_info:
+  mysql : mysql://root:erphuidfni!%40%2387899@rm-bp18407l4yw4y5130ho.mysql.rds.aliyuncs.com:3306
+  redis : redis://i.haode.fit:6379/10
+  sqlite: tunm.db

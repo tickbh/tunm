@@ -39,7 +39,7 @@ fn main() {
                 .version(&env!("CARGO_PKG_VERSION").to_string())
                 .usage("test")
                 .usage_desc("tunm server commander.")
-                .option_str("-c, --config [value]", "config data ", Some("config/Gate_GlobalConfig.conf".to_string()))
+                .option_str("-c, --config [value]", "config data ", Some("config/Gate.yaml".to_string()))
                 .option_str("-s, --search [value]", "search data ", Some("scripts/".to_string()))
                 .option_str("-l, --log [value]", "log4rs file config ", Some("config/log4rs.yml".to_string()))
                 .parse_env_or_exit()

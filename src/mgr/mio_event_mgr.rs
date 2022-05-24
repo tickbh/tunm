@@ -127,7 +127,7 @@ impl MioEventMgr {
         self.exit
     }
 
-    pub fn new_socket_event(&mut self, ev: SocketEvent) -> bool {
+    pub fn new_socket_event_lua(&mut self, ev: SocketEvent) -> bool {
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
         LuaEngine::instance().apply_new_connect(ev.get_cookie(),
@@ -149,11 +149,6 @@ impl MioEventMgr {
     pub fn new_socket_client(&mut self, ev: SocketEvent) -> bool {
         let mutex = self.mutex.clone();
         let _guard = mutex.lock().unwrap();
-        LuaEngine::instance().apply_new_connect(ev.get_cookie(),
-                                                ev.get_unique().clone(),
-                                                ev.get_client_ip(),
-                                                ev.get_server_port(),
-                                                ev.is_websocket());
         self.connect_ids.insert(ev.get_unique().clone() , ev);
         true
     }
@@ -522,6 +517,8 @@ impl MioEventMgr {
                         ev.set_end(socket_event.end);
                     }
                     if socket_event.call_accept(&mut ev) != 1 {
+                        self.new_socket_event_lua(ev);
+                    } else {
                         self.new_socket_client(ev);
                     }
                 }

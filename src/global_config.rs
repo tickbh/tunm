@@ -8,7 +8,6 @@ pub struct GlobalConfig {
     pub start_lua: String,
     pub db_info: HashMap<String, String>,
     pub telnet_addr: Option<String>,
-    pub net_info: String,
 }
 static mut EL: *mut GlobalConfig = 0 as *mut _;
 
@@ -21,7 +20,6 @@ impl GlobalConfig {
                     db_info: HashMap::new(),
                     start_lua: "main.lua".to_string(),
                     telnet_addr: None,
-                    net_info: "protocol.txt".to_string(),
                 };
                 EL = Box::into_raw(Box::new(config));
             }
@@ -30,7 +28,7 @@ impl GlobalConfig {
     }
 
     pub fn change_instance(file_data: &str) -> bool {
-        let field: Result<GlobalConfig, _> = serde_json::from_str(file_data);
+        let field: Result<GlobalConfig, _> = serde_yaml::from_str(file_data);
         let config = unwrap_or!(field.ok(), return false);
         unsafe {
             if EL != 0 as *mut _ {

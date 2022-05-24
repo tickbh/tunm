@@ -40,6 +40,7 @@ luasocket="0.1.9"
 
 tunm_timer="0.1.4"
 serde_json="1.0.81"
+serde_yaml="0.8.24"
 
 
 # ws = "0.9.2"
