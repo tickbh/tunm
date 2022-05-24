@@ -68,8 +68,10 @@ fn main() {
             lua.set(&**key, true);  
         } else if value.trim() == "false" {
             lua.set(&**key, false);  
+        } else if value.trim() == "false" {
+            lua.set(&**key, false);  
         } else {
-            lua.set(&**key, value);    
+            lua.set(&**key, value.trim_matches('"'));    
         }
     }
 
