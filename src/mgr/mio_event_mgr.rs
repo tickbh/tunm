@@ -120,6 +120,7 @@ impl MioEventMgr {
 
     pub fn shutdown_event(&mut self) {
         self.exit = true;
+        self.timer.set_shutdown(true);
         // self.event_loop.shutdown();
     }
 
@@ -602,6 +603,9 @@ impl MioEventMgr {
 
     pub fn run_server(&mut self) -> Result<()> {
         loop {
+            if self.exit {
+                return Ok(());
+            }
             self.run_one_server()?;
         }
     }

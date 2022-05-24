@@ -30,7 +30,7 @@ log="0.4.17"
 env_logger = "0.9.0"
 log4rs = "1.1.1"
 reqwest = { version = "0.11", features = ["blocking", "json"] }
-mysql = { version = "22.1.0", no-default-features = true }
+mysql = { version = "22.1.0" }
 commander = "0.1"
 mio = "0.8.3"
 # websocket-simple="0.1.1"
