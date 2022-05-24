@@ -136,7 +136,7 @@ impl NetMsg {
     }
 
     pub fn end_msg(&mut self) {
-        self.length = self.buffer.data_len() as u32;
+        self.length = self.buffer.get_wpos() as u32;
         let wpos = self.buffer.get_wpos();
         self.buffer.set_wpos(0);
         let _ = encode_number(&mut self.buffer, &Value::U32(self.length));

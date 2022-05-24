@@ -10,9 +10,9 @@ pub use self::socket_event::{SocketEvent, ReadCb, AcceptCb, WriteCb, EndCb};
 
 
 #[cfg(unix)]
-use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
+use std::os::unix::io::{AsRawFd};
 #[cfg(target_os = "wasi")]
-use std::os::wasi::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
+use std::os::wasi::io::{AsRawFd};
 #[cfg(windows)]
 use std::os::windows::io::{AsRawSocket};
 
