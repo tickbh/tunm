@@ -199,19 +199,19 @@ impl MioEventMgr {
             println!("error!!!!!!!! net_msg.get_pack_len() = {:?}, net_msg.len() = {:?}", net_msg.get_pack_len(), net_msg.len());
             return false;
         }
-        let is_websocket = {
+        let (is_websocket, is_local) = {
             let mutex = self.mutex.clone();
             let _guard = mutex.lock().unwrap();
             if !self.connect_ids.contains_key(unique) {
                 return false;
             } else {
                 let socket_event = self.connect_ids.get_mut(unique).unwrap();
-                socket_event.is_websocket()
+                (socket_event.is_websocket(), socket_event.is_local())
             }
         };
         
         if is_websocket {
-            return WebSocketMgr::instance().send_message(unique, net_msg);
+            return WebSocketMgr::instance().send_message(unique, net_msg, is_local);
         } else {
             net_msg.get_buffer().set_rpos(0);
             return self.write_to_socket(unique, &net_msg.get_buffer().get_write_data()[..]).ok().unwrap_or(false);

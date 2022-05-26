@@ -13,8 +13,6 @@ use ws::util::{Token, Timeout};
 
 use crate::{LuaEngine, NetMsg, SocketEvent, MioEventMgr, LogUtils, log_utils};
 
-const CONNECT: Token = Token(1);
-
 pub struct WebsocketClient {
     pub out: Sender,
     pub port: u16,
@@ -35,6 +33,7 @@ impl Handler for WebsocketClient {
         let mut event = SocketEvent::new(self.unique.clone(), addr.to_string(), self.port);
         event.set_cookie(self.cookie);
         event.set_websocket(true);
+        event.set_local(true);
         event.set_mio(true);
 
         MioEventMgr::instance().new_socket_event_lua(event);
@@ -50,7 +49,7 @@ impl Handler for WebsocketClient {
                 return Ok(());
             },
             Message::Binary(data) => {
-                unwrap_or!(NetMsg::new_by_data(&data[..]).ok(), {
+                unwrap_or!(NetMsg::new_by_proto_data(&data[..]).ok(), {
                     WebSocketMgr::instance().on_close(&self.unique, &self.out, "解析二进制协议失败".to_string());
                     // LuaEngine::instance().apply_lost_connect(&self.unique as SOCKET, "解析二进制协议失败".to_string());
                     return Ok(())
@@ -146,29 +145,18 @@ impl Handler for WebsocketServer {
         WebSocketMgr::instance().on_close(&self.unique, &self.out, format!("Shutting down server for error: {}", err).to_string());
     }
 
-    fn on_timeout(&mut self, event: Token) -> Result<()> {
-        match event {
-            CONNECT => {
-                trace!("wait connecting handshake!!!! on_timeout occur {}", self.unique);
-                self.open_timeout = None;
-                let _ = self.out.close(CloseCode::Normal);
-                Ok(())
-            },
-            _ => {
-                Err(Error::new(ErrorKind::Internal, "Invalid timeout token encountered!"))
-            }
-        }
+    fn on_timeout(&mut self, _event: Token) -> Result<()> {
+        trace!("wait connecting handshake!!!! on_timeout occur {}", self.unique);
+        self.open_timeout = None;
+        let _ = self.out.close(CloseCode::Normal);
+        Ok(())
     }
 
-
-    fn on_new_timeout(&mut self, event: Token, timeout: Timeout) -> Result<()> {
-        // Cancel the old timeout and replace.
-        if event == CONNECT {
-            if let Some(t) = self.open_timeout.take() {
-                self.out.cancel(t)?
-            }
-            self.open_timeout = Some(timeout);
+    fn on_new_timeout(&mut self, _event: Token, timeout: Timeout) -> Result<()> {
+        if let Some(t) = self.open_timeout.take() {
+            self.out.cancel(t)?
         }
+        self.open_timeout = Some(timeout);
         Ok(())
     }
 
@@ -215,8 +203,8 @@ impl WebSocketMgr {
         let _connect = {
             let _data = self.mutex.lock().unwrap();
             unwrap_or!(self.connect_ids.remove(unique), {
-                // let _ = sender.close_with_reason(CloseCode::Abnormal, reason);
-                let _ = sender.shutdown();
+                let _ = sender.close_with_reason(CloseCode::Abnormal, reason);
+                // let _ = sender.shutdown();
                 return;
             })
         };
@@ -239,7 +227,7 @@ impl WebSocketMgr {
         true
     }
 
-    pub fn send_message(&mut self, unique: &String, net_msg: &mut NetMsg) -> bool {
+    pub fn send_message(&mut self, unique: &String, net_msg: &mut NetMsg, is_local: bool) -> bool {
         let _data = self.mutex.lock().unwrap();
         if !self.connect_ids.contains_key(unique) {
             return false;
@@ -247,7 +235,11 @@ impl WebSocketMgr {
 
         let sender = self.connect_ids.get_mut(unique).unwrap();
         net_msg.get_buffer().set_rpos(0);
-        let _ = sender.send(Message::binary(&net_msg.get_buffer().get_write_data()[26..]));
+        if is_local {
+            let _ = sender.send(Message::binary(&net_msg.get_buffer().get_write_data()[..]));
+        } else {
+            let _ = sender.send(Message::binary(&net_msg.get_buffer().get_write_data()[26..]));
+        }
         true
     }
 
@@ -268,7 +260,8 @@ impl WebSocketMgr {
                         unique: String::new(),
                         open_timeout: None,
                     };
-                    let _ = server.out.timeout(15_000, CONNECT).ok();
+                    // let token = server.out.token();
+                    // let _ = server.out.timeout(15_000, token).ok();
                     server
                 }).unwrap().listen(&*url);
                 let websocket = &format!("websocket close exit may webscoket fd is closed!!!!")[..];

@@ -43,8 +43,8 @@ serde_json="1.0.81"
 serde_yaml="0.8.24"
 
 
-# ws = "0.9.2"
-ws = { branch="new", git = "https://github.com/tickbh/ws-rs.git"}
+ws = "0.9.2"
+# ws = { branch="new", git = "https://github.com/tickbh/ws-rs.git"}
 
 [dependencies.rusqlite]
 version = "0.27.0"
