@@ -47,8 +47,16 @@ fn main() {
 
     log4rs::init_file(&*command.get_str("l").unwrap(), Default::default()).unwrap();
     warn!("local address!! {}", get().unwrap());
-    let success = GlobalConfig::change_by_file(&*command.get_str("c").unwrap());
-    assert_eq!(success, true);
+    let mut success = GlobalConfig::change_by_file(&*format!("local/{}",  &*command.get_str("c").unwrap()));
+    if !success {
+        success = GlobalConfig::change_by_file(&*format!("config/{}",  &*command.get_str("c").unwrap()));
+    }
+    if !success {
+        success = GlobalConfig::change_by_file(&*command.get_str("c").unwrap());
+    }
+    if !success {
+        panic!("加载配置文件失败");
+    }
 
     let global_config = GlobalConfig::instance();
     assert_eq!(success, true);

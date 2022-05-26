@@ -49,6 +49,8 @@ pub struct LuaEngine {
     exec_list: Vec<LuaElem>,
     lua: Lua,
     mutex: Arc<ReentrantMutex<i32>>,
+    aes_key: Option<[u8; 32]>,
+    aes_iv: Option<[u8; 12]>,
 }
 
 /// custom lua load func
@@ -105,7 +107,14 @@ impl LuaEngine {
             exec_list: vec![],
             lua: lua,
             mutex: Arc::new(ReentrantMutex::new(0)),
+            aes_key: Some(AES_KEY),
+            aes_iv: Some(AES_IV),
         }
+    }
+
+    pub fn set_aes_info(&mut self, aes_key: [u8; 32], aes_iv: [u8; 12]) {
+        self.aes_key = Some(aes_key);
+        self.aes_iv = Some(aes_iv);
     }
 
     pub fn get_lua(&mut self) -> &mut Lua {
