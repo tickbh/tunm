@@ -18,7 +18,7 @@ impl NetUtils {
                 td_rlua::LUA_TNUMBER => {
                     let val: f64 = unwrap_or!(LuaRead::lua_read_at_position(lua, index), return None);
                     if val - val.floor() < 0.001 {
-                        Some(Value::from(val as u32))
+                        Some(Value::from(val as i64))
                     } else {
                         Some(Value::from(val as f32))
                     }

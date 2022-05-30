@@ -7,7 +7,7 @@ use std::thread;
 use std::sync::Arc;
 use td_rthreadpool::ReentrantMutex;
 
-use ws::{Builder, Settings, CloseCode, Sender, Handler, Handshake, Message, Result, Error, ErrorKind};
+use ws::{Builder, Settings, CloseCode, Sender, Handler, Handshake, Message, Result, Error};
 use ws::util::{Token, Timeout};
 
 
