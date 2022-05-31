@@ -25,6 +25,12 @@ fn lua_print(method : u8, val: String) {
     TelnetUtils::instance().new_message(val);
 }
 
+fn rust_random(start : i32, end: i32) -> i32 {
+    let value : u32 = rand::random();
+    let step = (end - start + 1).max(1) as u32;
+    (value % step) as i32 + start
+}
+
 fn write_log(method : u8, val: String) {
     LogUtils::instance().append(method, &*val);
 }
@@ -249,6 +255,7 @@ extern "C" fn native_check_hu(lua: *mut lua_State) -> libc::c_int {
 
 pub fn register_util_func(lua: &mut Lua) {
     lua.set("LUA_PRINT", td_rlua::function2(lua_print));
+    lua.set("RUST_RANDOM", td_rlua::function2(rust_random));
     lua.set("WRITE_LOG", td_rlua::function2(write_log));
     lua.register("GET_NEXT_RID", get_next_rid);
     lua.set("GET_FULL_PATH", td_rlua::function1(get_full_path));

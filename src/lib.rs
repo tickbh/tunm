@@ -21,6 +21,7 @@ extern crate mio;
 extern crate tunm_timer;
 extern crate serde;
 extern crate serde_yaml;
+extern crate rand;
 
 #[macro_use] extern crate log;
 

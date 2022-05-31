@@ -87,7 +87,7 @@
                     "kind": "example"
                 }
             },
-            "args": ["-c", "config/Client_GlobalConfig.conf", "-s", "D:/game/poker_server/scripts/"],
+            "args": ["-c", "server.yaml", "-s", "D:/game/poker_server/scripts/"],
             "cwd": "${workspaceFolder}"
         },
         {
