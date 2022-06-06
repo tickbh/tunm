@@ -57,12 +57,25 @@ impl HttpMgr {
         *data += 1;
 
         let mut body = String::new();
+        let mut headers = HashMap::new();
+        for it in request.headers() {
+            headers.insert(it.field.as_str().to_string(), it.value.as_str().to_string());
+        }
+
         let _ = request.as_reader().read_to_string(&mut body);
-        LuaEngine::instance().apply_args_func("http_server_msg_recv".to_string(),
-                                              vec![data.to_string(),
-                                                   request.url().to_string(),
-                                                   body,
-                                                   format!("{}", request.remote_addr())]);
+        LuaEngine::instance().apply_http_callback_func(request.method().as_str().to_string(), headers, vec![
+                        data.to_string(),
+                        request.url().to_string(),
+                        body,
+                        format!("{}", request.remote_addr())
+                    ]);
+        
+        // ("http_server_msg_recv".to_string(),
+        //                                       vec![data.to_string(),
+        //                                            request.url().to_string(),
+        //                                            headers,
+        //                                            body,
+        //                                            format!("{}", request.remote_addr())]);
         self.requests.insert(*data, ServerRequest::new(request));
 
     }

@@ -1,4 +1,5 @@
 use std::iter::repeat;
+use std::collections::HashMap;
 use std::ffi::{CString};
 use crypto::aes_gcm::AesGcm;
 use crypto::aes::{KeySize};
@@ -40,6 +41,8 @@ enum LuaElem {
     LostConnection(String, String),
     /// func_str
     ExecString(String),
+    /// Args fuc
+    HttpCallbackFunc(String, HashMap<String, String>, Vec<String>),
     /// Args fuc
     ArgsFunc(String, Vec<String>),
 }
@@ -140,6 +143,10 @@ impl LuaEngine {
                 LuaElem::LostConnection(unique, reason) => self.execute_lost_connect(unique, reason),
                 LuaElem::ExecString(func_str) => self.execute_string(func_str),
                 LuaElem::ArgsFunc(func, args) => self.execute_args_func(func, args),
+                LuaElem::HttpCallbackFunc(method, headers, args) => self.execute_http_func(method, headers, args),
+
+
+                
             };
         }
         true
@@ -188,6 +195,11 @@ impl LuaEngine {
     pub fn apply_args_func(&mut self, func: String, args: Vec<String>) {
         let _guard = self.mutex.lock().unwrap();
         self.exec_list.push(LuaElem::ArgsFunc(func, args));
+    }
+    
+    pub fn apply_http_callback_func(&mut self, method: String, headers: HashMap<String, String>, args: Vec<String>) {
+        let _guard = self.mutex.lock().unwrap();
+        self.exec_list.push(LuaElem::HttpCallbackFunc(method, headers, args));
     }
 
     pub fn execute_new_connect(&mut self,
@@ -274,6 +286,40 @@ impl LuaEngine {
             }
             7 => {
                 self.lua.exec_func7(func,
+                                    &*args[0],
+                                    &*args[1],
+                                    &*args[2],
+                                    &*args[3],
+                                    &*args[4],
+                                    &*args[5],
+                                    &*args[6])
+            }
+            _ => -1,
+        }
+    }
+
+    
+    pub fn execute_http_func(&mut self, method: String, headers: HashMap<String, String>, args: Vec<String>) -> i32 {
+        // println!("execute func is {}", func);
+        let func = "http_server_msg_recv";
+        match args.len() {
+            0 => self.lua.exec_func2(func, method, headers),
+            1 => self.lua.exec_func3(func, method, headers, &*args[0]),
+            2 => self.lua.exec_func4(func, method, headers, &*args[0], &*args[1]),
+            3 => self.lua.exec_func5(func, method, headers, &*args[0], &*args[1], &*args[2]),
+            4 => self.lua.exec_func6(func, method, headers, &*args[0], &*args[1], &*args[2], &*args[3]),
+            5 => self.lua.exec_func7(func, method, headers, &*args[0], &*args[1], &*args[2], &*args[3], &*args[4]),
+            6 => {
+                self.lua.exec_func8(func, method, headers, 
+                                    &*args[0],
+                                    &*args[1],
+                                    &*args[2],
+                                    &*args[3],
+                                    &*args[4],
+                                    &*args[5])
+            }
+            7 => {
+                self.lua.exec_func9(func, method, headers, 
                                     &*args[0],
                                     &*args[1],
                                     &*args[2],
